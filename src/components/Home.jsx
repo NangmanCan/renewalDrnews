@@ -1,16 +1,24 @@
 import { useEffect, useRef } from 'react';
 import HeadlineNews from './HeadlineNews';
 import NewsCard from './NewsCard';
-import { getHeadlineArticle, getRegularArticles } from '../data/articles';
 
-const Home = ({ onArticleClick, selectedCategory }) => {
-  const headline = getHeadlineArticle();
-  let regularArticles = getRegularArticles();
+const Home = ({ onArticleClick, selectedCategory, articles, mainSlots }) => {
+  // mainSlots에서 헤드라인과 서브 기사 가져오기
+  const headline = mainSlots?.headline || null;
+  const subArticles = mainSlots?.sub || [];
+
+  // 메인 슬롯에 없는 기사들을 일반 기사로 표시
+  const mainSlotIds = [
+    headline?.id,
+    ...subArticles.map((a) => a.id),
+  ].filter(Boolean);
+
+  let regularArticles = articles.filter((a) => !mainSlotIds.includes(a.id));
 
   // 카테고리 필터링
   if (selectedCategory) {
-    regularArticles = regularArticles.filter(
-      article => article.category === selectedCategory
+    regularArticles = articles.filter(
+      (article) => article.category === selectedCategory
     );
   }
 

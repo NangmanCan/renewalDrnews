@@ -1,9 +1,12 @@
-import { getArticleById, getRelatedArticles } from '../data/articles';
 import NewsCard from './NewsCard';
 
-const ArticleDetail = ({ articleId, onArticleClick, onBack }) => {
-  const article = getArticleById(articleId);
-  const relatedArticles = article ? getRelatedArticles(articleId, article.category) : [];
+const ArticleDetail = ({ articleId, onArticleClick, onBack, articles }) => {
+  const article = articles.find((a) => a.id === parseInt(articleId) || a.id === articleId);
+  const relatedArticles = article
+    ? articles
+        .filter((a) => a.id !== article.id && a.category === article.category)
+        .slice(0, 3)
+    : [];
 
   if (!article) {
     return (

@@ -2,11 +2,22 @@ import { useState } from 'react';
 import Header from './components/Header';
 import Home from './components/Home';
 import ArticleDetail from './components/ArticleDetail';
+import AdminLayout from './components/admin/AdminLayout';
+import { articles as initialArticles } from './data/articles';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [selectedArticleId, setSelectedArticleId] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // 기사 상태 관리 (관리자에서 수정 가능)
+  const [articles, setArticles] = useState(initialArticles);
+
+  // 메인 페이지 슬롯 상태
+  const [mainSlots, setMainSlots] = useState({
+    headline: initialArticles.find((a) => a.isHeadline) || null,
+    sub: initialArticles.filter((a) => !a.isHeadline).slice(0, 3),
+  });
 
   const handleArticleClick = (articleId) => {
     setSelectedArticleId(articleId);
@@ -18,6 +29,23 @@ function App() {
     setCurrentPage('home');
     setSelectedArticleId(null);
   };
+
+  const handleAdminExit = () => {
+    setCurrentPage('home');
+  };
+
+  // 관리자 페이지
+  if (currentPage === 'admin') {
+    return (
+      <AdminLayout
+        onExit={handleAdminExit}
+        articles={articles}
+        setArticles={setArticles}
+        mainSlots={mainSlots}
+        setMainSlots={setMainSlots}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -31,6 +59,8 @@ function App() {
         <Home
           onArticleClick={handleArticleClick}
           selectedCategory={selectedCategory}
+          articles={articles}
+          mainSlots={mainSlots}
         />
       )}
 
@@ -39,6 +69,7 @@ function App() {
           articleId={selectedArticleId}
           onArticleClick={handleArticleClick}
           onBack={handleBack}
+          articles={articles}
         />
       )}
 

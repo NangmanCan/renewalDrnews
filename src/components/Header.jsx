@@ -37,7 +37,10 @@ const Header = ({ currentPage, setCurrentPage, setSelectedCategory }) => {
           </nav>
 
           {/* Admin Button */}
-          <button className="px-4 py-2 bg-sky-600 hover:bg-sky-700 rounded-md font-medium transition-colors">
+          <button
+            onClick={() => setCurrentPage('admin')}
+            className="px-4 py-2 bg-sky-600 hover:bg-sky-700 rounded-md font-medium transition-colors"
+          >
             관리자
           </button>
         </div>
