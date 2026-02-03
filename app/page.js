@@ -4,8 +4,11 @@ import HeadlineNews from '@/components/HeadlineNews';
 import NewsCard from '@/components/NewsCard';
 import { articles } from '@/data/articles';
 
-export default function Home({ searchParams }) {
-  const category = searchParams?.category;
+export const runtime = 'edge';
+
+export default async function Home({ searchParams }) {
+  const params = await searchParams;
+  const category = params?.category;
 
   const headline = articles.find((a) => a.isHeadline);
   let regularArticles = articles.filter((a) => !a.isHeadline);
