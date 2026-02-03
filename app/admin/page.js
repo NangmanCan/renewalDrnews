@@ -52,8 +52,8 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
   );
 }
 
-// 기사 작성 에디터
-function ArticleEditor({ onPublish }) {
+// 기사 작성/수정 에디터
+function ArticleEditor({ onPublish, onUpdate, editingArticle, onCancelEdit }) {
   const [form, setForm] = useState({
     title: '',
     category: '정책',
@@ -64,19 +64,65 @@ function ArticleEditor({ onPublish }) {
 
   const categories = ['정책', '학술', '병원', '산업'];
 
+  // 수정 모드일 때 폼에 기사 내용 로드
+  useState(() => {
+    if (editingArticle) {
+      setForm({
+        title: editingArticle.title || '',
+        category: editingArticle.category || '정책',
+        author: editingArticle.author || '',
+        summary: editingArticle.summary || '',
+        content: editingArticle.content || '',
+      });
+    }
+  }, [editingArticle]);
+
+  // editingArticle이 변경될 때 폼 업데이트
+  if (editingArticle && form.title !== editingArticle.title && form.title === '') {
+    setForm({
+      title: editingArticle.title || '',
+      category: editingArticle.category || '정책',
+      author: editingArticle.author || '',
+      summary: editingArticle.summary || '',
+      content: editingArticle.content || '',
+    });
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.title || !form.content) {
       alert('제목과 본문을 입력해주세요.');
       return;
     }
-    onPublish(form);
+
+    if (editingArticle) {
+      onUpdate({ ...editingArticle, ...form });
+    } else {
+      onPublish(form);
+    }
     setForm({ title: '', category: '정책', author: '', summary: '', content: '' });
+  };
+
+  const handleCancel = () => {
+    setForm({ title: '', category: '정책', author: '', summary: '', content: '' });
+    onCancelEdit();
   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">기사 작성</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900">
+          {editingArticle ? '기사 수정' : '기사 작성'}
+        </h2>
+        {editingArticle && (
+          <button
+            onClick={handleCancel}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            취소하고 새 기사 작성
+          </button>
+        )}
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
@@ -138,11 +184,59 @@ function ArticleEditor({ onPublish }) {
 
         <button
           type="submit"
-          className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-lg transition-colors"
+          className={`w-full py-3 text-white font-medium rounded-lg transition-colors ${
+            editingArticle
+              ? 'bg-green-600 hover:bg-green-700'
+              : 'bg-sky-600 hover:bg-sky-700'
+          }`}
         >
-          발행하기
+          {editingArticle ? '수정 완료' : '발행하기'}
         </button>
       </form>
+    </div>
+  );
+}
+
+// 기사 관리 (리스트 + 수정/삭제)
+function ArticleManager({ articles, onEdit, onDelete }) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-6">기사 관리</h2>
+      <div className="space-y-3 max-h-[600px] overflow-y-auto">
+        {articles.map((article) => (
+          <div
+            key={article.id}
+            className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                    {article.category}
+                  </span>
+                  <span className="text-xs text-gray-400">{article.date}</span>
+                </div>
+                <p className="font-medium text-gray-900 mb-1">{article.title}</p>
+                <p className="text-sm text-gray-500 line-clamp-1">{article.summary}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onEdit(article)}
+                  className="px-3 py-1.5 text-sm bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg transition-colors"
+                >
+                  수정
+                </button>
+                <button
+                  onClick={() => onDelete(article.id)}
+                  className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -332,6 +426,7 @@ function AdManager() {
 // 뉴스 데스크
 function NewsDesk({ articles, setArticles, mainSlots, setMainSlots }) {
   const [activeTab, setActiveTab] = useState('curation');
+  const [editingArticle, setEditingArticle] = useState(null);
 
   const handlePublish = (form) => {
     const newArticle = {
@@ -345,12 +440,51 @@ function NewsDesk({ articles, setArticles, mainSlots, setMainSlots }) {
     alert('기사가 발행되었습니다.');
   };
 
+  const handleUpdate = (updatedArticle) => {
+    setArticles(articles.map((a) => (a.id === updatedArticle.id ? updatedArticle : a)));
+    // mainSlots도 업데이트
+    if (mainSlots.headline?.id === updatedArticle.id) {
+      setMainSlots({ ...mainSlots, headline: updatedArticle });
+    }
+    const subIndex = mainSlots.sub.findIndex((a) => a.id === updatedArticle.id);
+    if (subIndex !== -1) {
+      const newSub = [...mainSlots.sub];
+      newSub[subIndex] = updatedArticle;
+      setMainSlots({ ...mainSlots, sub: newSub });
+    }
+    setEditingArticle(null);
+    alert('기사가 수정되었습니다.');
+  };
+
+  const handleEdit = (article) => {
+    setEditingArticle(article);
+    setActiveTab('editor');
+  };
+
+  const handleDelete = (articleId) => {
+    if (!confirm('정말 이 기사를 삭제하시겠습니까?')) return;
+    setArticles(articles.filter((a) => a.id !== articleId));
+    // mainSlots에서도 제거
+    if (mainSlots.headline?.id === articleId) {
+      setMainSlots({ ...mainSlots, headline: null });
+    }
+    setMainSlots({
+      ...mainSlots,
+      sub: mainSlots.sub.filter((a) => a.id !== articleId),
+    });
+    alert('기사가 삭제되었습니다.');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingArticle(null);
+  };
+
   return (
     <div>
       {/* 탭 */}
       <div className="flex gap-4 mb-6">
         <button
-          onClick={() => setActiveTab('curation')}
+          onClick={() => { setActiveTab('curation'); setEditingArticle(null); }}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === 'curation'
               ? 'bg-navy text-white'
@@ -360,14 +494,24 @@ function NewsDesk({ articles, setArticles, mainSlots, setMainSlots }) {
           메인 큐레이션
         </button>
         <button
-          onClick={() => setActiveTab('editor')}
+          onClick={() => { setActiveTab('manage'); setEditingArticle(null); }}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'manage'
+              ? 'bg-navy text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          기사 관리
+        </button>
+        <button
+          onClick={() => { setActiveTab('editor'); setEditingArticle(null); }}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             activeTab === 'editor'
               ? 'bg-navy text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          기사 작성
+          {editingArticle ? '기사 수정' : '기사 작성'}
         </button>
       </div>
 
@@ -378,7 +522,21 @@ function NewsDesk({ articles, setArticles, mainSlots, setMainSlots }) {
           setMainSlots={setMainSlots}
         />
       )}
-      {activeTab === 'editor' && <ArticleEditor onPublish={handlePublish} />}
+      {activeTab === 'manage' && (
+        <ArticleManager
+          articles={articles}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
+      {activeTab === 'editor' && (
+        <ArticleEditor
+          onPublish={handlePublish}
+          onUpdate={handleUpdate}
+          editingArticle={editingArticle}
+          onCancelEdit={handleCancelEdit}
+        />
+      )}
     </div>
   );
 }
