@@ -411,6 +411,7 @@ function MainCuration({ articles, mainSlots, setMainSlots }) {
 // 광고 관리자
 function AdManager({ banners, setBanners }) {
   const [selectedType, setSelectedType] = useState('headline');
+  const [previewMode, setPreviewMode] = useState('mobile'); // 'pc' or 'mobile'
 
   const typeLabels = {
     headline: '헤드라인 슬라이드 광고',
@@ -457,6 +458,213 @@ function AdManager({ banners, setBanners }) {
   };
 
   const activeBanners = banners.filter((b) => b.isActive);
+  const sidebarBanners = activeBanners.filter((b) => b.type === 'sidebar');
+  const bottomBanners = activeBanners.filter((b) => b.type === 'bottom');
+  const headlineBanners = activeBanners.filter((b) => b.type === 'headline');
+
+  // PC 미리보기
+  const PCPreview = () => (
+    <div className="bg-gray-100 p-4 rounded-lg">
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-full mx-auto">
+        {/* 헤더 */}
+        <div className="bg-navy text-white px-4 py-3">
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-bold">Dr.News</span>
+            <div className="flex gap-3 text-xs text-gray-300">
+              <span>정책</span>
+              <span>학술</span>
+              <span>병원</span>
+              <span>산업</span>
+              <span>AI</span>
+              <span>제약·바이오</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 콘텐츠 영역 */}
+        <div className="flex p-4 gap-4">
+          {/* 메인 콘텐츠 */}
+          <div className="flex-1">
+            {/* 헤드라인 */}
+            <div className="relative h-32 bg-gray-200 rounded-lg overflow-hidden mb-4">
+              {headlineBanners.length > 0 ? (
+                <div className="relative w-full h-full">
+                  <Image src={headlineBanners[0]?.image} alt="headline" fill className="object-cover" />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-2">
+                    <p className="text-white text-xs font-medium truncate">{headlineBanners[0]?.title}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400 text-xs">헤드라인 광고</div>
+              )}
+            </div>
+
+            <h3 className="text-sm font-bold text-gray-800 mb-3">최신 뉴스</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-gray-50 rounded-lg p-2">
+                  <div className="bg-gray-200 h-12 rounded mb-2"></div>
+                  <div className="h-2 bg-gray-200 rounded w-3/4 mb-1"></div>
+                  <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 사이드바 광고 영역 (가로형) */}
+          <div className="w-36 flex-shrink-0">
+            <h4 className="text-[10px] font-semibold text-gray-500 mb-2">광고</h4>
+            {sidebarBanners.length > 0 ? (
+              sidebarBanners.map((banner) => (
+                <div key={banner.id} className="mb-3 rounded-lg overflow-hidden shadow-md bg-white">
+                  <div className="relative h-12">
+                    <Image src={banner.image} alt={banner.title} fill className="object-cover" />
+                    <span className="absolute top-1 left-1 bg-black/60 text-white text-[6px] px-1 rounded">AD</span>
+                  </div>
+                  <div className="p-1.5">
+                    <p className="text-[8px] font-medium text-gray-800 line-clamp-1">{banner.title}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-gray-400 text-[10px]">사이드 광고 없음</div>
+            )}
+          </div>
+        </div>
+      </div>
+      <p className="text-center text-xs text-gray-500 mt-3">PC 버전 - 사이드바에 가로형 배너 표시</p>
+    </div>
+  );
+
+  // 모바일 미리보기
+  const MobilePreview = () => {
+    const nativeAds = [...bottomBanners, ...sidebarBanners].slice(0, 2);
+
+    return (
+      <div className="flex justify-center">
+        <div className="w-[280px] bg-gray-900 rounded-[36px] p-2.5 shadow-xl">
+          {/* 노치 */}
+          <div className="bg-gray-900 h-5 flex items-center justify-center mb-0.5">
+            <div className="w-14 h-2.5 bg-gray-800 rounded-full"></div>
+          </div>
+
+          <div className="bg-gray-50 rounded-[28px] overflow-hidden h-[480px] overflow-y-auto">
+            {/* 헤더 */}
+            <div className="bg-navy text-white px-3 py-2">
+              <p className="text-sm font-bold">Dr.News</p>
+            </div>
+
+            {/* 카테고리 */}
+            <div className="bg-slate-800 px-2 py-1 flex gap-2 overflow-x-auto">
+              {['정책', '학술', '병원', '산업', 'AI', '제약·바이오'].map((cat) => (
+                <span key={cat} className="text-[7px] text-gray-300 whitespace-nowrap">{cat}</span>
+              ))}
+            </div>
+
+            {/* 헤드라인 */}
+            <div className="p-2">
+              <div className="relative h-24 bg-gray-200 rounded-lg overflow-hidden">
+                {headlineBanners.length > 0 ? (
+                  <div className="relative w-full h-full">
+                    <Image src={headlineBanners[0]?.image} alt="headline" fill className="object-cover" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-1.5">
+                      <p className="text-white text-[9px] font-medium truncate">{headlineBanners[0]?.title}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400 text-[9px]">헤드라인 광고</div>
+                )}
+              </div>
+            </div>
+
+            {/* 콘텐츠 - 기사와 네이티브 광고 */}
+            <div className="px-2 space-y-2">
+              <h3 className="text-[10px] font-bold text-gray-800">최신 뉴스</h3>
+
+              {/* 기사 1 */}
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="flex gap-2">
+                  <div className="w-12 h-12 bg-gray-200 rounded flex-shrink-0"></div>
+                  <div className="flex-1">
+                    <div className="h-1.5 bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-1.5 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 기사 2 */}
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="flex gap-2">
+                  <div className="w-12 h-12 bg-gray-200 rounded flex-shrink-0"></div>
+                  <div className="flex-1">
+                    <div className="h-1.5 bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-1.5 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 네이티브 광고 1 */}
+              {nativeAds[0] && (
+                <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg overflow-hidden shadow-sm border border-sky-100">
+                  <div className="flex gap-2 p-2">
+                    <div className="w-12 h-12 relative rounded overflow-hidden flex-shrink-0">
+                      <Image src={nativeAds[0].image} alt={nativeAds[0].title} fill className="object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[6px] text-sky-600 font-semibold">Sponsored</span>
+                      <p className="text-[8px] font-medium text-gray-800 line-clamp-2">{nativeAds[0].title}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 기사 3 */}
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="flex gap-2">
+                  <div className="w-12 h-12 bg-gray-200 rounded flex-shrink-0"></div>
+                  <div className="flex-1">
+                    <div className="h-1.5 bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-1.5 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 기사 4 */}
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="flex gap-2">
+                  <div className="w-12 h-12 bg-gray-200 rounded flex-shrink-0"></div>
+                  <div className="flex-1">
+                    <div className="h-1.5 bg-gray-200 rounded w-3/4 mb-1"></div>
+                    <div className="h-1.5 bg-gray-100 rounded w-1/2"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 네이티브 광고 2 */}
+              {nativeAds[1] && (
+                <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg overflow-hidden shadow-sm border border-sky-100">
+                  <div className="flex gap-2 p-2">
+                    <div className="w-12 h-12 relative rounded overflow-hidden flex-shrink-0">
+                      <Image src={nativeAds[1].image} alt={nativeAds[1].title} fill className="object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[6px] text-sky-600 font-semibold">Sponsored</span>
+                      <p className="text-[8px] font-medium text-gray-800 line-clamp-2">{nativeAds[1].title}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 하단 홈 인디케이터 */}
+            <div className="h-3 flex items-center justify-center mt-2">
+              <div className="w-16 h-0.5 bg-gray-300 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -544,111 +752,47 @@ function AdManager({ banners, setBanners }) {
         </div>
       </div>
 
-      {/* 우측: 스마트폰 미리보기 */}
+      {/* 우측: 미리보기 (PC/모바일 탭) */}
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">미리보기</h2>
-
-        {/* 스마트폰 목업 */}
-        <div className="flex justify-center">
-          <div className="w-[300px] h-[600px] bg-gray-900 rounded-[40px] p-3 shadow-xl">
-            <div className="w-full h-full bg-gray-50 rounded-[32px] overflow-hidden overflow-y-auto">
-              {/* 미니 헤더 */}
-              <div className="bg-navy text-white p-3">
-                <p className="text-sm font-bold">Dr.News</p>
-              </div>
-
-              {/* 헤드라인 슬라이드 영역 */}
-              <div className="p-3">
-                <div className="relative h-32 bg-gray-200 rounded-lg overflow-hidden">
-                  {activeBanners.filter((b) => b.type === 'headline').length > 0 ? (
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={activeBanners.filter((b) => b.type === 'headline')[0]?.image}
-                        alt="headline"
-                        fill
-                        className="object-cover"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-2">
-                        <p className="text-white text-xs font-medium truncate">
-                          {activeBanners.filter((b) => b.type === 'headline')[0]?.title}
-                        </p>
-                      </div>
-                      {/* 슬라이드 인디케이터 */}
-                      <div className="absolute bottom-1 right-2 flex gap-1">
-                        {activeBanners.filter((b) => b.type === 'headline').map((_, i) => (
-                          <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-white' : 'bg-white/50'}`} />
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-xs">
-                      헤드라인 광고
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 뉴스 카드 미리보기 */}
-              <div className="px-3 space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white rounded-lg p-2 shadow-sm">
-                    <div className="flex gap-2">
-                      <div className="w-16 h-12 bg-gray-200 rounded flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="h-2 bg-gray-200 rounded w-3/4 mb-1" />
-                        <div className="h-2 bg-gray-100 rounded w-1/2" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* 하단 롤링 배너 */}
-              <div className="p-3">
-                <div className="h-16 bg-gray-200 rounded-lg overflow-hidden relative">
-                  {activeBanners.filter((b) => b.type === 'bottom').length > 0 ? (
-                    <div className="flex items-center h-full px-3 gap-3">
-                      <div className="w-10 h-10 relative rounded overflow-hidden flex-shrink-0">
-                        <Image
-                          src={activeBanners.filter((b) => b.type === 'bottom')[0]?.image}
-                          alt="bottom"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-900 truncate">
-                          {activeBanners.filter((b) => b.type === 'bottom')[0]?.title}
-                        </p>
-                        <p className="text-[10px] text-gray-500 truncate">
-                          {activeBanners.filter((b) => b.type === 'bottom')[0]?.description}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-xs">
-                      하단 롤링 배너
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 사이드 배너 미리보기 (작은 플로팅) */}
-              {activeBanners.filter((b) => b.type === 'sidebar').length > 0 && (
-                <div className="absolute bottom-20 right-4 w-12 h-12 bg-sky-500 rounded-lg shadow-lg flex items-center justify-center">
-                  <span className="text-white text-[8px] font-bold">AD</span>
-                </div>
-              )}
-            </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">미리보기</h2>
+          {/* PC/모바일 탭 */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setPreviewMode('pc')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                previewMode === 'pc' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              PC
+            </button>
+            <button
+              onClick={() => setPreviewMode('mobile')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                previewMode === 'mobile' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              모바일
+            </button>
           </div>
         </div>
 
+        {/* 미리보기 콘텐츠 */}
+        {previewMode === 'pc' ? <PCPreview /> : <MobilePreview />}
+
         {/* 활성 배너 카운트 */}
         <div className="mt-4 text-center text-sm text-gray-500">
-          활성 배너: 헤드라인 {activeBanners.filter((b) => b.type === 'headline').length}개,
-          하단 {activeBanners.filter((b) => b.type === 'bottom').length}개,
-          사이드 {activeBanners.filter((b) => b.type === 'sidebar').length}개
+          활성 배너: 헤드라인 {headlineBanners.length}개, 하단 {bottomBanners.length}개, 사이드 {sidebarBanners.length}개
         </div>
+        <p className="text-center text-xs text-gray-400 mt-1">
+          {previewMode === 'pc' ? '사이드바에 가로형 배너로 표시됩니다' : '기사 사이에 네이티브 광고로 표시됩니다'}
+        </p>
       </div>
     </div>
   );
