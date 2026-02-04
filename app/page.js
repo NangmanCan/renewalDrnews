@@ -1,7 +1,9 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeadlineNews from '@/components/HeadlineNews';
+import PopularArticles from '@/components/PopularArticles';
 import SubArticleCard from '@/components/SubArticleCard';
+import AdScrollStrip from '@/components/AdScrollStrip';
 import ArticleListItem from '@/components/ArticleListItem';
 import SidebarAd from '@/components/SidebarAd';
 import { articles, bioPharmBreakingNews } from '@/data/articles';
@@ -20,10 +22,14 @@ export default async function Home({ searchParams }) {
     regularArticles = articles.filter((a) => a.category === category);
   }
 
-  // 서브기사: 일반 기사 첫 3개
+  // 관련 기사: 일반 기사 첫 3개
   const subArticles = regularArticles.slice(0, 3);
 
-  // 사이드바 배너 필터링
+  // 배너 필터링
+  const headlineBanners = initialBanners
+    .filter((b) => b.type === 'headline' && b.isActive)
+    .sort((a, b) => a.order - b.order);
+
   const sidebarBanners = initialBanners
     .filter((b) => b.type === 'sidebar' && b.isActive)
     .sort((a, b) => a.order - b.order);
@@ -33,29 +39,37 @@ export default async function Home({ searchParams }) {
       <Header />
       <main className="max-w-7xl mx-auto px-4 py-8">
 
-        {/* ===== 큐레이션 섹션: 헤드라인 1개 + 서브기사 3개 ===== */}
+        {/* ===== 큐레이션: 헤드라인(좌) + 많이 본 기사(우) ===== */}
         {!category && headline && (
-          <section className="mb-10">
+          <section className="mb-4">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* 헤드라인 기사 (좌측 2/3) */}
               <div className="lg:w-2/3">
                 <HeadlineNews article={headline} />
               </div>
-
-              {/* 서브기사 3개 (우측 1/3) */}
-              <div className="lg:w-1/3 bg-white rounded-2xl shadow-md p-4 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 pb-2 border-b border-gray-200">
-                    관련 기사
-                  </h3>
-                  <div className="flex flex-col gap-1">
-                    {subArticles.map((article) => (
-                      <SubArticleCard key={article.id} article={article} />
-                    ))}
-                  </div>
-                </div>
+              {/* 많이 본 기사 (우측 1/3) */}
+              <div className="lg:w-1/3">
+                <PopularArticles />
               </div>
             </div>
+          </section>
+        )}
+
+        {/* ===== 관련 기사 3개 (PC: 가로 3열, 모바일: 세로) ===== */}
+        {!category && (
+          <section className="mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {subArticles.map((article) => (
+                <SubArticleCard key={article.id} article={article} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ===== 가로 스크롤 광고 슬롯 ===== */}
+        {!category && headlineBanners.length > 0 && (
+          <section className="mb-8">
+            <AdScrollStrip banners={headlineBanners} />
           </section>
         )}
 
@@ -81,7 +95,7 @@ export default async function Home({ searchParams }) {
         {!category && (
           <section>
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* 좌측: 바이오·제약 속보 — 직사각형 이미지-글 레이아웃 */}
+              {/* 좌측: 바이오·제약 속보 */}
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-4">
                   <h2 className="text-xl font-bold text-navy">바이오·제약 속보</h2>

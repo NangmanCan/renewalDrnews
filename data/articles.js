@@ -14,7 +14,8 @@ export const articles = [
     author: "김정책 기자",
     date: "2026-02-03",
     image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop",
-    isHeadline: true
+    isHeadline: true,
+    views: 45200
   },
   {
     id: 2,
@@ -31,7 +32,8 @@ export const articles = [
     author: "박학술 기자",
     date: "2026-02-02",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 38100
   },
   {
     id: 3,
@@ -48,7 +50,8 @@ export const articles = [
     author: "이병원 기자",
     date: "2026-02-02",
     image: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 32500
   },
   {
     id: 4,
@@ -63,7 +66,8 @@ export const articles = [
     author: "정산업 기자",
     date: "2026-02-01",
     image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 28900
   },
   {
     id: 5,
@@ -80,7 +84,8 @@ export const articles = [
     author: "김정책 기자",
     date: "2026-02-01",
     image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 22100
   },
   {
     id: 6,
@@ -97,7 +102,8 @@ export const articles = [
     author: "정산업 기자",
     date: "2026-01-31",
     image: "https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 19800
   },
   {
     id: 7,
@@ -114,7 +120,8 @@ export const articles = [
     author: "이병원 기자",
     date: "2026-01-30",
     image: "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 17400
   },
   {
     id: 8,
@@ -131,7 +138,8 @@ export const articles = [
     author: "박학술 기자",
     date: "2026-01-29",
     image: "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 15600
   }
 ];
 
@@ -151,7 +159,8 @@ export const bioPharmBreakingNews = [
     date: "2026-02-04",
     image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=400&fit=crop",
     isHeadline: false,
-    stockChange: 7.5
+    stockChange: 7.5,
+    views: 8400
   },
   {
     id: 102,
@@ -167,7 +176,8 @@ export const bioPharmBreakingNews = [
     date: "2026-02-04",
     image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop",
     isHeadline: false,
-    stockChange: 4.2
+    stockChange: 4.2,
+    views: 6200
   },
   {
     id: 103,
@@ -183,7 +193,8 @@ export const bioPharmBreakingNews = [
     date: "2026-02-03",
     image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&h=400&fit=crop",
     isHeadline: false,
-    stockChange: 2.8
+    stockChange: 2.8,
+    views: 5100
   },
   {
     id: 104,
@@ -199,7 +210,8 @@ export const bioPharmBreakingNews = [
     date: "2026-02-03",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=400&fit=crop",
     isHeadline: false,
-    stockChange: 12.1
+    stockChange: 12.1,
+    views: 9800
   },
   {
     id: 105,
@@ -215,7 +227,8 @@ export const bioPharmBreakingNews = [
     date: "2026-02-03",
     image: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&h=400&fit=crop",
     isHeadline: false,
-    stockChange: -1.5
+    stockChange: -1.5,
+    views: 4300
   }
 ];
 
