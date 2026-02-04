@@ -1,10 +1,9 @@
-import { useEffect, useRef } from 'react';
 import HeadlineNews from './HeadlineNews';
 import NewsCard from './NewsCard';
-import { getHeadlineArticle, getRegularArticles } from '../data/articles';
+import { getHeadlineArticles, getRegularArticles } from '../data/articles';
 
 const Home = ({ onArticleClick, selectedCategory }) => {
-  const headline = getHeadlineArticle();
+  const headlines = getHeadlineArticles(3);
   let regularArticles = getRegularArticles();
 
   // 카테고리 필터링
@@ -14,59 +13,11 @@ const Home = ({ onArticleClick, selectedCategory }) => {
     );
   }
 
-  const scrollRef = useRef(null);
-  const animationRef = useRef(null);
-
-  // 자동 스크롤 애니메이션
-  useEffect(() => {
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer || regularArticles.length <= 3) return;
-
-    let scrollPosition = 0;
-    const scrollSpeed = 0.5;
-
-    const animate = () => {
-      scrollPosition += scrollSpeed;
-
-      // 스크롤이 끝에 도달하면 처음으로
-      if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
-        scrollPosition = 0;
-      }
-
-      scrollContainer.scrollLeft = scrollPosition;
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    // 마우스 호버 시 애니메이션 정지
-    const handleMouseEnter = () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-
-    const handleMouseLeave = () => {
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    scrollContainer.addEventListener('mouseenter', handleMouseEnter);
-    scrollContainer.addEventListener('mouseleave', handleMouseLeave);
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      scrollContainer.removeEventListener('mouseenter', handleMouseEnter);
-      scrollContainer.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, [regularArticles.length]);
-
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
       {/* 헤드라인 뉴스 - 카테고리 필터가 없을 때만 표시 */}
-      {!selectedCategory && headline && (
-        <HeadlineNews article={headline} onClick={onArticleClick} />
+      {!selectedCategory && headlines.length > 0 && (
+        <HeadlineNews articles={headlines} onClick={onArticleClick} />
       )}
 
       {/* 섹션 타이틀 */}
@@ -81,26 +32,12 @@ const Home = ({ onArticleClick, selectedCategory }) => {
         )}
       </div>
 
-      {/* 뉴스 그리드 - 일반 모드 */}
-      {!selectedCategory && regularArticles.length > 3 ? (
-        <div
-          ref={scrollRef}
-          className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide"
-          style={{ scrollBehavior: 'auto' }}
-        >
-          {regularArticles.map((article) => (
-            <div key={article.id} className="flex-shrink-0 w-[calc(33.333%-16px)] min-w-[300px]">
-              <NewsCard article={article} onClick={onArticleClick} />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {regularArticles.map((article) => (
-            <NewsCard key={article.id} article={article} onClick={onArticleClick} />
-          ))}
-        </div>
-      )}
+      {/* 뉴스 리스트 - 텍스트 기반 */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        {regularArticles.map((article) => (
+          <NewsCard key={article.id} article={article} onClick={onArticleClick} />
+        ))}
+      </div>
 
       {regularArticles.length === 0 && (
         <div className="text-center py-20 text-gray-500">

@@ -31,7 +31,7 @@ export const articles = [
     author: "박학술 기자",
     date: "2026-02-02",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: true
   },
   {
     id: 3,
@@ -48,7 +48,7 @@ export const articles = [
     author: "이병원 기자",
     date: "2026-02-02",
     image: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: true
   },
   {
     id: 4,
@@ -141,6 +141,10 @@ export const getArticleById = (id) => {
 
 export const getHeadlineArticle = () => {
   return articles.find(article => article.isHeadline);
+};
+
+export const getHeadlineArticles = (limit = 3) => {
+  return articles.filter(article => article.isHeadline).slice(0, limit);
 };
 
 export const getRegularArticles = () => {
