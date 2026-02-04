@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 const NewsListItem = ({ article }) => {
@@ -8,22 +9,32 @@ const NewsListItem = ({ article }) => {
   return (
     <Link
       href={`/article/${article.id}`}
-      className="flex items-center gap-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
+      className="flex gap-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
     >
-      {/* 카테고리 뱃지 */}
-      <span className="text-xs font-medium text-sky-600 bg-sky-50 px-2 py-0.5 rounded flex-shrink-0">
-        {article.category}
-      </span>
+      {/* 좌측 썸네일 (소형) */}
+      <div className="relative w-20 h-14 flex-shrink-0">
+        <Image
+          src={article.image}
+          alt={article.title}
+          fill
+          className="object-cover rounded"
+        />
+      </div>
 
-      {/* 제목 */}
-      <h4 className="text-sm font-medium text-gray-800 group-hover:text-sky-600 transition-colors line-clamp-1 flex-1">
-        {article.title}
-      </h4>
-
-      {/* 날짜 */}
-      <span className="text-xs text-gray-400 flex-shrink-0">
-        {article.date.slice(5)}
-      </span>
+      {/* 우측 텍스트 */}
+      <div className="flex flex-col justify-center flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-[10px] font-medium text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded">
+            {article.category}
+          </span>
+          <span className="text-[10px] text-gray-400">
+            {article.date.slice(5)}
+          </span>
+        </div>
+        <h4 className="text-sm font-medium text-gray-800 group-hover:text-sky-600 transition-colors line-clamp-2 leading-snug">
+          {article.title}
+        </h4>
+      </div>
     </Link>
   );
 };

@@ -4,6 +4,7 @@ import HeadlineSlider from '@/components/HeadlineSlider';
 import SubHeadline from '@/components/SubHeadline';
 import NewsList from '@/components/NewsListItem';
 import PopularNews from '@/components/PopularNews';
+import BioPharmNews from '@/components/BioPharmNews';
 import SidebarAd from '@/components/SidebarAd';
 import NativeAd from '@/components/NativeAd';
 import { articles, getPopularArticles, getSubHeadlineArticles } from '@/data/articles';
@@ -28,6 +29,11 @@ export default async function Home({ searchParams }) {
   // 많이 본 뉴스
   const popularArticles = getPopularArticles(5);
 
+  // 바이오/제약/AI 속보 (산업, AI 카테고리)
+  const bioPharmArticles = articles
+    .filter(a => a.category === '산업' || a.category === 'AI' || a.category === '제약·바이오')
+    .slice(0, 3);
+
   if (category) {
     regularArticles = articles.filter((a) => a.category === category);
     listArticles = regularArticles;
@@ -45,63 +51,128 @@ export default async function Home({ searchParams }) {
     <>
       <Header />
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* 헤드라인 슬라이더 (기사 + 광고) */}
-        {!category && headline && (
-          <section className="mb-8">
-            <HeadlineSlider article={headline} banners={headlineBanners} />
-          </section>
-        )}
-
         {/* 카테고리 타이틀 */}
         {category && (
           <h1 className="text-3xl font-bold text-navy mb-8">{category} 뉴스</h1>
         )}
 
-        {/* 서브 헤드라인 (중형, 가로형 피드 2개) - 카테고리 필터 없을 때만 */}
-        {!category && subHeadlineArticles.length > 0 && (
-          <section className="mb-8">
-            <SubHeadline articles={subHeadlineArticles} />
-          </section>
-        )}
+        {/* PC 레이아웃 */}
+        <div className="hidden lg:block">
+          {!category && (
+            <>
+              {/* 상단 영역: 헤드라인 + 서브헤드 | 많이본뉴스 + 배너 */}
+              <div className="flex gap-6 mb-8">
+                {/* 좌측: 헤드라인 슬라이더 + 서브헤드 */}
+                <div className="flex-1 space-y-6">
+                  {/* 헤드라인 슬라이더 */}
+                  {headline && (
+                    <HeadlineSlider article={headline} banners={headlineBanners} />
+                  )}
 
-        {/* PC 레이아웃: 메인 콘텐츠 + 사이드바 */}
-        <div className="hidden lg:flex gap-8">
-          {/* 좌측: 목록형 뉴스 */}
-          <section className="flex-1">
-            <NewsList
-              articles={listArticles}
-              title={category ? null : "최신 뉴스"}
-            />
-          </section>
+                  {/* 서브 헤드라인 */}
+                  {subHeadlineArticles.length > 0 && (
+                    <SubHeadline articles={subHeadlineArticles} />
+                  )}
+                </div>
 
-          {/* 우측 사이드바: 많이본 뉴스 + 배너 광고 */}
-          <aside className="w-80 flex-shrink-0 space-y-6">
-            {/* 많이 본 뉴스 */}
-            {!category && (
-              <PopularNews articles={popularArticles} />
-            )}
+                {/* 우측 사이드바: 많이본뉴스 + 배너광고 */}
+                <aside className="w-72 flex-shrink-0 space-y-6">
+                  <PopularNews articles={popularArticles} />
+                  {sidebarBanners.length > 0 && (
+                    <SidebarAd banners={sidebarBanners} />
+                  )}
+                </aside>
+              </div>
 
-            {/* 배너 광고 */}
-            {sidebarBanners.length > 0 && (
-              <SidebarAd banners={sidebarBanners} />
-            )}
-          </aside>
+              {/* 하단 영역: 바이오속보 | 최신뉴스 | 배너광고 */}
+              <div className="flex gap-6">
+                {/* 바이오/제약 속보 */}
+                <div className="w-64 flex-shrink-0">
+                  <BioPharmNews articles={bioPharmArticles} />
+                </div>
+
+                {/* 최신 뉴스 목록 */}
+                <div className="flex-1">
+                  <NewsList articles={listArticles} title="최신 뉴스" />
+                </div>
+
+                {/* 배너 광고 */}
+                {sidebarBanners.length > 0 && (
+                  <div className="w-64 flex-shrink-0">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                      <h3 className="text-sm font-bold text-gray-500 mb-3">광고</h3>
+                      <div className="space-y-4">
+                        {sidebarBanners.map((banner) => (
+                          <a
+                            key={banner.id}
+                            href={banner.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block"
+                          >
+                            <img
+                              src={banner.image}
+                              alt={banner.title}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                            <p className="text-xs text-gray-600 mt-2 line-clamp-1">
+                              {banner.title}
+                            </p>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* 카테고리 필터 적용 시 */}
+          {category && (
+            <div className="flex gap-6">
+              <section className="flex-1">
+                <NewsList articles={listArticles} />
+              </section>
+              <aside className="w-72 flex-shrink-0 space-y-6">
+                <PopularNews articles={popularArticles} />
+                {sidebarBanners.length > 0 && (
+                  <SidebarAd banners={sidebarBanners} />
+                )}
+              </aside>
+            </div>
+          )}
         </div>
 
         {/* 모바일/태블릿 레이아웃 */}
         <div className="lg:hidden space-y-6">
-          {/* 많이 본 뉴스 */}
           {!category && (
-            <PopularNews articles={popularArticles} />
+            <>
+              {/* 헤드라인 슬라이더 */}
+              {headline && (
+                <HeadlineSlider article={headline} banners={headlineBanners} />
+              )}
+
+              {/* 서브 헤드라인 */}
+              {subHeadlineArticles.length > 0 && (
+                <SubHeadline articles={subHeadlineArticles} />
+              )}
+
+              {/* 많이 본 뉴스 */}
+              <PopularNews articles={popularArticles} />
+
+              {/* 바이오/제약 속보 */}
+              <BioPharmNews articles={bioPharmArticles} />
+            </>
           )}
 
-          {/* 목록형 뉴스 */}
+          {/* 최신 뉴스 목록 */}
           <NewsList
             articles={listArticles}
             title={category ? null : "최신 뉴스"}
           />
 
-          {/* 사이드바 광고 (모바일) */}
+          {/* 광고 (모바일) */}
           {sidebarBanners.length > 0 && (
             <div className="space-y-4">
               {sidebarBanners.map((banner) => (
