@@ -135,8 +135,94 @@ export const articles = [
   }
 ];
 
+// ===== 바이오·제약 속보 (증권 정보 포함) =====
+export const bioPharmBreakingNews = [
+  {
+    id: 101,
+    title: "한미약품, 당뇨 신약 임상 3상 성공...주가 7.5% 상승",
+    category: "바이오",
+    summary: "한미약품의 당뇨병 신약 'HM9331'이 글로벌 임상 3상 1차 종료점을 달성했다. 장중 52주 최고가를 갱신하며 시장의 주목을 받고 있다.",
+    content: `한미약품은 오늘 당뇨병 치료용 신약 'HM9331'의 글로벌 임상 3상 1차 종료점이 달성되었다고 발표했다.
+
+임상 시험 결과에 따르면 HM9331은 기존 치료제 대비 혈당 조절 효과에서 우월성을 증명했다. 이 결과는 국제학술지에 게재될 예정이며 FDA 신약 승인 신청의 핵심 근거로 활용될 것이다.
+
+한미약품 주가는 이 소식으로 장중 7.5% 상승하며 52주 최고가를 갱신했다. 시가총액은 약 15조원 대를 돌파했다.`,
+    author: "증권부 기자",
+    date: "2026-02-04",
+    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=400&fit=crop",
+    isHeadline: false,
+    stockChange: 7.5
+  },
+  {
+    id: 102,
+    title: "셀트리온, 바이오시밀러 유럽 EMA 최종 승인",
+    category: "제약",
+    summary: "셀트리온의 바이오시밀러 제품이 유럽 약품규제기관(EMA)의 최종 승인을 받았다. 유럽 시장 점유율 확대가 예상된다.",
+    content: `셀트리온은 오늘 바이오시밀러 제품 'CT-P35'가 유럽 약품규제기관(EMA)의 최종 승인을 받았다고 발표했다.
+
+이 제품은 자가면역질환 치료용으로 유럽 주요 국가에서 즉시 판매 가능하며, 연간 약 2억 달러의 추가 매출이 예상된다. 셀트리온의 바이오시밀러 포트폴리오는 현재 유럽 시장에서 강력한 입지를 보유하고 있다.
+
+주가는 장중 4.2% 상승하며 안정적인 우세를 보였다.`,
+    author: "증권부 기자",
+    date: "2026-02-04",
+    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop",
+    isHeadline: false,
+    stockChange: 4.2
+  },
+  {
+    id: 103,
+    title: "삼성바이오로직스, CMO 계약 연장 확정",
+    category: "바이오",
+    summary: "삼성바이오로직스가 글로벌 제약사와의 위수탁생산(CMO) 계약을 2027년까지 연장하여 안정적인 매출 확보가 예상된다.",
+    content: `삼성바이오로직스는 오늘 글로벌 제약사 A사와의 위수탁생산(CMO) 계약이 2027년 하반기까지 연장되었다고 발표했다.
+
+이번 계약 연장은 약 1.2조원 규모로, 기존 계약보다 생산량과 제품 종류가 다양화된다. 삼성바이오로직스의 4공장 가동이 본궤도로 진행되면서 생산 역량도 크게 확대된다.
+
+주가는 장중 2.8% 상승하며 안정적인 상승세를 유지했다.`,
+    author: "증권부 기자",
+    date: "2026-02-03",
+    image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&h=400&fit=crop",
+    isHeadline: false,
+    stockChange: 2.8
+  },
+  {
+    id: 104,
+    title: "유지우바이오, GLP-1 경구제 임상 2상 진입",
+    category: "제약",
+    summary: "유지우바이오는 비만·당뇨 치료용 경구 GLP-1 제제가 임상 2상 시험에 진입했다고 발표했다. 주가는 장중 급등 중인다.",
+    content: `유지우바이오는 오늘 비만 및 당뇨 치료용 경구 GLP-1 수용체 작동제가 임상 2상 시험에 진입했다고 발표했다.
+
+이 제품은 기존 주사제형 대비 복약 편의성을 크게 향상시켰다고 평가받고 있으며, 글로벌 시장에서 비만 치료 경구제 수요가 급증하는 추세와 맞추어 개발된다. 임상 2상 결과는 내년 상반기까지 도출될 것으로 예상된다.
+
+주가는 이 소식으로 장중 12.1% 급등하며 매수세가 집중되었다.`,
+    author: "증권부 기자",
+    date: "2026-02-03",
+    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=400&fit=crop",
+    isHeadline: false,
+    stockChange: 12.1
+  },
+  {
+    id: 105,
+    title: "SK바이오팜, 간질환 신약 FDA 신속심사 지정",
+    category: "바이오",
+    summary: "SK바이오팜의 간질환 치료 신약이 미국 FDA의 신속심사(Fast Track) 지정을 받아 승인 일정이 단축될 것으로 기대된다.",
+    content: `SK바이오팜은 오늘 간질환 치료용 신약 'SKB-101'이 미국 FDA로부터 신속심사(Fast Track) 지정을 받았다고 발표했다.
+
+신속심사 지정은 심사 기간을 기존 대비 약 6월 단축시키는 효과가 있으며, 이는 해당 신약의 상용화 시점을 앞당길 것으로 기대된다. 현재 임상 3상이 진행 중이며 결과는 하반기 발표 예정이다.
+
+다만 주가는 장중 1.5% 소폭 하락하며 차익 매도 압박이 있었다.`,
+    author: "증권부 기자",
+    date: "2026-02-03",
+    image: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&h=400&fit=crop",
+    isHeadline: false,
+    stockChange: -1.5
+  }
+];
+
 export const getArticleById = (id) => {
-  return articles.find(article => article.id === parseInt(id));
+  const parsed = parseInt(id);
+  return articles.find(article => article.id === parsed)
+    || bioPharmBreakingNews.find(article => article.id === parsed);
 };
 
 export const getHeadlineArticle = () => {

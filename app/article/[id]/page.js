@@ -3,16 +3,18 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsCard from '@/components/NewsCard';
-import { articles } from '@/data/articles';
+import { articles, bioPharmBreakingNews } from '@/data/articles';
+
+const allArticles = [...articles, ...bioPharmBreakingNews];
 
 export async function generateStaticParams() {
-  return articles.map((article) => ({
+  return allArticles.map((article) => ({
     id: article.id.toString(),
   }));
 }
 
 export async function generateMetadata({ params }) {
-  const article = articles.find((a) => a.id === parseInt(params.id));
+  const article = allArticles.find((a) => a.id === parseInt(params.id));
 
   if (!article) {
     return {
@@ -35,7 +37,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default function ArticlePage({ params }) {
-  const article = articles.find((a) => a.id === parseInt(params.id));
+  const article = allArticles.find((a) => a.id === parseInt(params.id));
 
   if (!article) {
     return (
@@ -52,7 +54,7 @@ export default function ArticlePage({ params }) {
     );
   }
 
-  const relatedArticles = articles
+  const relatedArticles = allArticles
     .filter((a) => a.id !== article.id && a.category === article.category)
     .slice(0, 3);
 
