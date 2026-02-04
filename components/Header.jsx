@@ -6,6 +6,9 @@ import { useState } from 'react';
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // CMS URL - 환경변수로 설정 가능
+  const cmsUrl = process.env.NEXT_PUBLIC_CMS_URL || 'https://cms.drnews.kr';
+
   const categories = [
     { name: '정책', href: '/category/정책' },
     { name: '학술', href: '/category/학술' },
@@ -37,14 +40,16 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* 관리자 버튼 */}
+          {/* 관리자 버튼 - 외부 CMS 링크 */}
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              href="/admin"
+            <a
+              href={cmsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-4 py-2 bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors font-medium"
             >
               관리자
-            </Link>
+            </a>
           </div>
 
           {/* 모바일 메뉴 버튼 */}
