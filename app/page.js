@@ -5,11 +5,13 @@ import SubHeadline from '@/components/SubHeadline';
 import CeoReport from '@/components/CeoReport';
 import NewsList from '@/components/NewsListItem';
 import PopularNews from '@/components/PopularNews';
+import Opinion from '@/components/Opinion';
 import BioPharmNews from '@/components/BioPharmNews';
 import SidebarAd from '@/components/SidebarAd';
 import NativeAd from '@/components/NativeAd';
 import { articles, getPopularArticles, getSubHeadlineArticles } from '@/data/articles';
 import { getLatestCeoReport } from '@/data/ceoReports';
+import { getLatestOpinions } from '@/data/opinions';
 import { initialBanners } from '@/data/banners';
 
 export const runtime = 'edge';
@@ -37,6 +39,9 @@ export default async function Home({ searchParams }) {
 
   // CEO 리포트
   const latestCeoReport = getLatestCeoReport();
+
+  // 오피니언
+  const latestOpinions = getLatestOpinions(2);
 
   if (category) {
     regularArticles = articles.filter((a) => a.category === category);
@@ -93,10 +98,11 @@ export default async function Home({ searchParams }) {
                 </aside>
               </div>
 
-              {/* 하단 영역: 바이오속보 | 최신뉴스 | 배너광고 */}
+              {/* 하단 영역: 오피니언 + 바이오속보 | 최신뉴스 | 배너광고 */}
               <div className="flex gap-6">
-                {/* 바이오/제약 속보 */}
-                <div className="w-64 flex-shrink-0">
+                {/* 오피니언 + 바이오/제약 속보 */}
+                <div className="w-64 flex-shrink-0 space-y-6">
+                  <Opinion opinions={latestOpinions} />
                   <BioPharmNews articles={bioPharmArticles} />
                 </div>
 
@@ -174,6 +180,9 @@ export default async function Home({ searchParams }) {
 
               {/* 많이 본 뉴스 */}
               <PopularNews articles={popularArticles} />
+
+              {/* 오피니언 */}
+              <Opinion opinions={latestOpinions} />
 
               {/* 바이오/제약 속보 */}
               <BioPharmNews articles={bioPharmArticles} />

@@ -16,7 +16,7 @@ export const initialBanners = [
     image: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&h=400&fit=crop',
     link: '#',
     type: 'headline',
-    isActive: true,
+    isActive: false,
     order: 2,
   },
   {
