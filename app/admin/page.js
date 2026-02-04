@@ -1,16 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { articles as initialArticles } from '@/data/articles';
+import { ceoReports as initialCeoReports } from '@/data/ceoReports';
+import { opinions as initialOpinions } from '@/data/opinions';
 import { initialBanners } from '@/data/banners';
+
+// 게재영역 정의
+const PLACEMENT_OPTIONS = [
+  { id: 'headline', label: '헤드라인 슬라이더', color: 'red', max: 1 },
+  { id: 'subheadline', label: '서브헤드라인', color: 'blue', max: 1 },
+  { id: 'news', label: '최신뉴스 목록', color: 'gray', max: null },
+  { id: 'opinion', label: '오피니언 기고란', color: 'violet', max: 2 },
+];
+
+// 이미지 사이즈 가이드
+const IMAGE_GUIDES = {
+  headline: { width: 800, height: 400, label: '헤드라인 (800x400)' },
+  subheadline: { width: 640, height: 360, label: '서브헤드라인 (640x360)' },
+  news: { width: 320, height: 200, label: '뉴스목록 (320x200)' },
+  opinion: { width: 100, height: 100, label: '프로필 (100x100)' },
+  ceo: { width: 100, height: 100, label: '프로필 (100x100)' },
+};
 
 // 사이드바 컴포넌트
 function AdminSidebar({ currentMenu, setCurrentMenu }) {
   const menuItems = [
-    { id: 'newsdesk', label: '뉴스 데스크', icon: '📰' },
-    { id: 'ads', label: '광고 관리자', icon: '📊' },
+    { id: 'articles', label: '기사 관리', icon: '📰' },
+    { id: 'ceo', label: 'CEO 리포트', icon: '✍️' },
+    { id: 'slots', label: '슬롯 관리', icon: '📋' },
+    { id: 'ads', label: '광고 관리', icon: '📊' },
   ];
 
   return (
@@ -54,41 +75,101 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
   );
 }
 
-// 기사 작성/수정 에디터
-function ArticleEditor({ onPublish, onUpdate, editingArticle, onCancelEdit }) {
+// 이미지 업로더 컴포넌트
+function ImageUploader({ currentImage, onImageChange, guide }) {
+  const fileInputRef = useRef(null);
+  const [preview, setPreview] = useState(currentImage || '');
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // 실제로는 서버에 업로드하고 URL을 받아야 함
+      // 여기서는 미리보기용 Data URL 생성
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+        onImageChange(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUrlInput = (url) => {
+    setPreview(url);
+    onImageChange(url);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <label className="block text-sm font-medium text-gray-700">대표 이미지</label>
+        {guide && (
+          <span className="text-xs text-gray-400">권장: {guide.label}</span>
+        )}
+      </div>
+
+      {/* 미리보기 */}
+      {preview && (
+        <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
+          <Image src={preview} alt="미리보기" fill className="object-cover" />
+          <button
+            type="button"
+            onClick={() => { setPreview(''); onImageChange(''); }}
+            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* 업로드 옵션 */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          파일 업로드
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
+
+      {/* URL 입력 */}
+      <input
+        type="text"
+        placeholder="또는 이미지 URL 입력"
+        value={preview}
+        onChange={(e) => handleUrlInput(e.target.value)}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+      />
+    </div>
+  );
+}
+
+// 기사 에디터 컴포넌트
+function ArticleEditor({ article, onSave, onCancel, placement }) {
   const [form, setForm] = useState({
-    title: '',
-    category: '정책',
-    author: '',
-    summary: '',
-    content: '',
+    title: article?.title || '',
+    category: article?.category || '정책',
+    author: article?.author || '',
+    summary: article?.summary || '',
+    content: article?.content || '',
+    image: article?.image || '',
+    placement: article?.placement || placement || 'news',
   });
 
-  const categories = ['정책', '학술', '병원', '산업'];
-
-  // 수정 모드일 때 폼에 기사 내용 로드
-  useState(() => {
-    if (editingArticle) {
-      setForm({
-        title: editingArticle.title || '',
-        category: editingArticle.category || '정책',
-        author: editingArticle.author || '',
-        summary: editingArticle.summary || '',
-        content: editingArticle.content || '',
-      });
-    }
-  }, [editingArticle]);
-
-  // editingArticle이 변경될 때 폼 업데이트
-  if (editingArticle && form.title !== editingArticle.title && form.title === '') {
-    setForm({
-      title: editingArticle.title || '',
-      category: editingArticle.category || '정책',
-      author: editingArticle.author || '',
-      summary: editingArticle.summary || '',
-      content: editingArticle.content || '',
-    });
-  }
+  const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -96,36 +177,53 @@ function ArticleEditor({ onPublish, onUpdate, editingArticle, onCancelEdit }) {
       alert('제목과 본문을 입력해주세요.');
       return;
     }
-
-    if (editingArticle) {
-      onUpdate({ ...editingArticle, ...form });
-    } else {
-      onPublish(form);
-    }
-    setForm({ title: '', category: '정책', author: '', summary: '', content: '' });
+    onSave(form);
   };
 
-  const handleCancel = () => {
-    setForm({ title: '', category: '정책', author: '', summary: '', content: '' });
-    onCancelEdit();
-  };
+  const currentGuide = IMAGE_GUIDES[form.placement] || IMAGE_GUIDES.news;
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">
-          {editingArticle ? '기사 수정' : '기사 작성'}
+          {article ? '기사 수정' : '기사 작성'}
         </h2>
-        {editingArticle && (
-          <button
-            onClick={handleCancel}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            취소하고 새 기사 작성
+        {onCancel && (
+          <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+            취소
           </button>
         )}
       </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 게재영역 선택 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">게재영역</label>
+          <div className="flex flex-wrap gap-2">
+            {PLACEMENT_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setForm({ ...form, placement: opt.id })}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  form.placement === opt.id
+                    ? `bg-${opt.color}-500 text-white`
+                    : `bg-${opt.color}-50 text-${opt.color}-600 hover:bg-${opt.color}-100`
+                }`}
+                style={{
+                  backgroundColor: form.placement === opt.id
+                    ? (opt.color === 'red' ? '#ef4444' : opt.color === 'blue' ? '#3b82f6' : opt.color === 'violet' ? '#8b5cf6' : '#6b7280')
+                    : undefined,
+                  color: form.placement === opt.id ? 'white' : undefined
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 제목 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
           <input
@@ -137,6 +235,7 @@ function ArticleEditor({ onPublish, onUpdate, editingArticle, onCancelEdit }) {
           />
         </div>
 
+        {/* 카테고리 & 기자명 */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
@@ -151,17 +250,27 @@ function ArticleEditor({ onPublish, onUpdate, editingArticle, onCancelEdit }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">기자명</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {form.placement === 'opinion' ? '기고자명 / 직함' : '기자명'}
+            </label>
             <input
               type="text"
               value={form.author}
               onChange={(e) => setForm({ ...form, author: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-              placeholder="기자명"
+              placeholder={form.placement === 'opinion' ? '홍길동 / 의료경영학 박사' : '김기자'}
             />
           </div>
         </div>
 
+        {/* 이미지 업로드 */}
+        <ImageUploader
+          currentImage={form.image}
+          onImageChange={(url) => setForm({ ...form, image: url })}
+          guide={currentGuide}
+        />
+
+        {/* 요약 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">요약</label>
           <input
@@ -173,6 +282,7 @@ function ArticleEditor({ onPublish, onUpdate, editingArticle, onCancelEdit }) {
           />
         </div>
 
+        {/* 본문 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">본문</label>
           <textarea
@@ -187,235 +297,564 @@ function ArticleEditor({ onPublish, onUpdate, editingArticle, onCancelEdit }) {
         <button
           type="submit"
           className={`w-full py-3 text-white font-medium rounded-lg transition-colors ${
-            editingArticle
-              ? 'bg-green-600 hover:bg-green-700'
-              : 'bg-sky-600 hover:bg-sky-700'
+            article ? 'bg-green-600 hover:bg-green-700' : 'bg-sky-600 hover:bg-sky-700'
           }`}
         >
-          {editingArticle ? '수정 완료' : '발행하기'}
+          {article ? '수정 완료' : '발행하기'}
         </button>
       </form>
     </div>
   );
 }
 
-// 기사 관리 (리스트 + 수정/삭제)
-function ArticleManager({ articles, onEdit, onDelete }) {
+// 기사 관리 탭
+function ArticleManager({ articles, setArticles, opinions, setOpinions }) {
+  const [activeTab, setActiveTab] = useState('list');
+  const [editingItem, setEditingItem] = useState(null);
+  const [filterPlacement, setFilterPlacement] = useState('all');
+
+  // 기사와 오피니언 합쳐서 표시
+  const allItems = [
+    ...articles.map(a => ({ ...a, type: 'article', placement: a.placement || 'news' })),
+    ...opinions.map(o => ({ ...o, type: 'opinion', placement: 'opinion' })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const filteredItems = filterPlacement === 'all'
+    ? allItems
+    : allItems.filter(item => item.placement === filterPlacement);
+
+  const handleSave = (form) => {
+    if (form.placement === 'opinion') {
+      // 오피니언으로 저장
+      const newOpinion = {
+        id: editingItem?.id || Date.now(),
+        title: form.title,
+        summary: form.summary,
+        content: form.content,
+        author: form.author.split('/')[0]?.trim() || form.author,
+        authorTitle: form.author.split('/')[1]?.trim() || '',
+        authorImage: form.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+        date: editingItem?.date || new Date().toISOString().split('T')[0],
+        category: form.category === '정책' ? '칼럼' : '기고',
+      };
+      if (editingItem?.type === 'opinion') {
+        setOpinions(opinions.map(o => o.id === editingItem.id ? newOpinion : o));
+      } else {
+        setOpinions([newOpinion, ...opinions]);
+      }
+    } else {
+      // 일반 기사로 저장
+      const newArticle = {
+        id: editingItem?.id || Date.now(),
+        ...form,
+        date: editingItem?.date || new Date().toISOString().split('T')[0],
+        image: form.image || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop',
+        isHeadline: form.placement === 'headline',
+        views: editingItem?.views || 0,
+      };
+      if (editingItem?.type === 'article') {
+        setArticles(articles.map(a => a.id === editingItem.id ? newArticle : a));
+      } else {
+        setArticles([newArticle, ...articles]);
+      }
+    }
+    setEditingItem(null);
+    setActiveTab('list');
+    alert(editingItem ? '수정되었습니다.' : '발행되었습니다.');
+  };
+
+  const handleDelete = (item) => {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (item.type === 'opinion') {
+      setOpinions(opinions.filter(o => o.id !== item.id));
+    } else {
+      setArticles(articles.filter(a => a.id !== item.id));
+    }
+  };
+
+  const getPlacementBadge = (placement) => {
+    const opt = PLACEMENT_OPTIONS.find(o => o.id === placement);
+    if (!opt) return null;
+    const colors = {
+      red: 'bg-red-100 text-red-600',
+      blue: 'bg-blue-100 text-blue-600',
+      violet: 'bg-violet-100 text-violet-600',
+      gray: 'bg-gray-100 text-gray-600',
+    };
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded ${colors[opt.color]}`}>
+        {opt.label}
+      </span>
+    );
+  };
+
+  return (
+    <div>
+      {/* 탭 */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => { setActiveTab('list'); setEditingItem(null); }}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'list' ? 'bg-navy text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          기사 목록
+        </button>
+        <button
+          onClick={() => { setActiveTab('write'); setEditingItem(null); }}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'write' ? 'bg-navy text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          새 기사 작성
+        </button>
+      </div>
+
+      {activeTab === 'list' && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          {/* 필터 */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm text-gray-500">게재영역:</span>
+            <button
+              onClick={() => setFilterPlacement('all')}
+              className={`px-3 py-1 text-sm rounded-lg ${filterPlacement === 'all' ? 'bg-navy text-white' : 'bg-gray-100'}`}
+            >
+              전체
+            </button>
+            {PLACEMENT_OPTIONS.map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => setFilterPlacement(opt.id)}
+                className={`px-3 py-1 text-sm rounded-lg ${filterPlacement === opt.id ? 'bg-navy text-white' : 'bg-gray-100'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 목록 */}
+          <div className="space-y-3 max-h-[600px] overflow-y-auto">
+            {filteredItems.map((item) => (
+              <div key={`${item.type}-${item.id}`} className="p-4 border border-gray-200 rounded-lg hover:border-gray-300">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      {getPlacementBadge(item.placement)}
+                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                        {item.category}
+                      </span>
+                      <span className="text-xs text-gray-400">{item.date}</span>
+                    </div>
+                    <p className="font-medium text-gray-900 mb-1">{item.title}</p>
+                    <p className="text-sm text-gray-500 line-clamp-1">{item.summary}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setEditingItem(item); setActiveTab('write'); }}
+                      className="px-3 py-1.5 text-sm bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item)}
+                      className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'write' && (
+        <ArticleEditor
+          article={editingItem}
+          onSave={handleSave}
+          onCancel={() => { setEditingItem(null); setActiveTab('list'); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// CEO 리포트 에디터
+function CeoReportEditor({ report, onSave, onCancel }) {
+  const [form, setForm] = useState({
+    title: report?.title || '',
+    subtitle: report?.subtitle || '',
+    content: report?.content || '',
+    author: report?.author || '김의료',
+    authorTitle: report?.authorTitle || 'Dr.News 대표',
+    authorImage: report?.authorImage || '',
+    category: report?.category || '경영철학',
+    weekNumber: report?.weekNumber || Math.ceil((new Date().getDate()) / 7),
+  });
+
+  const categories = ['경영철학', '리더십', '의료혁신', '미래전망'];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.title || !form.content) {
+      alert('제목과 본문을 입력해주세요.');
+      return;
+    }
+    onSave(form);
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">기사 관리</h2>
-      <div className="space-y-3 max-h-[600px] overflow-y-auto">
-        {articles.map((article) => (
-          <div
-            key={article.id}
-            className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                    {article.category}
-                  </span>
-                  <span className="text-xs text-gray-400">{article.date}</span>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900">
+          {report ? 'CEO 리포트 수정' : 'CEO 리포트 작성'}
+        </h2>
+        {onCancel && (
+          <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+            취소
+          </button>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 제목 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+            placeholder="의료의 본질, 다시 환자 중심으로"
+          />
+        </div>
+
+        {/* 부제목 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">부제목</label>
+          <input
+            type="text"
+            value={form.subtitle}
+            onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+            placeholder="디지털 전환 시대, 우리가 놓치지 말아야 할 것"
+          />
+        </div>
+
+        {/* 카테고리 & 주차 */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+            <select
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">주차</label>
+            <input
+              type="number"
+              value={form.weekNumber}
+              onChange={(e) => setForm({ ...form, weekNumber: parseInt(e.target.value) })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+              min="1"
+              max="52"
+            />
+          </div>
+        </div>
+
+        {/* 저자 정보 */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">저자명</label>
+            <input
+              type="text"
+              value={form.author}
+              onChange={(e) => setForm({ ...form, author: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">직함</label>
+            <input
+              type="text"
+              value={form.authorTitle}
+              onChange={(e) => setForm({ ...form, authorTitle: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+        </div>
+
+        {/* 프로필 이미지 */}
+        <ImageUploader
+          currentImage={form.authorImage}
+          onImageChange={(url) => setForm({ ...form, authorImage: url })}
+          guide={IMAGE_GUIDES.ceo}
+        />
+
+        {/* 본문 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">본문</label>
+          <textarea
+            value={form.content}
+            onChange={(e) => setForm({ ...form, content: e.target.value })}
+            rows={12}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 resize-none"
+            placeholder="철학적인 에세이 내용을 작성하세요..."
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full py-3 bg-slate-700 hover:bg-slate-800 text-white font-medium rounded-lg"
+        >
+          {report ? '수정 완료' : '발행하기'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// CEO 리포트 관리 탭
+function CeoReportManager({ reports, setReports }) {
+  const [activeTab, setActiveTab] = useState('list');
+  const [editingReport, setEditingReport] = useState(null);
+
+  const handleSave = (form) => {
+    const newReport = {
+      id: editingReport?.id || Date.now(),
+      ...form,
+      date: editingReport?.date || new Date().toISOString().split('T')[0],
+      authorImage: form.authorImage || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop',
+    };
+
+    if (editingReport) {
+      setReports(reports.map(r => r.id === editingReport.id ? newReport : r));
+    } else {
+      setReports([newReport, ...reports]);
+    }
+    setEditingReport(null);
+    setActiveTab('list');
+    alert(editingReport ? '수정되었습니다.' : '발행되었습니다.');
+  };
+
+  const handleDelete = (id) => {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+    setReports(reports.filter(r => r.id !== id));
+  };
+
+  return (
+    <div>
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => { setActiveTab('list'); setEditingReport(null); }}
+          className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'list' ? 'bg-navy text-white' : 'bg-gray-100'}`}
+        >
+          리포트 목록
+        </button>
+        <button
+          onClick={() => { setActiveTab('write'); setEditingReport(null); }}
+          className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'write' ? 'bg-navy text-white' : 'bg-gray-100'}`}
+        >
+          새 리포트 작성
+        </button>
+      </div>
+
+      {activeTab === 'list' && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="space-y-3 max-h-[600px] overflow-y-auto">
+            {reports.map((report) => (
+              <div key={report.id} className="p-4 border border-gray-200 rounded-lg hover:border-gray-300">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-600 rounded">
+                        {report.category}
+                      </span>
+                      <span className="text-xs text-gray-400">{report.date} · 제{report.weekNumber}주차</span>
+                    </div>
+                    <p className="font-medium text-gray-900">{report.title}</p>
+                    <p className="text-sm text-gray-500 italic">"{report.subtitle}"</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setEditingReport(report); setActiveTab('write'); }}
+                      className="px-3 py-1.5 text-sm bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={() => handleDelete(report.id)}
+                      className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg"
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </div>
-                <p className="font-medium text-gray-900 mb-1">{article.title}</p>
-                <p className="text-sm text-gray-500 line-clamp-1">{article.summary}</p>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onEdit(article)}
-                  className="px-3 py-1.5 text-sm bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg transition-colors"
-                >
-                  수정
-                </button>
-                <button
-                  onClick={() => onDelete(article.id)}
-                  className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors"
-                >
-                  삭제
-                </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'write' && (
+        <CeoReportEditor
+          report={editingReport}
+          onSave={handleSave}
+          onCancel={() => { setEditingReport(null); setActiveTab('list'); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// 슬롯 관리 탭
+function SlotManager({ articles, slots, setSlots }) {
+  const getSlotArticles = (placement) => {
+    return slots[placement] || [];
+  };
+
+  const availableArticles = articles.filter(a => {
+    // 이미 슬롯에 배치된 기사 제외
+    const allSlotIds = Object.values(slots).flat().map(a => a.id);
+    return !allSlotIds.includes(a.id);
+  });
+
+  const addToSlot = (placement, article) => {
+    const opt = PLACEMENT_OPTIONS.find(o => o.id === placement);
+    const currentSlot = slots[placement] || [];
+
+    if (opt.max && currentSlot.length >= opt.max) {
+      alert(`${opt.label}은 최대 ${opt.max}개까지 가능합니다.`);
+      return;
+    }
+
+    setSlots({
+      ...slots,
+      [placement]: [...currentSlot, article],
+    });
+  };
+
+  const removeFromSlot = (placement, articleId) => {
+    setSlots({
+      ...slots,
+      [placement]: (slots[placement] || []).filter(a => a.id !== articleId),
+    });
+  };
+
+  const SlotSection = ({ placement, label, color, max }) => {
+    const slotArticles = getSlotArticles(placement);
+    const borderColors = {
+      red: 'border-red-300 bg-red-50',
+      blue: 'border-blue-300 bg-blue-50',
+      violet: 'border-violet-300 bg-violet-50',
+      gray: 'border-gray-300 bg-gray-50',
+    };
+
+    return (
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold text-gray-700">{label}</h3>
+          <span className="text-sm text-gray-400">
+            {slotArticles.length}{max ? ` / ${max}` : ''}개
+          </span>
+        </div>
+        <div className={`p-4 border-2 border-dashed rounded-lg min-h-[80px] ${borderColors[color]}`}>
+          {slotArticles.length > 0 ? (
+            <div className="space-y-2">
+              {slotArticles.map((article, idx) => (
+                <div key={article.id} className="flex items-center justify-between bg-white p-2 rounded">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-400">{idx + 1}</span>
+                    <span className="text-sm font-medium truncate">{article.title}</span>
+                  </div>
+                  <button
+                    onClick={() => removeFromSlot(placement, article.id)}
+                    className="p-1 hover:bg-gray-100 rounded"
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-center text-sm py-4">기사를 배치하세요</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 좌측: 기사 선택 */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">기사 선택</h2>
+        <div className="space-y-3 max-h-[600px] overflow-y-auto">
+          {availableArticles.map((article) => (
+            <div key={article.id} className="p-3 border border-gray-200 rounded-lg">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                      {article.category}
+                    </span>
+                    <span className="text-xs text-gray-400">{article.date}</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 truncate">{article.title}</p>
+                </div>
+                <div className="flex flex-col gap-1">
+                  {PLACEMENT_OPTIONS.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => addToSlot(opt.id, article)}
+                      className="text-[10px] px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded whitespace-nowrap"
+                    >
+                      {opt.label.replace(' 슬라이더', '').replace(' 목록', '').replace(' 기고란', '')}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          ))}
+          {availableArticles.length === 0 && (
+            <p className="text-center text-gray-400 py-8">모든 기사가 배치되었습니다</p>
+          )}
+        </div>
+      </div>
+
+      {/* 우측: 슬롯 배치 */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">슬롯 배치</h2>
+        {PLACEMENT_OPTIONS.map(opt => (
+          <SlotSection
+            key={opt.id}
+            placement={opt.id}
+            label={opt.label}
+            color={opt.color}
+            max={opt.max}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-// 메인 큐레이션
-function MainCuration({ articles, mainSlots, setMainSlots }) {
-  const setHeadline = (article) => {
-    setMainSlots({ ...mainSlots, headline: article });
-  };
-
-  const addToSub = (article) => {
-    if (mainSlots.sub.length >= 3) {
-      alert('서브 슬롯은 최대 3개까지 가능합니다.');
-      return;
-    }
-    if (mainSlots.sub.find((a) => a.id === article.id)) {
-      alert('이미 서브에 추가된 기사입니다.');
-      return;
-    }
-    setMainSlots({ ...mainSlots, sub: [...mainSlots.sub, article] });
-  };
-
-  const removeFromHeadline = () => {
-    setMainSlots({ ...mainSlots, headline: null });
-  };
-
-  const removeFromSub = (articleId) => {
-    setMainSlots({
-      ...mainSlots,
-      sub: mainSlots.sub.filter((a) => a.id !== articleId),
-    });
-  };
-
-  const isInSlot = (articleId) => {
-    if (mainSlots.headline?.id === articleId) return 'headline';
-    if (mainSlots.sub.find((a) => a.id === articleId)) return 'sub';
-    return null;
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">메인 큐레이션</h2>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 전체 기사 리스트 */}
-        <div>
-          <h3 className="font-semibold text-gray-700 mb-4">전체 기사 리스트</h3>
-          <div className="space-y-3 max-h-[600px] overflow-y-auto">
-            {articles.map((article) => {
-              const slot = isInSlot(article.id);
-              return (
-                <div
-                  key={article.id}
-                  className="p-4 border border-gray-200 rounded-lg"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                          {article.category}
-                        </span>
-                        {slot === 'headline' && (
-                          <span className="text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded">
-                            헤드라인
-                          </span>
-                        )}
-                        {slot === 'sub' && (
-                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
-                            서브
-                          </span>
-                        )}
-                      </div>
-                      <p className="font-medium text-gray-900 truncate">{article.title}</p>
-                      <p className="text-sm text-gray-500">{article.date}</p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <button
-                        onClick={() => setHeadline(article)}
-                        className="text-xs px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
-                      >
-                        헤드라인
-                      </button>
-                      <button
-                        onClick={() => addToSub(article)}
-                        className="text-xs px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
-                      >
-                        서브 추가
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 메인 페이지 슬롯 */}
-        <div>
-          <h3 className="font-semibold text-gray-700 mb-4">메인 페이지 슬롯</h3>
-
-          {/* 헤드라인 슬롯 */}
-          <div className="mb-6">
-            <p className="text-sm text-gray-500 mb-2">헤드라인 (1개)</p>
-            <div className="p-4 border-2 border-dashed border-red-300 rounded-lg min-h-[100px] bg-red-50">
-              {mainSlots.headline ? (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded">
-                      {mainSlots.headline.category}
-                    </span>
-                    <p className="font-medium text-gray-900 mt-1">{mainSlots.headline.title}</p>
-                  </div>
-                  <button
-                    onClick={removeFromHeadline}
-                    className="p-1 hover:bg-red-100 rounded transition-colors"
-                  >
-                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <p className="text-gray-400 text-center py-6">헤드라인을 선택하세요</p>
-              )}
-            </div>
-          </div>
-
-          {/* 서브 슬롯 */}
-          <div>
-            <p className="text-sm text-gray-500 mb-2">서브 (최대 3개)</p>
-            <div className="space-y-2">
-              {[0, 1, 2].map((index) => {
-                const article = mainSlots.sub[index];
-                return (
-                  <div
-                    key={index}
-                    className="p-3 border-2 border-dashed border-blue-300 rounded-lg min-h-[60px] bg-blue-50"
-                  >
-                    {article ? (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
-                            {article.category}
-                          </span>
-                          <p className="font-medium text-gray-900 mt-1 text-sm">{article.title}</p>
-                        </div>
-                        <button
-                          onClick={() => removeFromSub(article.id)}
-                          className="p-1 hover:bg-blue-100 rounded transition-colors"
-                        >
-                          <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 text-center text-sm py-2">슬롯 {index + 1}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// 광고 관리자
+// 광고 관리 (기존 AdManager 간소화)
 function AdManager({ banners, setBanners }) {
   const [selectedType, setSelectedType] = useState('headline');
-  const [previewMode, setPreviewMode] = useState('mobile'); // 'pc' or 'mobile'
 
   const typeLabels = {
-    headline: '헤드라인 슬라이드 광고',
-    bottom: '하단 롤링 배너',
+    headline: '헤드라인 광고',
+    bottom: '하단 배너',
     sidebar: '사이드 배너',
   };
 
@@ -427,504 +866,78 @@ function AdManager({ banners, setBanners }) {
     setBanners(banners.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b)));
   };
 
-  const moveUp = (id) => {
-    const banner = banners.find((b) => b.id === id);
-    const sametype = banners.filter((b) => b.type === banner.type).sort((a, b) => a.order - b.order);
-    const idx = sametype.findIndex((b) => b.id === id);
-    if (idx <= 0) return;
-    const prev = sametype[idx - 1];
-    setBanners(
-      banners.map((b) => {
-        if (b.id === id) return { ...b, order: prev.order };
-        if (b.id === prev.id) return { ...b, order: banner.order };
-        return b;
-      })
-    );
-  };
-
-  const moveDown = (id) => {
-    const banner = banners.find((b) => b.id === id);
-    const sametype = banners.filter((b) => b.type === banner.type).sort((a, b) => a.order - b.order);
-    const idx = sametype.findIndex((b) => b.id === id);
-    if (idx >= sametype.length - 1) return;
-    const next = sametype[idx + 1];
-    setBanners(
-      banners.map((b) => {
-        if (b.id === id) return { ...b, order: next.order };
-        if (b.id === next.id) return { ...b, order: banner.order };
-        return b;
-      })
-    );
-  };
-
-  const activeBanners = banners.filter((b) => b.isActive);
-  const sidebarBanners = activeBanners.filter((b) => b.type === 'sidebar');
-  const bottomBanners = activeBanners.filter((b) => b.type === 'bottom');
-  const headlineBanners = activeBanners.filter((b) => b.type === 'headline');
-
-  // PC 미리보기
-  const PCPreview = () => (
-    <div className="bg-gray-100 p-4 rounded-lg">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-full mx-auto">
-        {/* 헤더 */}
-        <div className="bg-navy text-white px-4 py-3">
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-bold">Dr.News</span>
-            <div className="flex gap-3 text-xs text-gray-300">
-              <span>정책</span>
-              <span>학술</span>
-              <span>병원</span>
-              <span>산업</span>
-              <span>AI</span>
-              <span>제약·바이오</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 콘텐츠 영역 */}
-        <div className="flex p-4 gap-4">
-          {/* 메인 콘텐츠 */}
-          <div className="flex-1">
-            {/* 헤드라인 */}
-            <div className="relative h-32 bg-gray-200 rounded-lg overflow-hidden mb-4">
-              {headlineBanners.length > 0 ? (
-                <div className="relative w-full h-full">
-                  <Image src={headlineBanners[0]?.image} alt="headline" fill className="object-cover" />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-2">
-                    <p className="text-white text-xs font-medium truncate">{headlineBanners[0]?.title}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-400 text-xs">헤드라인 광고</div>
-              )}
-            </div>
-
-            <h3 className="text-sm font-bold text-gray-800 mb-3">최신 뉴스</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-gray-50 rounded-lg p-2">
-                  <div className="bg-gray-200 h-12 rounded mb-2"></div>
-                  <div className="h-2 bg-gray-200 rounded w-3/4 mb-1"></div>
-                  <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 사이드바 광고 영역 (가로형) */}
-          <div className="w-36 flex-shrink-0">
-            <h4 className="text-[10px] font-semibold text-gray-500 mb-2">광고</h4>
-            {sidebarBanners.length > 0 ? (
-              sidebarBanners.map((banner) => (
-                <div key={banner.id} className="mb-3 rounded-lg overflow-hidden shadow-md bg-white">
-                  <div className="relative h-12">
-                    <Image src={banner.image} alt={banner.title} fill className="object-cover" />
-                    <span className="absolute top-1 left-1 bg-black/60 text-white text-[6px] px-1 rounded">AD</span>
-                  </div>
-                  <div className="p-1.5">
-                    <p className="text-[8px] font-medium text-gray-800 line-clamp-1">{banner.title}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-4 text-gray-400 text-[10px]">사이드 광고 없음</div>
-            )}
-          </div>
-        </div>
-      </div>
-      <p className="text-center text-xs text-gray-500 mt-3">PC 버전 - 사이드바에 가로형 배너 표시</p>
-    </div>
-  );
-
-  // 모바일 미리보기
-  const MobilePreview = () => {
-    const nativeAds = [...bottomBanners, ...sidebarBanners].slice(0, 2);
-
-    return (
-      <div className="flex justify-center">
-        <div className="w-[280px] bg-gray-900 rounded-[36px] p-2.5 shadow-xl">
-          {/* 노치 */}
-          <div className="bg-gray-900 h-5 flex items-center justify-center mb-0.5">
-            <div className="w-14 h-2.5 bg-gray-800 rounded-full"></div>
-          </div>
-
-          <div className="bg-gray-50 rounded-[28px] overflow-hidden h-[480px] overflow-y-auto">
-            {/* 헤더 */}
-            <div className="bg-navy text-white px-3 py-2">
-              <p className="text-sm font-bold">Dr.News</p>
-            </div>
-
-            {/* 카테고리 */}
-            <div className="bg-slate-800 px-2 py-1 flex gap-2 overflow-x-auto">
-              {['정책', '학술', '병원', '산업', 'AI', '제약·바이오'].map((cat) => (
-                <span key={cat} className="text-[7px] text-gray-300 whitespace-nowrap">{cat}</span>
-              ))}
-            </div>
-
-            {/* 헤드라인 */}
-            <div className="p-2">
-              <div className="relative h-24 bg-gray-200 rounded-lg overflow-hidden">
-                {headlineBanners.length > 0 ? (
-                  <div className="relative w-full h-full">
-                    <Image src={headlineBanners[0]?.image} alt="headline" fill className="object-cover" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-1.5">
-                      <p className="text-white text-[9px] font-medium truncate">{headlineBanners[0]?.title}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400 text-[9px]">헤드라인 광고</div>
-                )}
-              </div>
-            </div>
-
-            {/* 콘텐츠 - 기사와 네이티브 광고 */}
-            <div className="px-2 space-y-2">
-              <h3 className="text-[10px] font-bold text-gray-800">최신 뉴스</h3>
-
-              {/* 기사 1 */}
-              <div className="bg-white rounded-lg p-2 shadow-sm">
-                <div className="flex gap-2">
-                  <div className="w-12 h-12 bg-gray-200 rounded flex-shrink-0"></div>
-                  <div className="flex-1">
-                    <div className="h-1.5 bg-gray-200 rounded w-3/4 mb-1"></div>
-                    <div className="h-1.5 bg-gray-100 rounded w-1/2"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 기사 2 */}
-              <div className="bg-white rounded-lg p-2 shadow-sm">
-                <div className="flex gap-2">
-                  <div className="w-12 h-12 bg-gray-200 rounded flex-shrink-0"></div>
-                  <div className="flex-1">
-                    <div className="h-1.5 bg-gray-200 rounded w-3/4 mb-1"></div>
-                    <div className="h-1.5 bg-gray-100 rounded w-1/2"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 네이티브 광고 1 */}
-              {nativeAds[0] && (
-                <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg overflow-hidden shadow-sm border border-sky-100">
-                  <div className="flex gap-2 p-2">
-                    <div className="w-12 h-12 relative rounded overflow-hidden flex-shrink-0">
-                      <Image src={nativeAds[0].image} alt={nativeAds[0].title} fill className="object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[6px] text-sky-600 font-semibold">Sponsored</span>
-                      <p className="text-[8px] font-medium text-gray-800 line-clamp-2">{nativeAds[0].title}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 기사 3 */}
-              <div className="bg-white rounded-lg p-2 shadow-sm">
-                <div className="flex gap-2">
-                  <div className="w-12 h-12 bg-gray-200 rounded flex-shrink-0"></div>
-                  <div className="flex-1">
-                    <div className="h-1.5 bg-gray-200 rounded w-3/4 mb-1"></div>
-                    <div className="h-1.5 bg-gray-100 rounded w-1/2"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 기사 4 */}
-              <div className="bg-white rounded-lg p-2 shadow-sm">
-                <div className="flex gap-2">
-                  <div className="w-12 h-12 bg-gray-200 rounded flex-shrink-0"></div>
-                  <div className="flex-1">
-                    <div className="h-1.5 bg-gray-200 rounded w-3/4 mb-1"></div>
-                    <div className="h-1.5 bg-gray-100 rounded w-1/2"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 네이티브 광고 2 */}
-              {nativeAds[1] && (
-                <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-lg overflow-hidden shadow-sm border border-sky-100">
-                  <div className="flex gap-2 p-2">
-                    <div className="w-12 h-12 relative rounded overflow-hidden flex-shrink-0">
-                      <Image src={nativeAds[1].image} alt={nativeAds[1].title} fill className="object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[6px] text-sky-600 font-semibold">Sponsored</span>
-                      <p className="text-[8px] font-medium text-gray-800 line-clamp-2">{nativeAds[1].title}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 하단 홈 인디케이터 */}
-            <div className="h-3 flex items-center justify-center mt-2">
-              <div className="w-16 h-0.5 bg-gray-300 rounded-full"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* 좌측: 배너 설정 */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">배너 관리</h2>
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4">배너 관리</h2>
 
-        {/* 타입 선택 탭 */}
-        <div className="flex gap-2 mb-6">
-          {Object.entries(typeLabels).map(([type, label]) => (
-            <button
-              key={type}
-              onClick={() => setSelectedType(type)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                selectedType === type
-                  ? 'bg-navy text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+      {/* 타입 선택 */}
+      <div className="flex gap-2 mb-6">
+        {Object.entries(typeLabels).map(([type, label]) => (
+          <button
+            key={type}
+            onClick={() => setSelectedType(type)}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              selectedType === type ? 'bg-navy text-white' : 'bg-gray-100'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {/* 배너 리스트 */}
-        <div className="space-y-3 max-h-[500px] overflow-y-auto">
-          {filteredBanners.map((banner, idx) => (
-            <div
-              key={banner.id}
-              className={`p-4 border rounded-lg transition-colors ${
-                banner.isActive ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                {/* 순서 이동 버튼 */}
-                <div className="flex flex-col gap-1">
-                  <button
-                    onClick={() => moveUp(banner.id)}
-                    disabled={idx === 0}
-                    className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => moveDown(banner.id)}
-                    disabled={idx === filteredBanners.length - 1}
-                    className="p-1 hover:bg-gray-200 rounded disabled:opacity-30"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* 썸네일 */}
-                <div className="w-20 h-12 relative rounded overflow-hidden flex-shrink-0">
-                  <Image src={banner.image} alt={banner.title} fill className="object-cover" />
-                </div>
-
-                {/* 정보 */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{banner.title}</p>
-                  <p className="text-sm text-gray-500 truncate">{banner.description}</p>
-                </div>
-
-                {/* ON/OFF 토글 */}
-                <button
-                  onClick={() => toggleActive(banner.id)}
-                  className={`px-3 py-1 text-sm font-medium rounded-full transition-colors ${
-                    banner.isActive
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-300 text-gray-600'
-                  }`}
-                >
-                  {banner.isActive ? 'ON' : 'OFF'}
-                </button>
+      {/* 배너 목록 */}
+      <div className="space-y-3">
+        {filteredBanners.map((banner) => (
+          <div
+            key={banner.id}
+            className={`p-4 border rounded-lg ${
+              banner.isActive ? 'border-green-300 bg-green-50' : 'border-gray-200'
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-14 relative rounded overflow-hidden flex-shrink-0">
+                <Image src={banner.image} alt={banner.title} fill className="object-cover" />
               </div>
+              <div className="flex-1">
+                <p className="font-medium">{banner.title}</p>
+                <p className="text-sm text-gray-500">{banner.description}</p>
+              </div>
+              <button
+                onClick={() => toggleActive(banner.id)}
+                className={`px-4 py-2 rounded-full font-medium ${
+                  banner.isActive ? 'bg-green-500 text-white' : 'bg-gray-300'
+                }`}
+              >
+                {banner.isActive ? 'ON' : 'OFF'}
+              </button>
             </div>
-          ))}
-          {filteredBanners.length === 0 && (
-            <p className="text-center text-gray-400 py-8">등록된 배너가 없습니다</p>
-          )}
-        </div>
-      </div>
-
-      {/* 우측: 미리보기 (PC/모바일 탭) */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">미리보기</h2>
-          {/* PC/모바일 탭 */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setPreviewMode('pc')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                previewMode === 'pc' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              PC
-            </button>
-            <button
-              onClick={() => setPreviewMode('mobile')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                previewMode === 'mobile' ? 'bg-white text-navy shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              모바일
-            </button>
           </div>
-        </div>
-
-        {/* 미리보기 콘텐츠 */}
-        {previewMode === 'pc' ? <PCPreview /> : <MobilePreview />}
-
-        {/* 활성 배너 카운트 */}
-        <div className="mt-4 text-center text-sm text-gray-500">
-          활성 배너: 헤드라인 {headlineBanners.length}개, 하단 {bottomBanners.length}개, 사이드 {sidebarBanners.length}개
-        </div>
-        <p className="text-center text-xs text-gray-400 mt-1">
-          {previewMode === 'pc' ? '사이드바에 가로형 배너로 표시됩니다' : '기사 사이에 네이티브 광고로 표시됩니다'}
-        </p>
+        ))}
       </div>
-    </div>
-  );
-}
-
-// 뉴스 데스크
-function NewsDesk({ articles, setArticles, mainSlots, setMainSlots }) {
-  const [activeTab, setActiveTab] = useState('curation');
-  const [editingArticle, setEditingArticle] = useState(null);
-
-  const handlePublish = (form) => {
-    const newArticle = {
-      id: Date.now(),
-      ...form,
-      date: new Date().toISOString().split('T')[0],
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop',
-      isHeadline: false,
-    };
-    setArticles([newArticle, ...articles]);
-    alert('기사가 발행되었습니다.');
-  };
-
-  const handleUpdate = (updatedArticle) => {
-    setArticles(articles.map((a) => (a.id === updatedArticle.id ? updatedArticle : a)));
-    // mainSlots도 업데이트
-    if (mainSlots.headline?.id === updatedArticle.id) {
-      setMainSlots({ ...mainSlots, headline: updatedArticle });
-    }
-    const subIndex = mainSlots.sub.findIndex((a) => a.id === updatedArticle.id);
-    if (subIndex !== -1) {
-      const newSub = [...mainSlots.sub];
-      newSub[subIndex] = updatedArticle;
-      setMainSlots({ ...mainSlots, sub: newSub });
-    }
-    setEditingArticle(null);
-    alert('기사가 수정되었습니다.');
-  };
-
-  const handleEdit = (article) => {
-    setEditingArticle(article);
-    setActiveTab('editor');
-  };
-
-  const handleDelete = (articleId) => {
-    if (!confirm('정말 이 기사를 삭제하시겠습니까?')) return;
-    setArticles(articles.filter((a) => a.id !== articleId));
-    // mainSlots에서도 제거
-    if (mainSlots.headline?.id === articleId) {
-      setMainSlots({ ...mainSlots, headline: null });
-    }
-    setMainSlots({
-      ...mainSlots,
-      sub: mainSlots.sub.filter((a) => a.id !== articleId),
-    });
-    alert('기사가 삭제되었습니다.');
-  };
-
-  const handleCancelEdit = () => {
-    setEditingArticle(null);
-  };
-
-  return (
-    <div>
-      {/* 탭 */}
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={() => { setActiveTab('curation'); setEditingArticle(null); }}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'curation'
-              ? 'bg-navy text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          메인 큐레이션
-        </button>
-        <button
-          onClick={() => { setActiveTab('manage'); setEditingArticle(null); }}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'manage'
-              ? 'bg-navy text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          기사 관리
-        </button>
-        <button
-          onClick={() => { setActiveTab('editor'); setEditingArticle(null); }}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'editor'
-              ? 'bg-navy text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          {editingArticle ? '기사 수정' : '기사 작성'}
-        </button>
-      </div>
-
-      {activeTab === 'curation' && (
-        <MainCuration
-          articles={articles}
-          mainSlots={mainSlots}
-          setMainSlots={setMainSlots}
-        />
-      )}
-      {activeTab === 'manage' && (
-        <ArticleManager
-          articles={articles}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      )}
-      {activeTab === 'editor' && (
-        <ArticleEditor
-          onPublish={handlePublish}
-          onUpdate={handleUpdate}
-          editingArticle={editingArticle}
-          onCancelEdit={handleCancelEdit}
-        />
-      )}
     </div>
   );
 }
 
 // 메인 관리자 페이지
 export default function AdminPage() {
-  const [currentMenu, setCurrentMenu] = useState('newsdesk');
+  const [currentMenu, setCurrentMenu] = useState('articles');
   const [articles, setArticles] = useState(initialArticles);
-  const [mainSlots, setMainSlots] = useState({
-    headline: initialArticles.find((a) => a.isHeadline) || null,
-    sub: initialArticles.filter((a) => !a.isHeadline).slice(0, 3),
-  });
+  const [ceoReports, setCeoReports] = useState(initialCeoReports);
+  const [opinions, setOpinions] = useState(initialOpinions);
   const [banners, setBanners] = useState(initialBanners);
+  const [slots, setSlots] = useState({
+    headline: initialArticles.filter(a => a.isHeadline),
+    subheadline: initialArticles.filter(a => !a.isHeadline).slice(0, 1),
+    news: initialArticles.filter(a => !a.isHeadline).slice(1),
+    opinion: [],
+  });
+
+  const menuTitles = {
+    articles: '기사 관리',
+    ceo: 'CEO 리포트',
+    slots: '슬롯 관리',
+    ads: '광고 관리',
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -932,20 +945,26 @@ export default function AdminPage() {
 
       <main className="flex-1 p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {currentMenu === 'newsdesk' ? '뉴스 데스크' : '광고 관리자'}
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">{menuTitles[currentMenu]}</h1>
         </div>
 
-        {currentMenu === 'newsdesk' && (
-          <NewsDesk
+        {currentMenu === 'articles' && (
+          <ArticleManager
             articles={articles}
             setArticles={setArticles}
-            mainSlots={mainSlots}
-            setMainSlots={setMainSlots}
+            opinions={opinions}
+            setOpinions={setOpinions}
           />
         )}
-        {currentMenu === 'ads' && <AdManager banners={banners} setBanners={setBanners} />}
+        {currentMenu === 'ceo' && (
+          <CeoReportManager reports={ceoReports} setReports={setCeoReports} />
+        )}
+        {currentMenu === 'slots' && (
+          <SlotManager articles={articles} slots={slots} setSlots={setSlots} />
+        )}
+        {currentMenu === 'ads' && (
+          <AdManager banners={banners} setBanners={setBanners} />
+        )}
       </main>
     </div>
   );
