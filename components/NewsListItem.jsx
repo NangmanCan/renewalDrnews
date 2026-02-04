@@ -9,31 +9,34 @@ const NewsListItem = ({ article }) => {
   return (
     <Link
       href={`/article/${article.id}`}
-      className="flex gap-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
+      className="block py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
     >
-      {/* 좌측 썸네일 (소형) */}
-      <div className="relative w-20 h-14 flex-shrink-0">
-        <Image
-          src={article.image}
-          alt={article.title}
-          fill
-          className="object-cover rounded"
-        />
+      {/* 상단: 카테고리 + 타이틀 */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs font-medium text-sky-600 bg-sky-50 px-2 py-0.5 rounded">
+          {article.category}
+        </span>
+        <span className="text-xs text-gray-400">
+          {article.date}
+        </span>
       </div>
+      <h4 className="text-base font-bold text-gray-900 group-hover:text-sky-600 transition-colors mb-3 leading-snug">
+        {article.title}
+      </h4>
 
-      {/* 우측 텍스트 */}
-      <div className="flex flex-col justify-center flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-[10px] font-medium text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded">
-            {article.category}
-          </span>
-          <span className="text-[10px] text-gray-400">
-            {article.date.slice(5)}
-          </span>
+      {/* 하단: 사진(좌) + 텍스트(우) */}
+      <div className="flex gap-4">
+        <div className="relative w-32 h-20 flex-shrink-0">
+          <Image
+            src={article.image}
+            alt={article.title}
+            fill
+            className="object-cover rounded-lg"
+          />
         </div>
-        <h4 className="text-sm font-medium text-gray-800 group-hover:text-sky-600 transition-colors line-clamp-2 leading-snug">
-          {article.title}
-        </h4>
+        <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed flex-1">
+          {article.content}
+        </p>
       </div>
     </Link>
   );

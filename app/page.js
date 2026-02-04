@@ -19,12 +19,11 @@ export default async function Home({ searchParams }) {
   const headline = articles.find((a) => a.isHeadline);
   let regularArticles = articles.filter((a) => !a.isHeadline);
 
-  // 서브 헤드라인 (최신 2개)
-  const subHeadlineArticles = getSubHeadlineArticles(2);
+  // 서브 헤드라인 (최신 1개)
+  const subHeadlineArticle = getSubHeadlineArticles(1)[0];
 
   // 서브 헤드라인 제외한 나머지 기사 (목록용)
-  const subHeadlineIds = subHeadlineArticles.map(a => a.id);
-  let listArticles = regularArticles.filter(a => !subHeadlineIds.includes(a.id));
+  let listArticles = regularArticles.filter(a => a.id !== subHeadlineArticle?.id);
 
   // 많이 본 뉴스
   const popularArticles = getPopularArticles(5);
@@ -70,8 +69,8 @@ export default async function Home({ searchParams }) {
                   )}
 
                   {/* 서브 헤드라인 */}
-                  {subHeadlineArticles.length > 0 && (
-                    <SubHeadline articles={subHeadlineArticles} />
+                  {subHeadlineArticle && (
+                    <SubHeadline article={subHeadlineArticle} />
                   )}
                 </div>
 
@@ -93,7 +92,7 @@ export default async function Home({ searchParams }) {
 
                 {/* 최신 뉴스 목록 */}
                 <div className="flex-1">
-                  <NewsList articles={listArticles} title="최신 뉴스" />
+                  <NewsList articles={listArticles} />
                 </div>
 
                 {/* 배너 광고 */}
@@ -154,8 +153,8 @@ export default async function Home({ searchParams }) {
               )}
 
               {/* 서브 헤드라인 */}
-              {subHeadlineArticles.length > 0 && (
-                <SubHeadline articles={subHeadlineArticles} />
+              {subHeadlineArticle && (
+                <SubHeadline article={subHeadlineArticle} />
               )}
 
               {/* 많이 본 뉴스 */}
@@ -167,10 +166,7 @@ export default async function Home({ searchParams }) {
           )}
 
           {/* 최신 뉴스 목록 */}
-          <NewsList
-            articles={listArticles}
-            title={category ? null : "최신 뉴스"}
-          />
+          <NewsList articles={listArticles} />
 
           {/* 광고 (모바일) */}
           {sidebarBanners.length > 0 && (
