@@ -2,12 +2,14 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeadlineSlider from '@/components/HeadlineSlider';
 import SubHeadline from '@/components/SubHeadline';
+import CeoReport from '@/components/CeoReport';
 import NewsList from '@/components/NewsListItem';
 import PopularNews from '@/components/PopularNews';
 import BioPharmNews from '@/components/BioPharmNews';
 import SidebarAd from '@/components/SidebarAd';
 import NativeAd from '@/components/NativeAd';
 import { articles, getPopularArticles, getSubHeadlineArticles } from '@/data/articles';
+import { getLatestCeoReport } from '@/data/ceoReports';
 import { initialBanners } from '@/data/banners';
 
 export const runtime = 'edge';
@@ -32,6 +34,9 @@ export default async function Home({ searchParams }) {
   const bioPharmArticles = articles
     .filter(a => a.category === '산업' || a.category === 'AI' || a.category === '제약·바이오')
     .slice(0, 3);
+
+  // CEO 리포트
+  const latestCeoReport = getLatestCeoReport();
 
   if (category) {
     regularArticles = articles.filter((a) => a.category === category);
@@ -71,6 +76,11 @@ export default async function Home({ searchParams }) {
                   {/* 서브 헤드라인 */}
                   {subHeadlineArticle && (
                     <SubHeadline article={subHeadlineArticle} />
+                  )}
+
+                  {/* CEO 리포트 */}
+                  {latestCeoReport && (
+                    <CeoReport report={latestCeoReport} />
                   )}
                 </div>
 
@@ -155,6 +165,11 @@ export default async function Home({ searchParams }) {
               {/* 서브 헤드라인 */}
               {subHeadlineArticle && (
                 <SubHeadline article={subHeadlineArticle} />
+              )}
+
+              {/* CEO 리포트 */}
+              {latestCeoReport && (
+                <CeoReport report={latestCeoReport} />
               )}
 
               {/* 많이 본 뉴스 */}
