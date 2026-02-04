@@ -1,4 +1,7 @@
-const HeadlineNews = ({ articles, onClick }) => {
+import Link from 'next/link';
+import Image from 'next/image';
+
+const HeadlineNews = ({ articles }) => {
   if (!articles || articles.length === 0) return null;
 
   const mainArticle = articles[0];
@@ -8,15 +11,19 @@ const HeadlineNews = ({ articles, onClick }) => {
     <section className="mb-10">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 메인 헤드라인 뉴스 (왼쪽 큰 영역) */}
-        <button
-          onClick={() => onClick(mainArticle.id)}
-          className="text-left group relative overflow-hidden rounded-xl shadow-lg"
+        <Link
+          href={`/article/${mainArticle.id}`}
+          className="group relative overflow-hidden rounded-xl shadow-lg block"
         >
-          <img
-            src={mainArticle.image}
-            alt={mainArticle.title}
-            className="w-full h-[300px] lg:h-[400px] object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          <div className="relative w-full h-[300px] lg:h-[400px]">
+            <Image
+              src={mainArticle.image}
+              alt={mainArticle.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              priority
+            />
+          </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-5">
             <span className="inline-block px-2 py-1 bg-sky-600 text-white text-xs font-medium rounded mb-2">
@@ -34,23 +41,26 @@ const HeadlineNews = ({ articles, onClick }) => {
               <span>{mainArticle.date}</span>
             </div>
           </div>
-        </button>
+        </Link>
 
         {/* 오른쪽 영역: 서브 뉴스 2개 + 광고 1개 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
           {/* 서브 뉴스 2개 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {subArticles.map((article) => (
-              <button
+              <Link
                 key={article.id}
-                onClick={() => onClick(article.id)}
-                className="text-left group relative overflow-hidden rounded-xl shadow-lg"
+                href={`/article/${article.id}`}
+                className="group relative overflow-hidden rounded-xl shadow-lg block"
               >
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="w-full h-[150px] lg:h-[190px] object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+                <div className="relative w-full h-[150px] lg:h-[190px]">
+                  <Image
+                    src={article.image}
+                    alt={article.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <span className="inline-block px-2 py-0.5 bg-sky-600 text-white text-xs font-medium rounded mb-1">
@@ -60,7 +70,7 @@ const HeadlineNews = ({ articles, onClick }) => {
                     {article.title}
                   </h3>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
 

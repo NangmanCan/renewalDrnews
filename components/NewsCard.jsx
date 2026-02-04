@@ -1,16 +1,20 @@
-const NewsCard = ({ article, onClick }) => {
+import Link from 'next/link';
+import Image from 'next/image';
+
+const NewsCard = ({ article }) => {
   return (
-    <button
-      onClick={() => onClick(article.id)}
-      className="w-full text-left group bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200 py-4 px-2"
+    <Link
+      href={`/article/${article.id}`}
+      className="block w-full group bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200 py-4 px-2"
     >
       <div className="flex gap-4">
         {/* 작은 썸네일 이미지 */}
-        <div className="flex-shrink-0">
-          <img
+        <div className="flex-shrink-0 relative w-24 h-20">
+          <Image
             src={article.image}
             alt={article.title}
-            className="w-24 h-20 object-cover rounded"
+            fill
+            className="object-cover rounded"
           />
         </div>
 
@@ -30,7 +34,7 @@ const NewsCard = ({ article, onClick }) => {
           </p>
         </div>
       </div>
-    </button>
+    </Link>
   );
 };
 
