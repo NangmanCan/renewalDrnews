@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const Header = () => {
   const pathname = usePathname();
-  const categories = ['정책', '학술', '병원', '산업'];
+  const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오'];
 
   return (
     <header className="bg-navy text-white sticky top-0 z-50 shadow-lg">
