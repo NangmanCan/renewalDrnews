@@ -39,9 +39,12 @@ const Header = () => {
 
           {/* 관리자 버튼 */}
           <div className="hidden md:flex items-center gap-4">
-            <button className="px-4 py-2 bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors font-medium">
+            <Link
+              href="/admin"
+              className="px-4 py-2 bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors font-medium"
+            >
               관리자
-            </button>
+            </Link>
           </div>
 
           {/* 모바일 메뉴 버튼 */}

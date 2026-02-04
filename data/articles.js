@@ -14,7 +14,8 @@ export const articles = [
     author: "김정책 기자",
     date: "2026-02-03",
     image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop",
-    isHeadline: true
+    isHeadline: true,
+    views: 15420
   },
   {
     id: 2,
@@ -31,7 +32,8 @@ export const articles = [
     author: "박학술 기자",
     date: "2026-02-02",
     image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=400&fit=crop",
-    isHeadline: true
+    isHeadline: true,
+    views: 12350
   },
   {
     id: 3,
@@ -48,7 +50,8 @@ export const articles = [
     author: "이병원 기자",
     date: "2026-02-02",
     image: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&h=400&fit=crop",
-    isHeadline: true
+    isHeadline: true,
+    views: 9870
   },
   {
     id: 4,
@@ -63,7 +66,8 @@ export const articles = [
     author: "정산업 기자",
     date: "2026-02-01",
     image: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 8540
   },
   {
     id: 5,
@@ -80,7 +84,8 @@ export const articles = [
     author: "김정책 기자",
     date: "2026-02-01",
     image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 7230
   },
   {
     id: 6,
@@ -97,7 +102,8 @@ export const articles = [
     author: "정산업 기자",
     date: "2026-01-31",
     image: "https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 11200
   },
   {
     id: 7,
@@ -114,7 +120,8 @@ export const articles = [
     author: "이병원 기자",
     date: "2026-01-30",
     image: "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 6890
   },
   {
     id: 8,
@@ -131,7 +138,8 @@ export const articles = [
     author: "박학술 기자",
     date: "2026-01-29",
     image: "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800&h=400&fit=crop",
-    isHeadline: false
+    isHeadline: false,
+    views: 5670
   }
 ];
 
@@ -154,5 +162,11 @@ export const getRegularArticles = () => {
 export const getRelatedArticles = (currentId, category, limit = 3) => {
   return articles
     .filter(article => article.id !== parseInt(currentId) && article.category === category)
+    .slice(0, limit);
+};
+
+export const getPopularArticles = (limit = 5) => {
+  return [...articles]
+    .sort((a, b) => (b.views || 0) - (a.views || 0))
     .slice(0, limit);
 };
