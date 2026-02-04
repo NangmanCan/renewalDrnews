@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getArticleById, getRelatedArticles } from '@/data/articles';
 import NewsCard from '@/components/NewsCard';
+
+export const runtime = 'edge';
 
 export async function generateMetadata({ params }) {
   const article = getArticleById(params.id);
@@ -51,12 +52,10 @@ export default function ArticleDetail({ params }) {
             <span>{article.date}</span>
           </div>
           <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden">
-            <Image
+            <img
               src={article.image}
               alt={article.title}
-              fill
-              className="object-cover"
-              priority
+              className="w-full h-full object-cover"
             />
           </div>
         </header>
@@ -85,7 +84,6 @@ export default function ArticleDetail({ params }) {
           </button>
           <button
             className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-            onClick={() => navigator.clipboard?.writeText(window.location.href)}
           >
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

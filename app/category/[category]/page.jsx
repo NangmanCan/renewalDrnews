@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import NewsList from '@/components/NewsList';
 import { articles } from '@/data/articles';
 
+export const runtime = 'edge';
+
 const validCategories = ['정책', '학술', '병원', '산업'];
 
 export async function generateMetadata({ params }) {
