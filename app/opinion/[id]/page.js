@@ -10,13 +10,6 @@ import { getBanners } from '@/lib/banners';
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
-export async function generateStaticParams() {
-  const opinions = await getOpinions();
-  return opinions.map((opinion) => ({
-    id: opinion.id.toString(),
-  }));
-}
-
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const opinion = await getOpinionById(id);

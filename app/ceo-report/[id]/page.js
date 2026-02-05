@@ -6,13 +6,6 @@ import { getCeoReportById, getCeoReports } from '@/lib/ceoReports';
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
-export async function generateStaticParams() {
-  const reports = await getCeoReports(100);
-  return reports.map((report) => ({
-    id: report.id.toString(),
-  }));
-}
-
 export default async function CeoReportPage({ params }) {
   const { id } = await params;
   const [report, allReports] = await Promise.all([
