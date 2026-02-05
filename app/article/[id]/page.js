@@ -3,7 +3,9 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsCard from '@/components/NewsCard';
+import SidebarAd from '@/components/SidebarAd';
 import { articles } from '@/data/articles';
+import { initialBanners } from '@/data/banners';
 
 export async function generateStaticParams() {
   return articles.map((article) => ({
@@ -37,6 +39,11 @@ export async function generateMetadata({ params }) {
 export default function ArticlePage({ params }) {
   const article = articles.find((a) => a.id === parseInt(params.id));
 
+  // 사이드바 배너 가져오기
+  const sidebarBanners = initialBanners.filter(
+    (b) => b.type === 'sidebar' && b.isActive && (!b.positions || b.positions.sidebarPC)
+  );
+
   if (!article) {
     return (
       <>
@@ -59,7 +66,7 @@ export default function ArticlePage({ params }) {
   return (
     <>
       <Header />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         {/* 뒤로가기 */}
         <Link
           href="/"
@@ -71,8 +78,9 @@ export default function ArticlePage({ params }) {
           목록으로
         </Link>
 
+        <div className="flex flex-col lg:flex-row gap-8">
         {/* 기사 */}
-        <article>
+        <article className="flex-1 max-w-4xl">
           <header className="mb-8">
             <span className="inline-block px-3 py-1 bg-navy text-white text-sm font-medium rounded mb-4">
               {article.category}
@@ -113,7 +121,7 @@ export default function ArticlePage({ params }) {
           </div>
 
           {/* 공유 버튼 */}
-          <div className="flex items-center gap-4 py-6 border-t border-b border-gray-200 mb-12">
+          <div className="flex items-center gap-4 py-6 border-t border-b border-gray-200">
             <span className="text-gray-600 font-medium">공유하기</span>
             <button className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
               <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
@@ -128,9 +136,15 @@ export default function ArticlePage({ params }) {
           </div>
         </article>
 
+        {/* 사이드바 - PC에서만 표시 */}
+        <aside className="hidden lg:block w-72 flex-shrink-0">
+          <SidebarAd banners={sidebarBanners} sticky={true} showInquiry={true} />
+        </aside>
+        </div>
+
         {/* 관련 기사 */}
         {relatedArticles.length > 0 && (
-          <section>
+          <section className="mt-12">
             <h2 className="text-2xl font-bold text-navy mb-6">관련 기사</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedArticles.map((relatedArticle) => (
