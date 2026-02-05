@@ -7,6 +7,10 @@ import SidebarAd from '@/components/SidebarAd';
 import { getArticleById, getRelatedArticles, getArticles } from '@/lib/articles';
 import { getBanners } from '@/lib/banners';
 
+// 동적 렌더링 강제 (실시간 데이터 반영)
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export async function generateStaticParams() {
   const articles = await getArticles();
   return articles.map((article) => ({

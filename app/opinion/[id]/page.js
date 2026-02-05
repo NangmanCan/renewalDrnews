@@ -6,6 +6,10 @@ import SidebarAd from '@/components/SidebarAd';
 import { getOpinionById, getOpinions } from '@/lib/opinions';
 import { getBanners } from '@/lib/banners';
 
+// 동적 렌더링 강제 (실시간 데이터 반영)
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export async function generateStaticParams() {
   const opinions = await getOpinions();
   return opinions.map((opinion) => ({
