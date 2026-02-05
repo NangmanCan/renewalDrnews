@@ -58,5 +58,26 @@ export const initialBanners = [
     type: 'sidebar',
     isActive: true,
     order: 1,
+    // 노출 위치 제어 (sidebar 타입만 해당)
+    positions: {
+      sidebarPC: true,        // PC 사이드바 영역
+      mobileBetween: true,    // 모바일: 많이본뉴스-제약바이오 사이
+      mobileInline: true,     // 모바일: 최신뉴스 목록 내 (4개당 1개)
+    },
+  },
+  {
+    id: 7,
+    title: '의료인 전용 금융상품',
+    description: '의사·간호사를 위한 특별 대출',
+    image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=400&fit=crop',
+    link: '#',
+    type: 'sidebar',
+    isActive: true,
+    order: 2,
+    positions: {
+      sidebarPC: true,
+      mobileBetween: false,
+      mobileInline: true,
+    },
   },
 ];

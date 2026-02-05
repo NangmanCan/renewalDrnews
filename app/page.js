@@ -52,9 +52,24 @@ export default async function Home({ searchParams }) {
   const headlineBanners = initialBanners
     .filter((b) => b.type === 'headline' && b.isActive)
     .sort((a, b) => a.order - b.order);
-  const sidebarBanners = initialBanners
+
+  // 사이드바 광고 (위치별 필터링)
+  const allSidebarBanners = initialBanners
     .filter((b) => b.type === 'sidebar' && b.isActive)
     .sort((a, b) => a.order - b.order);
+
+  // PC 사이드바용
+  const sidebarBanners = allSidebarBanners.filter(
+    (b) => !b.positions || b.positions.sidebarPC
+  );
+  // 모바일: 많이본뉴스-제약바이오 사이
+  const mobileBetweenBanners = allSidebarBanners.filter(
+    (b) => b.positions?.mobileBetween
+  );
+  // 모바일: 최신뉴스 목록 내
+  const mobileInlineBanners = allSidebarBanners.filter(
+    (b) => b.positions?.mobileInline
+  );
 
   return (
     <>
@@ -111,33 +126,11 @@ export default async function Home({ searchParams }) {
                   <NewsList articles={listArticles} />
                 </div>
 
-                {/* 배너 광고 */}
+                {/* 사이드바 광고 */}
                 {sidebarBanners.length > 0 && (
-                  <div className="hidden lg:block w-72 flex-shrink-0">
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-                      <h3 className="text-sm font-bold text-gray-500 mb-3">광고</h3>
-                      <div className="space-y-4">
-                        {sidebarBanners.map((banner) => (
-                          <a
-                            key={banner.id}
-                            href={banner.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block"
-                          >
-                            <img
-                              src={banner.image}
-                              alt={banner.title}
-                              className="w-full h-32 object-cover rounded-lg"
-                            />
-                            <p className="text-xs text-gray-600 mt-2 line-clamp-1">
-                              {banner.title}
-                            </p>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                  <aside className="hidden lg:block w-72 flex-shrink-0">
+                    <SidebarAd banners={sidebarBanners} sticky={false} showInquiry={false} />
+                  </aside>
                 )}
               </div>
             </>
@@ -185,8 +178,8 @@ export default async function Home({ searchParams }) {
               <PopularNews articles={popularArticles} />
 
               {/* 네이티브 광고 (많이본뉴스-제약바이오 사이) */}
-              {sidebarBanners.length > 0 && (
-                <NativeAd banner={sidebarBanners[0]} />
+              {mobileBetweenBanners.length > 0 && (
+                <NativeAd banner={mobileBetweenBanners[0]} />
               )}
 
               {/* 제약·바이오 속보 */}
@@ -201,9 +194,9 @@ export default async function Home({ searchParams }) {
                 <div key={article.id}>
                   <NewsListItem article={article} />
                   {/* 4개마다 네이티브 광고 삽입 */}
-                  {(index + 1) % 4 === 0 && sidebarBanners.length > 0 && (
+                  {(index + 1) % 4 === 0 && mobileInlineBanners.length > 0 && (
                     <div className="py-4 border-b border-gray-100">
-                      <NativeAd banner={sidebarBanners[Math.floor(index / 4) % sidebarBanners.length]} />
+                      <NativeAd banner={mobileInlineBanners[Math.floor(index / 4) % mobileInlineBanners.length]} />
                     </div>
                   )}
                 </div>

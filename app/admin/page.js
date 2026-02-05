@@ -856,14 +856,19 @@ function SlotManager({ articles, slots, setSlots }) {
   );
 }
 
-// 광고 관리 (기존 AdManager 간소화)
+// 광고 관리
 function AdManager({ banners, setBanners }) {
   const [selectedType, setSelectedType] = useState('headline');
 
   const typeLabels = {
     headline: '헤드라인 광고',
-    bottom: '하단 배너',
-    sidebar: '사이드 배너',
+    sidebar: '사이드바 광고',
+  };
+
+  const positionLabels = {
+    sidebarPC: 'PC 사이드바',
+    mobileBetween: '모바일: 뉴스 사이',
+    mobileInline: '모바일: 목록 내',
   };
 
   const filteredBanners = banners
@@ -872,6 +877,19 @@ function AdManager({ banners, setBanners }) {
 
   const toggleActive = (id) => {
     setBanners(banners.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b)));
+  };
+
+  const togglePosition = (id, position) => {
+    setBanners(banners.map((b) => {
+      if (b.id === id) {
+        const newPositions = {
+          ...(b.positions || { sidebarPC: true, mobileBetween: true, mobileInline: true }),
+          [position]: !(b.positions?.[position] ?? true),
+        };
+        return { ...b, positions: newPositions };
+      }
+      return b;
+    }));
   };
 
   return (
@@ -894,7 +912,7 @@ function AdManager({ banners, setBanners }) {
       </div>
 
       {/* 배너 목록 */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filteredBanners.map((banner) => (
           <div
             key={banner.id}
@@ -919,9 +937,44 @@ function AdManager({ banners, setBanners }) {
                 {banner.isActive ? 'ON' : 'OFF'}
               </button>
             </div>
+
+            {/* 사이드바 광고일 때 노출 위치 선택 */}
+            {selectedType === 'sidebar' && banner.isActive && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs font-medium text-gray-500 mb-2">노출 위치</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(positionLabels).map(([key, label]) => {
+                    const isChecked = banner.positions?.[key] ?? true;
+                    return (
+                      <label
+                        key={key}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                          isChecked
+                            ? 'bg-sky-100 text-sky-700 border border-sky-300'
+                            : 'bg-gray-100 text-gray-500 border border-gray-200'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => togglePosition(banner.id, key)}
+                          className="sr-only"
+                        />
+                        <span className={`w-3 h-3 rounded-full ${isChecked ? 'bg-sky-500' : 'bg-gray-300'}`} />
+                        {label}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      {filteredBanners.length === 0 && (
+        <p className="text-center text-gray-500 py-8">등록된 배너가 없습니다.</p>
+      )}
     </div>
   );
 }
