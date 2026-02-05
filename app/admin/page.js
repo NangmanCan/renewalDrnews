@@ -856,13 +856,180 @@ function SlotManager({ articles, slots, setSlots }) {
   );
 }
 
+// 광고 에디터 컴포넌트
+function AdEditor({ ad, adType, onSave, onCancel }) {
+  const typeInfo = {
+    headline: {
+      label: '헤드라인 슬라이더 광고',
+      imageGuide: '800x400',
+      description: '메인 상단 슬라이더에 노출되는 대형 광고',
+    },
+    sidebar: {
+      label: '사이드바 광고',
+      imageGuide: '800x400',
+      description: 'PC 사이드바 및 모바일 뉴스 사이에 노출',
+    },
+    gnb: {
+      label: 'GNB 상단배너',
+      imageGuide: '160x50',
+      description: '상단 로고 옆에 표시되는 소형 배너',
+    },
+  };
+
+  const info = typeInfo[adType] || typeInfo.sidebar;
+
+  const [form, setForm] = useState({
+    title: ad?.title || '',
+    description: ad?.description || '',
+    image: ad?.image || '',
+    link: ad?.link || '',
+    positions: ad?.positions || {
+      sidebarPC: true,
+      mobileBetween: true,
+      mobileInline: true,
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.title || !form.image) {
+      alert('제목과 이미지를 입력해주세요.');
+      return;
+    }
+    onSave(form);
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            {ad ? '광고 수정' : '새 광고 등록'}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">{info.description}</p>
+        </div>
+        {onCancel && (
+          <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+            취소
+          </button>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 제목 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">광고 제목</label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+            placeholder="의료기기 박람회 2026"
+          />
+        </div>
+
+        {/* 설명 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">광고 설명</label>
+          <input
+            type="text"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+            placeholder="국내 최대 의료기기 전시회"
+          />
+        </div>
+
+        {/* 이미지 */}
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <label className="block text-sm font-medium text-gray-700">이미지 URL</label>
+            <span className="text-xs text-gray-400">권장: {info.imageGuide}</span>
+          </div>
+          <input
+            type="text"
+            value={form.image}
+            onChange={(e) => setForm({ ...form, image: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+            placeholder="https://images.unsplash.com/..."
+          />
+          {form.image && (
+            <div className="mt-2 relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
+              <Image src={form.image} alt="미리보기" fill className="object-cover" />
+            </div>
+          )}
+        </div>
+
+        {/* 링크 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">클릭 URL</label>
+          <input
+            type="text"
+            value={form.link}
+            onChange={(e) => setForm({ ...form, link: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+            placeholder="https://example.com"
+          />
+        </div>
+
+        {/* 사이드바 광고일 때 노출 위치 선택 */}
+        {adType === 'sidebar' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">노출 위치</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'sidebarPC', label: 'PC 사이드바' },
+                { key: 'mobileBetween', label: '모바일: 뉴스 사이' },
+                { key: 'mobileInline', label: '모바일: 목록 내' },
+              ].map(({ key, label }) => (
+                <label
+                  key={key}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                    form.positions[key]
+                      ? 'bg-sky-100 text-sky-700 border border-sky-300'
+                      : 'bg-gray-100 text-gray-500 border border-gray-200'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.positions[key]}
+                    onChange={() => setForm({
+                      ...form,
+                      positions: { ...form.positions, [key]: !form.positions[key] },
+                    })}
+                    className="sr-only"
+                  />
+                  <span className={`w-3 h-3 rounded-full ${form.positions[key] ? 'bg-sky-500' : 'bg-gray-300'}`} />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className={`w-full py-3 text-white font-medium rounded-lg transition-colors ${
+            ad ? 'bg-green-600 hover:bg-green-700' : 'bg-sky-600 hover:bg-sky-700'
+          }`}
+        >
+          {ad ? '수정 완료' : '등록하기'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // 광고 관리
 function AdManager({ banners, setBanners }) {
   const [selectedType, setSelectedType] = useState('headline');
+  const [activeTab, setActiveTab] = useState('list');
+  const [editingAd, setEditingAd] = useState(null);
 
   const typeLabels = {
     headline: '헤드라인 광고',
     sidebar: '사이드바 광고',
+    gnb: 'GNB 상단배너',
   };
 
   const positionLabels = {
@@ -892,18 +1059,51 @@ function AdManager({ banners, setBanners }) {
     }));
   };
 
-  return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">배너 관리</h2>
+  const handleSave = (form) => {
+    const maxOrder = filteredBanners.reduce((max, b) => Math.max(max, b.order), 0);
 
-      {/* 타입 선택 */}
-      <div className="flex gap-2 mb-6">
+    const newBanner = {
+      id: editingAd?.id || Date.now(),
+      title: form.title,
+      description: form.description,
+      image: form.image,
+      link: form.link || '#',
+      type: selectedType,
+      isActive: editingAd?.isActive ?? true,
+      order: editingAd?.order ?? maxOrder + 1,
+      ...(selectedType === 'sidebar' && { positions: form.positions }),
+    };
+
+    if (editingAd) {
+      setBanners(banners.map((b) => (b.id === editingAd.id ? newBanner : b)));
+    } else {
+      setBanners([...banners, newBanner]);
+    }
+
+    setEditingAd(null);
+    setActiveTab('list');
+    alert(editingAd ? '수정되었습니다.' : '등록되었습니다.');
+  };
+
+  const handleDelete = (id) => {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+    setBanners(banners.filter((b) => b.id !== id));
+  };
+
+  return (
+    <div>
+      {/* 타입 선택 탭 */}
+      <div className="flex gap-2 mb-4">
         {Object.entries(typeLabels).map(([type, label]) => (
           <button
             key={type}
-            onClick={() => setSelectedType(type)}
+            onClick={() => {
+              setSelectedType(type);
+              setActiveTab('list');
+              setEditingAd(null);
+            }}
             className={`px-4 py-2 rounded-lg font-medium ${
-              selectedType === type ? 'bg-navy text-white' : 'bg-gray-100'
+              selectedType === type ? 'bg-navy text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             {label}
@@ -911,69 +1111,119 @@ function AdManager({ banners, setBanners }) {
         ))}
       </div>
 
-      {/* 배너 목록 */}
-      <div className="space-y-4">
-        {filteredBanners.map((banner) => (
-          <div
-            key={banner.id}
-            className={`p-4 border rounded-lg ${
-              banner.isActive ? 'border-green-300 bg-green-50' : 'border-gray-200'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-24 h-14 relative rounded overflow-hidden flex-shrink-0">
-                <Image src={banner.image} alt={banner.title} fill className="object-cover" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">{banner.title}</p>
-                <p className="text-sm text-gray-500">{banner.description}</p>
-              </div>
-              <button
-                onClick={() => toggleActive(banner.id)}
-                className={`px-4 py-2 rounded-full font-medium ${
-                  banner.isActive ? 'bg-green-500 text-white' : 'bg-gray-300'
-                }`}
-              >
-                {banner.isActive ? 'ON' : 'OFF'}
-              </button>
-            </div>
-
-            {/* 사이드바 광고일 때 노출 위치 선택 */}
-            {selectedType === 'sidebar' && banner.isActive && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-xs font-medium text-gray-500 mb-2">노출 위치</p>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(positionLabels).map(([key, label]) => {
-                    const isChecked = banner.positions?.[key] ?? true;
-                    return (
-                      <label
-                        key={key}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-                          isChecked
-                            ? 'bg-sky-100 text-sky-700 border border-sky-300'
-                            : 'bg-gray-100 text-gray-500 border border-gray-200'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => togglePosition(banner.id, key)}
-                          className="sr-only"
-                        />
-                        <span className={`w-3 h-3 rounded-full ${isChecked ? 'bg-sky-500' : 'bg-gray-300'}`} />
-                        {label}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+      {/* 서브 탭: 목록/등록 */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => { setActiveTab('list'); setEditingAd(null); }}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'list' ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          광고 목록
+        </button>
+        <button
+          onClick={() => { setActiveTab('create'); setEditingAd(null); }}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'create' ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          새 광고 등록
+        </button>
       </div>
 
-      {filteredBanners.length === 0 && (
-        <p className="text-center text-gray-500 py-8">등록된 배너가 없습니다.</p>
+      {/* 광고 목록 */}
+      {activeTab === 'list' && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">{typeLabels[selectedType]} 목록</h2>
+
+          <div className="space-y-4">
+            {filteredBanners.map((banner) => (
+              <div
+                key={banner.id}
+                className={`p-4 border rounded-lg ${
+                  banner.isActive ? 'border-green-300 bg-green-50' : 'border-gray-200'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-14 relative rounded overflow-hidden flex-shrink-0">
+                    <Image src={banner.image} alt={banner.title} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{banner.title}</p>
+                    <p className="text-sm text-gray-500">{banner.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { setEditingAd(banner); setActiveTab('create'); }}
+                      className="px-3 py-1.5 text-sm bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={() => handleDelete(banner.id)}
+                      className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg"
+                    >
+                      삭제
+                    </button>
+                    <button
+                      onClick={() => toggleActive(banner.id)}
+                      className={`px-4 py-2 rounded-full font-medium ${
+                        banner.isActive ? 'bg-green-500 text-white' : 'bg-gray-300'
+                      }`}
+                    >
+                      {banner.isActive ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 사이드바 광고일 때 노출 위치 선택 */}
+                {selectedType === 'sidebar' && banner.isActive && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-xs font-medium text-gray-500 mb-2">노출 위치</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(positionLabels).map(([key, label]) => {
+                        const isChecked = banner.positions?.[key] ?? true;
+                        return (
+                          <label
+                            key={key}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                              isChecked
+                                ? 'bg-sky-100 text-sky-700 border border-sky-300'
+                                : 'bg-gray-100 text-gray-500 border border-gray-200'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => togglePosition(banner.id, key)}
+                              className="sr-only"
+                            />
+                            <span className={`w-3 h-3 rounded-full ${isChecked ? 'bg-sky-500' : 'bg-gray-300'}`} />
+                            {label}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {filteredBanners.length === 0 && (
+            <p className="text-center text-gray-500 py-8">등록된 배너가 없습니다.</p>
+          )}
+        </div>
+      )}
+
+      {/* 광고 등록/수정 폼 */}
+      {activeTab === 'create' && (
+        <AdEditor
+          ad={editingAd}
+          adType={selectedType}
+          onSave={handleSave}
+          onCancel={() => { setEditingAd(null); setActiveTab('list'); }}
+        />
       )}
     </div>
   );

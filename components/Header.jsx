@@ -1,11 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { initialBanners } from '@/data/banners';
 
 const Header = () => {
   const pathname = usePathname();
   const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '오피니언'];
+
+  // GNB 배너 가져오기
+  const gnbBanner = initialBanners.find((b) => b.type === 'gnb' && b.isActive);
 
   // 현재 날짜 포맷
   const today = new Date();
@@ -55,9 +60,25 @@ const Header = () => {
 
             {/* 오른쪽: 배너 광고 영역 */}
             <div className="hidden md:flex items-center min-w-[180px] justify-end">
-              <div className="w-[160px] h-[50px] bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
-                <span className="text-xs text-gray-400">AD 160x50</span>
-              </div>
+              {gnbBanner ? (
+                <a
+                  href={gnbBanner.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative w-[160px] h-[50px] rounded overflow-hidden hover:opacity-90 transition-opacity"
+                >
+                  <Image
+                    src={gnbBanner.image}
+                    alt={gnbBanner.title}
+                    fill
+                    className="object-cover"
+                  />
+                </a>
+              ) : (
+                <div className="w-[160px] h-[50px] bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                  <span className="text-xs text-gray-400">AD 160x50</span>
+                </div>
+              )}
             </div>
 
             {/* 모바일: 관리자 버튼 */}

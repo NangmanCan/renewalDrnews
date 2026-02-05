@@ -1,11 +1,12 @@
 export const initialBanners = [
+  // 헤드라인 슬라이더 광고
   {
     id: 1,
     title: '의료기기 박람회 2026',
     description: '국내 최대 의료기기 전시회',
     image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&h=400&fit=crop',
     link: '#',
-    type: 'headline', // headline, bottom, sidebar
+    type: 'headline',
     isActive: true,
     order: 1,
   },
@@ -19,36 +20,18 @@ export const initialBanners = [
     isActive: false,
     order: 2,
   },
+  // GNB 상단 배너 광고
   {
     id: 3,
-    title: '의료 AI 솔루션 - MedTech',
-    description: '진단 정확도 95% 달성',
-    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop',
+    title: 'Dr.News 구독 이벤트',
+    description: '월 9,900원으로 프리미엄 콘텐츠 무제한',
+    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=160&h=50&fit=crop',
     link: '#',
-    type: 'bottom',
+    type: 'gnb',
     isActive: true,
     order: 1,
   },
-  {
-    id: 4,
-    title: '제약사 채용 공고',
-    description: '글로벌 제약사 한국지사 채용',
-    image: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=800&h=400&fit=crop',
-    link: '#',
-    type: 'bottom',
-    isActive: true,
-    order: 2,
-  },
-  {
-    id: 5,
-    title: '의료 세미나 안내',
-    description: '2026 디지털 헬스케어 컨퍼런스',
-    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=400&fit=crop',
-    link: '#',
-    type: 'bottom',
-    isActive: false,
-    order: 3,
-  },
+  // 사이드바 광고
   {
     id: 6,
     title: '병원 경영 컨설팅',
@@ -58,11 +41,10 @@ export const initialBanners = [
     type: 'sidebar',
     isActive: true,
     order: 1,
-    // 노출 위치 제어 (sidebar 타입만 해당)
     positions: {
-      sidebarPC: true,        // PC 사이드바 영역
-      mobileBetween: true,    // 모바일: 많이본뉴스-제약바이오 사이
-      mobileInline: true,     // 모바일: 최신뉴스 목록 내 (4개당 1개)
+      sidebarPC: true,
+      mobileBetween: true,
+      mobileInline: true,
     },
   },
   {
