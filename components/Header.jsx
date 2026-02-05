@@ -82,7 +82,7 @@ const Header = () => {
                   key={category}
                   href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
                   className={`
-                    px-4 py-3 text-sm font-medium transition-colors relative
+                    px-5 py-3.5 text-base font-medium transition-colors relative
                     ${category === '오피니언'
                       ? 'text-amber-400 hover:text-amber-300'
                       : 'text-gray-300 hover:text-white hover:bg-slate-700'
@@ -109,24 +109,27 @@ const Header = () => {
       </div>
 
       {/* 모바일 카테고리 (스크롤) */}
-      <div className="md:hidden bg-slate-800 overflow-x-auto">
-        <div className="flex items-center px-2 py-2 gap-1 min-w-max">
-          {categories.map((category) => (
+      <div className="md:hidden bg-slate-800 overflow-x-auto border-t border-slate-700">
+        <nav className="flex items-center min-w-max">
+          {categories.map((category, index) => (
             <Link
               key={category}
               href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
               className={`
-                px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap
+                px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap
                 ${category === '오피니언'
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                  ? 'text-amber-400'
+                  : 'text-gray-300 active:bg-slate-700'
                 }
               `}
             >
               {category}
+              {index < categories.length - 1 && (
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-slate-600"></span>
+              )}
             </Link>
           ))}
-        </div>
+        </nav>
       </div>
     </header>
   );

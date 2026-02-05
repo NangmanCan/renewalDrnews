@@ -3,7 +3,7 @@ import Footer from '@/components/Footer';
 import HeadlineSlider from '@/components/HeadlineSlider';
 import SubHeadline from '@/components/SubHeadline';
 import CeoReport from '@/components/CeoReport';
-import NewsList from '@/components/NewsListItem';
+import NewsList, { NewsListItem } from '@/components/NewsListItem';
 import PopularNews from '@/components/PopularNews';
 import Opinion from '@/components/Opinion';
 import BioPharmNews from '@/components/BioPharmNews';
@@ -184,22 +184,32 @@ export default async function Home({ searchParams }) {
               {/* 많이 본 뉴스 */}
               <PopularNews articles={popularArticles} />
 
+              {/* 네이티브 광고 (많이본뉴스-제약바이오 사이) */}
+              {sidebarBanners.length > 0 && (
+                <NativeAd banner={sidebarBanners[0]} />
+              )}
+
               {/* 제약·바이오 속보 */}
               <BioPharmNews articles={bioPharmArticles} />
             </>
           )}
 
-          {/* 최신 뉴스 목록 */}
-          <NewsList articles={listArticles} />
-
-          {/* 광고 (모바일) */}
-          {sidebarBanners.length > 0 && (
-            <div className="space-y-4">
-              {sidebarBanners.map((banner) => (
-                <NativeAd key={banner.id} banner={banner} />
+          {/* 최신 뉴스 목록 (4개마다 네이티브 광고 삽입) */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div className="px-4">
+              {listArticles.map((article, index) => (
+                <div key={article.id}>
+                  <NewsListItem article={article} />
+                  {/* 4개마다 네이티브 광고 삽입 */}
+                  {(index + 1) % 4 === 0 && sidebarBanners.length > 0 && (
+                    <div className="py-4 border-b border-gray-100">
+                      <NativeAd banner={sidebarBanners[Math.floor(index / 4) % sidebarBanners.length]} />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
-          )}
+          </div>
         </div>
 
         {listArticles.length === 0 && (
