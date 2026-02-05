@@ -59,13 +59,13 @@ const Header = () => {
             </Link>
 
             {/* 오른쪽: 배너 광고 영역 */}
-            <div className="hidden md:flex items-center min-w-[180px] justify-end">
+            <div className="hidden md:flex items-center min-w-[250px] justify-end">
               {gnbBanner ? (
                 <a
                   href={gnbBanner.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative w-[160px] h-[50px] rounded overflow-hidden hover:opacity-90 transition-opacity"
+                  className="relative w-[234px] h-[60px] rounded overflow-hidden hover:opacity-90 transition-opacity"
                 >
                   <Image
                     src={gnbBanner.image}
@@ -75,8 +75,8 @@ const Header = () => {
                   />
                 </a>
               ) : (
-                <div className="w-[160px] h-[50px] bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
-                  <span className="text-xs text-gray-400">AD 160x50</span>
+                <div className="w-[234px] h-[60px] bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                  <span className="text-xs text-gray-400">AD 234x60</span>
                 </div>
               )}
             </div>
