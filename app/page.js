@@ -32,16 +32,16 @@ export default async function Home({ searchParams }) {
   // 많이 본 뉴스
   const popularArticles = getPopularArticles(5);
 
-  // 바이오/제약/AI 속보 (산업, AI 카테고리)
+  // 바이오/제약/AI 속보 (산업, AI 카테고리) - 5개로 확대
   const bioPharmArticles = articles
     .filter(a => a.category === '산업' || a.category === 'AI' || a.category === '제약·바이오')
-    .slice(0, 3);
+    .slice(0, 5);
 
   // CEO 리포트
   const latestCeoReport = getLatestCeoReport();
 
-  // 오피니언
-  const latestOpinions = getLatestOpinions(2);
+  // 오피니언 (3개까지)
+  const latestOpinions = getLatestOpinions(3);
 
   if (category) {
     regularArticles = articles.filter((a) => a.category === category);
@@ -89,8 +89,9 @@ export default async function Home({ searchParams }) {
                   )}
                 </div>
 
-                {/* 우측 사이드바: 많이본뉴스 + 배너광고 */}
-                <aside className="w-72 flex-shrink-0 space-y-6">
+                {/* 우측 사이드바: 오피니언 + 많이본뉴스 + 배너광고 */}
+                <aside className="w-72 flex-shrink-0 space-y-4">
+                  <Opinion opinions={latestOpinions} />
                   <PopularNews articles={popularArticles} />
                   {sidebarBanners.length > 0 && (
                     <SidebarAd banners={sidebarBanners} />
@@ -98,11 +99,10 @@ export default async function Home({ searchParams }) {
                 </aside>
               </div>
 
-              {/* 하단 영역: 오피니언 + 바이오속보 | 최신뉴스 | 배너광고 */}
+              {/* 하단 영역: 바이오속보 | 최신뉴스 | 배너광고 */}
               <div className="flex gap-6">
-                {/* 오피니언 + 바이오/제약 속보 */}
-                <div className="w-64 flex-shrink-0 space-y-6">
-                  <Opinion opinions={latestOpinions} />
+                {/* 제약*바이오 속보 (확대) */}
+                <div className="w-72 flex-shrink-0">
                   <BioPharmNews articles={bioPharmArticles} />
                 </div>
 
@@ -178,13 +178,13 @@ export default async function Home({ searchParams }) {
                 <CeoReport report={latestCeoReport} />
               )}
 
-              {/* 많이 본 뉴스 */}
-              <PopularNews articles={popularArticles} />
-
               {/* 오피니언 */}
               <Opinion opinions={latestOpinions} />
 
-              {/* 바이오/제약 속보 */}
+              {/* 많이 본 뉴스 */}
+              <PopularNews articles={popularArticles} />
+
+              {/* 제약*바이오 속보 */}
               <BioPharmNews articles={bioPharmArticles} />
             </>
           )}
