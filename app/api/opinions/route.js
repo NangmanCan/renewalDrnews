@@ -51,14 +51,18 @@ export async function POST(request) {
         author_title: body.authorTitle,
         author_image: body.authorImage
       }])
-      .select()
-      .single();
+      .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: '오피니언 생성 실패' }, { status: 500 });
+    }
+
+    const created = data[0];
     return NextResponse.json({
-      ...data,
-      authorTitle: data.author_title,
-      authorImage: data.author_image
+      ...created,
+      authorTitle: created.author_title,
+      authorImage: created.author_image
     });
   } catch (error) {
     console.error('Error creating opinion:', error);

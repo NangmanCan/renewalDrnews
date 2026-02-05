@@ -53,11 +53,19 @@ export async function POST(request) {
         is_headline: body.isHeadline || body.placement === 'headline',
         views: 0
       }])
-      .select()
-      .single();
+      .select();
 
     if (error) throw error;
-    return NextResponse.json(data);
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: '기사 생성 실패' }, { status: 500 });
+    }
+
+    const created = data[0];
+    return NextResponse.json({
+      ...created,
+      isHeadline: created.is_headline,
+      placement: created.placement || (created.is_headline ? 'headline' : 'news'),
+    });
   } catch (error) {
     console.error('Error creating article:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

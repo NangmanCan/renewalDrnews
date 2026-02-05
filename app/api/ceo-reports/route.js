@@ -53,15 +53,19 @@ export async function POST(request) {
         author_image: body.authorImage,
         week_number: body.weekNumber
       }])
-      .select()
-      .single();
+      .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: 'CEO 리포트 생성 실패' }, { status: 500 });
+    }
+
+    const created = data[0];
     return NextResponse.json({
-      ...data,
-      authorTitle: data.author_title,
-      authorImage: data.author_image,
-      weekNumber: data.week_number
+      ...created,
+      authorTitle: created.author_title,
+      authorImage: created.author_image,
+      weekNumber: created.week_number
     });
   } catch (error) {
     console.error('Error creating CEO report:', error);

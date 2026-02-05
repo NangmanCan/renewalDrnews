@@ -61,19 +61,23 @@ export async function POST(request) {
         position_mobile_between: body.positions?.mobileBetween ?? false,
         position_mobile_inline: body.positions?.mobileInline ?? false
       }])
-      .select()
-      .single();
+      .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: '배너 생성 실패' }, { status: 500 });
+    }
+
+    const created = data[0];
     return NextResponse.json({
-      ...data,
-      isActive: data.is_active,
-      order: data.sort_order,
+      ...created,
+      isActive: created.is_active,
+      order: created.sort_order,
       positions: {
-        sidebarTop: data.position_sidebar_top,
-        sidebarBottom: data.position_sidebar_bottom,
-        mobileBetween: data.position_mobile_between,
-        mobileInline: data.position_mobile_inline
+        sidebarTop: created.position_sidebar_top,
+        sidebarBottom: created.position_sidebar_bottom,
+        mobileBetween: created.position_mobile_between,
+        mobileInline: created.position_mobile_inline
       }
     });
   } catch (error) {
