@@ -4,17 +4,19 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsCard from '@/components/NewsCard';
 import SidebarAd from '@/components/SidebarAd';
-import { articles } from '@/data/articles';
-import { initialBanners } from '@/data/banners';
+import { getArticleById, getRelatedArticles, getArticles } from '@/lib/articles';
+import { getBanners } from '@/lib/banners';
 
 export async function generateStaticParams() {
+  const articles = await getArticles();
   return articles.map((article) => ({
     id: article.id.toString(),
   }));
 }
 
 export async function generateMetadata({ params }) {
-  const article = articles.find((a) => a.id === parseInt(params.id));
+  const { id } = await params;
+  const article = await getArticleById(id);
 
   if (!article) {
     return {
@@ -36,11 +38,15 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default function ArticlePage({ params }) {
-  const article = articles.find((a) => a.id === parseInt(params.id));
+export default async function ArticlePage({ params }) {
+  const { id } = await params;
+  const [article, allBanners] = await Promise.all([
+    getArticleById(id),
+    getBanners()
+  ]);
 
   // 사이드바 배너 가져오기 (상단 + 하단 모두)
-  const sidebarBanners = initialBanners.filter(
+  const sidebarBanners = allBanners.filter(
     (b) => b.type === 'sidebar' && b.isActive && (b.positions?.sidebarTop || b.positions?.sidebarBottom)
   );
 
@@ -59,9 +65,7 @@ export default function ArticlePage({ params }) {
     );
   }
 
-  const relatedArticles = articles
-    .filter((a) => a.id !== article.id && a.category === article.category)
-    .slice(0, 3);
+  const relatedArticles = await getRelatedArticles(id, article.category, 3);
 
   return (
     <>

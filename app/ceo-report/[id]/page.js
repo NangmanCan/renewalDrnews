@@ -1,16 +1,20 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ceoReports } from '@/data/ceoReports';
+import { getCeoReportById, getCeoReports } from '@/lib/ceoReports';
 
 export async function generateStaticParams() {
-  return ceoReports.map((report) => ({
+  const reports = await getCeoReports(100);
+  return reports.map((report) => ({
     id: report.id.toString(),
   }));
 }
 
 export default async function CeoReportPage({ params }) {
   const { id } = await params;
-  const report = ceoReports.find((r) => r.id === parseInt(id));
+  const [report, allReports] = await Promise.all([
+    getCeoReportById(id),
+    getCeoReports(100)
+  ]);
 
   if (!report) {
     return (
@@ -21,12 +25,12 @@ export default async function CeoReportPage({ params }) {
   }
 
   // 이전/다음 리포트
-  const currentIndex = ceoReports.findIndex((r) => r.id === report.id);
-  const prevReport = currentIndex < ceoReports.length - 1 ? ceoReports[currentIndex + 1] : null;
-  const nextReport = currentIndex > 0 ? ceoReports[currentIndex - 1] : null;
+  const currentIndex = allReports.findIndex((r) => r.id === report.id);
+  const prevReport = currentIndex < allReports.length - 1 ? allReports[currentIndex + 1] : null;
+  const nextReport = currentIndex > 0 ? allReports[currentIndex - 1] : null;
 
   // 다른 리포트 목록
-  const otherReports = ceoReports.filter((r) => r.id !== report.id).slice(0, 3);
+  const otherReports = allReports.filter((r) => r.id !== report.id).slice(0, 3);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">

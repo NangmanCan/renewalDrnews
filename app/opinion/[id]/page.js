@@ -3,10 +3,11 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SidebarAd from '@/components/SidebarAd';
-import { opinions } from '@/data/opinions';
-import { initialBanners } from '@/data/banners';
+import { getOpinionById, getOpinions } from '@/lib/opinions';
+import { getBanners } from '@/lib/banners';
 
 export async function generateStaticParams() {
+  const opinions = await getOpinions();
   return opinions.map((opinion) => ({
     id: opinion.id.toString(),
   }));
@@ -14,7 +15,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const opinion = opinions.find((o) => o.id === parseInt(id));
+  const opinion = await getOpinionById(id);
 
   if (!opinion) {
     return {
@@ -37,10 +38,14 @@ export async function generateMetadata({ params }) {
 
 export default async function OpinionPage({ params }) {
   const { id } = await params;
-  const opinion = opinions.find((o) => o.id === parseInt(id));
+  const [opinion, allBanners, allOpinions] = await Promise.all([
+    getOpinionById(id),
+    getBanners(),
+    getOpinions()
+  ]);
 
   // 사이드바 배너 가져오기 (상단 + 하단 모두)
-  const sidebarBanners = initialBanners.filter(
+  const sidebarBanners = allBanners.filter(
     (b) => b.type === 'sidebar' && b.isActive && (b.positions?.sidebarTop || b.positions?.sidebarBottom)
   );
 
@@ -60,7 +65,7 @@ export default async function OpinionPage({ params }) {
   }
 
   // 다른 오피니언 목록
-  const otherOpinions = opinions.filter((o) => o.id !== opinion.id).slice(0, 3);
+  const otherOpinions = allOpinions.filter((o) => o.id !== opinion.id).slice(0, 3);
 
   return (
     <>

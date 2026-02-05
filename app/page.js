@@ -9,10 +9,10 @@ import Opinion from '@/components/Opinion';
 import BioPharmNews from '@/components/BioPharmNews';
 import SidebarAd from '@/components/SidebarAd';
 import NativeAd from '@/components/NativeAd';
-import { articles, getPopularArticles, getSubHeadlineArticles } from '@/data/articles';
-import { getLatestCeoReport } from '@/data/ceoReports';
-import { getLatestOpinions } from '@/data/opinions';
-import { initialBanners } from '@/data/banners';
+import { getArticles, getHeadlineArticle, getSubHeadlineArticles, getPopularArticles, getArticlesByCategory } from '@/lib/articles';
+import { getLatestCeoReport } from '@/lib/ceoReports';
+import { getLatestOpinions } from '@/lib/opinions';
+import { getBanners } from '@/lib/banners';
 
 export const runtime = 'edge';
 
@@ -20,41 +20,43 @@ export default async function Home({ searchParams }) {
   const params = await searchParams;
   const category = params?.category;
 
-  const headline = articles.find((a) => a.isHeadline);
-  let regularArticles = articles.filter((a) => !a.isHeadline);
+  // Supabase에서 데이터 가져오기 (fallback 포함)
+  const [allArticles, headline, popularArticles, latestCeoReport, latestOpinions, allBanners] = await Promise.all([
+    getArticles(),
+    getHeadlineArticle(),
+    getPopularArticles(5),
+    getLatestCeoReport(),
+    getLatestOpinions(3),
+    getBanners()
+  ]);
+
+  let regularArticles = allArticles.filter((a) => !a.isHeadline && !a.is_headline);
 
   // 서브 헤드라인 (최신 1개)
-  const subHeadlineArticle = getSubHeadlineArticles(1)[0];
+  const subHeadlineArticles = await getSubHeadlineArticles(1);
+  const subHeadlineArticle = subHeadlineArticles[0];
 
   // 서브 헤드라인 제외한 나머지 기사 (목록용)
   let listArticles = regularArticles.filter(a => a.id !== subHeadlineArticle?.id);
 
-  // 많이 본 뉴스
-  const popularArticles = getPopularArticles(5);
-
   // 바이오/제약/AI 속보 (산업, AI 카테고리) - 5개로 확대
-  const bioPharmArticles = articles
+  const bioPharmArticles = allArticles
     .filter(a => a.category === '산업' || a.category === 'AI' || a.category === '제약·바이오')
     .slice(0, 5);
 
-  // CEO 리포트
-  const latestCeoReport = getLatestCeoReport();
-
-  // 오피니언 (3개까지)
-  const latestOpinions = getLatestOpinions(3);
-
   if (category) {
-    regularArticles = articles.filter((a) => a.category === category);
-    listArticles = regularArticles;
+    const categoryArticles = await getArticlesByCategory(category);
+    regularArticles = categoryArticles;
+    listArticles = categoryArticles;
   }
 
   // 활성화된 배너 필터링
-  const headlineBanners = initialBanners
+  const headlineBanners = allBanners
     .filter((b) => b.type === 'headline' && b.isActive)
     .sort((a, b) => a.order - b.order);
 
   // 사이드바 광고 (위치별 필터링)
-  const allSidebarBanners = initialBanners
+  const allSidebarBanners = allBanners
     .filter((b) => b.type === 'sidebar' && b.isActive)
     .sort((a, b) => a.order - b.order);
 

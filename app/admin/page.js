@@ -1,12 +1,66 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { articles as initialArticles } from '@/data/articles';
-import { ceoReports as initialCeoReports } from '@/data/ceoReports';
-import { opinions as initialOpinions } from '@/data/opinions';
-import { initialBanners } from '@/data/banners';
+import { articles as staticArticles } from '@/data/articles';
+import { ceoReports as staticCeoReports } from '@/data/ceoReports';
+import { opinions as staticOpinions } from '@/data/opinions';
+import { initialBanners as staticBanners } from '@/data/banners';
+
+// API 유틸리티 함수
+const api = {
+  async fetchData(endpoint) {
+    try {
+      const res = await fetch(`/api/${endpoint}`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      return await res.json();
+    } catch (error) {
+      console.error(`Error fetching ${endpoint}:`, error);
+      return null;
+    }
+  },
+  async create(endpoint, data) {
+    try {
+      const res = await fetch(`/api/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to create');
+      return await res.json();
+    } catch (error) {
+      console.error(`Error creating ${endpoint}:`, error);
+      return null;
+    }
+  },
+  async update(endpoint, id, data) {
+    try {
+      const res = await fetch(`/api/${endpoint}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      return await res.json();
+    } catch (error) {
+      console.error(`Error updating ${endpoint}:`, error);
+      return null;
+    }
+  },
+  async remove(endpoint, id) {
+    try {
+      const res = await fetch(`/api/${endpoint}/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      return await res.json();
+    } catch (error) {
+      console.error(`Error deleting ${endpoint}:`, error);
+      return null;
+    }
+  },
+};
 
 // 게재영역 정의
 const PLACEMENT_OPTIONS = [
@@ -316,14 +370,15 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
 }
 
 // 기사 관리 탭
-function ArticleManager({ articles, setArticles, opinions, setOpinions }) {
+function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefresh }) {
   const [activeTab, setActiveTab] = useState('list');
   const [editingItem, setEditingItem] = useState(null);
   const [filterPlacement, setFilterPlacement] = useState('all');
+  const [saving, setSaving] = useState(false);
 
   // 기사와 오피니언 합쳐서 표시
   const allItems = [
-    ...articles.map(a => ({ ...a, type: 'article', placement: a.placement || 'news' })),
+    ...articles.map(a => ({ ...a, type: 'article', placement: a.placement || (a.is_headline || a.isHeadline ? 'headline' : 'news') })),
     ...opinions.map(o => ({ ...o, type: 'opinion', placement: 'opinion' })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -331,52 +386,72 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions }) {
     ? allItems
     : allItems.filter(item => item.placement === filterPlacement);
 
-  const handleSave = (form) => {
-    if (form.placement === 'opinion') {
-      // 오피니언으로 저장
-      const newOpinion = {
-        id: editingItem?.id || Date.now(),
-        title: form.title,
-        summary: form.summary,
-        content: form.content,
-        author: form.author.split('/')[0]?.trim() || form.author,
-        authorTitle: form.author.split('/')[1]?.trim() || '',
-        authorImage: form.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-        date: editingItem?.date || new Date().toISOString().split('T')[0],
-        category: form.category,
-      };
-      if (editingItem?.type === 'opinion') {
-        setOpinions(opinions.map(o => o.id === editingItem.id ? newOpinion : o));
+  const handleSave = async (form) => {
+    setSaving(true);
+    try {
+      if (form.placement === 'opinion') {
+        // 오피니언으로 저장
+        const opinionData = {
+          title: form.title,
+          summary: form.summary,
+          content: form.content,
+          author: form.author.split('/')[0]?.trim() || form.author,
+          authorTitle: form.author.split('/')[1]?.trim() || '',
+          authorImage: form.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+          category: form.category,
+        };
+
+        if (editingItem?.type === 'opinion') {
+          await api.update('opinions', editingItem.id, opinionData);
+        } else {
+          await api.create('opinions', opinionData);
+        }
       } else {
-        setOpinions([newOpinion, ...opinions]);
+        // 일반 기사로 저장
+        const articleData = {
+          title: form.title,
+          summary: form.summary,
+          content: form.content,
+          category: form.category,
+          author: form.author,
+          image: form.image || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop',
+          placement: form.placement,
+          isHeadline: form.placement === 'headline',
+        };
+
+        if (editingItem?.type === 'article') {
+          await api.update('articles', editingItem.id, articleData);
+        } else {
+          await api.create('articles', articleData);
+        }
       }
-    } else {
-      // 일반 기사로 저장
-      const newArticle = {
-        id: editingItem?.id || Date.now(),
-        ...form,
-        date: editingItem?.date || new Date().toISOString().split('T')[0],
-        image: form.image || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop',
-        isHeadline: form.placement === 'headline',
-        views: editingItem?.views || 0,
-      };
-      if (editingItem?.type === 'article') {
-        setArticles(articles.map(a => a.id === editingItem.id ? newArticle : a));
-      } else {
-        setArticles([newArticle, ...articles]);
-      }
+
+      setEditingItem(null);
+      setActiveTab('list');
+      alert(editingItem ? '수정되었습니다.' : '발행되었습니다.');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error saving:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
     }
-    setEditingItem(null);
-    setActiveTab('list');
-    alert(editingItem ? '수정되었습니다.' : '발행되었습니다.');
   };
 
-  const handleDelete = (item) => {
+  const handleDelete = async (item) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
-    if (item.type === 'opinion') {
-      setOpinions(opinions.filter(o => o.id !== item.id));
-    } else {
-      setArticles(articles.filter(a => a.id !== item.id));
+
+    try {
+      if (item.type === 'opinion') {
+        await api.remove('opinions', item.id);
+      } else {
+        await api.remove('articles', item.id);
+      }
+      alert('삭제되었습니다.');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error deleting:', error);
+      alert('삭제 중 오류가 발생했습니다.');
     }
   };
 
@@ -630,31 +705,53 @@ function CeoReportEditor({ report, onSave, onCancel }) {
 }
 
 // CEO 리포트 관리 탭
-function CeoReportManager({ reports, setReports }) {
+function CeoReportManager({ reports, setReports, onRefresh }) {
   const [activeTab, setActiveTab] = useState('list');
   const [editingReport, setEditingReport] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = (form) => {
-    const newReport = {
-      id: editingReport?.id || Date.now(),
-      ...form,
-      date: editingReport?.date || new Date().toISOString().split('T')[0],
-      authorImage: form.authorImage || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop',
-    };
+  const handleSave = async (form) => {
+    setSaving(true);
+    try {
+      const reportData = {
+        title: form.title,
+        subtitle: form.subtitle,
+        content: form.content,
+        category: form.category,
+        author: form.author,
+        authorTitle: form.authorTitle,
+        authorImage: form.authorImage || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop',
+        weekNumber: form.weekNumber,
+      };
 
-    if (editingReport) {
-      setReports(reports.map(r => r.id === editingReport.id ? newReport : r));
-    } else {
-      setReports([newReport, ...reports]);
+      if (editingReport) {
+        await api.update('ceo-reports', editingReport.id, reportData);
+      } else {
+        await api.create('ceo-reports', reportData);
+      }
+
+      setEditingReport(null);
+      setActiveTab('list');
+      alert(editingReport ? '수정되었습니다.' : '발행되었습니다.');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error saving CEO report:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
     }
-    setEditingReport(null);
-    setActiveTab('list');
-    alert(editingReport ? '수정되었습니다.' : '발행되었습니다.');
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
-    setReports(reports.filter(r => r.id !== id));
+    try {
+      await api.remove('ceo-reports', id);
+      alert('삭제되었습니다.');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error deleting CEO report:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -1023,10 +1120,11 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
 }
 
 // 광고 관리
-function AdManager({ banners, setBanners }) {
+function AdManager({ banners, setBanners, onRefresh }) {
   const [selectedType, setSelectedType] = useState('headline');
   const [activeTab, setActiveTab] = useState('list');
   const [editingAd, setEditingAd] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const typeLabels = {
     headline: '헤드라인 광고',
@@ -1045,52 +1143,79 @@ function AdManager({ banners, setBanners }) {
     .filter((b) => b.type === selectedType)
     .sort((a, b) => a.order - b.order);
 
-  const toggleActive = (id) => {
-    setBanners(banners.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b)));
+  const toggleActive = async (id) => {
+    const banner = banners.find(b => b.id === id);
+    if (!banner) return;
+
+    try {
+      await api.update('banners', id, { ...banner, isActive: !banner.isActive });
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error toggling active:', error);
+    }
   };
 
-  const togglePosition = (id, position) => {
-    setBanners(banners.map((b) => {
-      if (b.id === id) {
-        const newPositions = {
-          ...(b.positions || { sidebarTop: true, sidebarBottom: false, mobileBetween: false, mobileInline: false }),
-          [position]: !(b.positions?.[position] ?? false),
-        };
-        return { ...b, positions: newPositions };
-      }
-      return b;
-    }));
-  };
+  const togglePosition = async (id, position) => {
+    const banner = banners.find(b => b.id === id);
+    if (!banner) return;
 
-  const handleSave = (form) => {
-    const maxOrder = filteredBanners.reduce((max, b) => Math.max(max, b.order), 0);
-
-    const newBanner = {
-      id: editingAd?.id || Date.now(),
-      title: form.title,
-      description: form.description,
-      image: form.image,
-      link: form.link || '#',
-      type: selectedType,
-      isActive: editingAd?.isActive ?? true,
-      order: editingAd?.order ?? maxOrder + 1,
-      ...(selectedType === 'sidebar' && { positions: form.positions }),
+    const newPositions = {
+      ...(banner.positions || { sidebarTop: true, sidebarBottom: false, mobileBetween: false, mobileInline: false }),
+      [position]: !(banner.positions?.[position] ?? false),
     };
 
-    if (editingAd) {
-      setBanners(banners.map((b) => (b.id === editingAd.id ? newBanner : b)));
-    } else {
-      setBanners([...banners, newBanner]);
+    try {
+      await api.update('banners', id, { ...banner, positions: newPositions });
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error toggling position:', error);
     }
-
-    setEditingAd(null);
-    setActiveTab('list');
-    alert(editingAd ? '수정되었습니다.' : '등록되었습니다.');
   };
 
-  const handleDelete = (id) => {
+  const handleSave = async (form) => {
+    setSaving(true);
+    try {
+      const maxOrder = filteredBanners.reduce((max, b) => Math.max(max, b.order || 0), 0);
+
+      const bannerData = {
+        title: form.title,
+        description: form.description,
+        image: form.image,
+        link: form.link || '#',
+        type: selectedType,
+        isActive: editingAd?.isActive ?? true,
+        order: editingAd?.order ?? maxOrder + 1,
+        positions: selectedType === 'sidebar' ? form.positions : undefined,
+      };
+
+      if (editingAd) {
+        await api.update('banners', editingAd.id, bannerData);
+      } else {
+        await api.create('banners', bannerData);
+      }
+
+      setEditingAd(null);
+      setActiveTab('list');
+      alert(editingAd ? '수정되었습니다.' : '등록되었습니다.');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error saving banner:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
-    setBanners(banners.filter((b) => b.id !== id));
+    try {
+      await api.remove('banners', id);
+      alert('삭제되었습니다.');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error deleting banner:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -1235,16 +1360,43 @@ function AdManager({ banners, setBanners }) {
 // 메인 관리자 페이지
 export default function AdminPage() {
   const [currentMenu, setCurrentMenu] = useState('articles');
-  const [articles, setArticles] = useState(initialArticles);
-  const [ceoReports, setCeoReports] = useState(initialCeoReports);
-  const [opinions, setOpinions] = useState(initialOpinions);
-  const [banners, setBanners] = useState(initialBanners);
+  const [articles, setArticles] = useState(staticArticles);
+  const [ceoReports, setCeoReports] = useState(staticCeoReports);
+  const [opinions, setOpinions] = useState(staticOpinions);
+  const [banners, setBanners] = useState(staticBanners);
+  const [loading, setLoading] = useState(true);
   const [slots, setSlots] = useState({
-    headline: initialArticles.filter(a => a.isHeadline),
-    subheadline: initialArticles.filter(a => !a.isHeadline).slice(0, 1),
-    news: initialArticles.filter(a => !a.isHeadline).slice(1),
+    headline: staticArticles.filter(a => a.isHeadline),
+    subheadline: staticArticles.filter(a => !a.isHeadline).slice(0, 1),
+    news: staticArticles.filter(a => !a.isHeadline).slice(1),
     opinion: [],
   });
+
+  // 데이터 로드
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [articlesData, opinionsData, ceoData, bannersData] = await Promise.all([
+        api.fetchData('articles'),
+        api.fetchData('opinions'),
+        api.fetchData('ceo-reports'),
+        api.fetchData('banners'),
+      ]);
+
+      if (articlesData) setArticles(articlesData);
+      if (opinionsData) setOpinions(opinionsData);
+      if (ceoData) setCeoReports(ceoData);
+      if (bannersData) setBanners(bannersData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const menuTitles = {
     articles: '기사 관리',
@@ -1258,8 +1410,25 @@ export default function AdminPage() {
       <AdminSidebar currentMenu={currentMenu} setCurrentMenu={setCurrentMenu} />
 
       <main className="flex-1 p-8">
-        <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">{menuTitles[currentMenu]}</h1>
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                로딩 중...
+              </>
+            ) : (
+              '새로고침'
+            )}
+          </button>
         </div>
 
         {currentMenu === 'articles' && (
@@ -1268,16 +1437,17 @@ export default function AdminPage() {
             setArticles={setArticles}
             opinions={opinions}
             setOpinions={setOpinions}
+            onRefresh={loadData}
           />
         )}
         {currentMenu === 'ceo' && (
-          <CeoReportManager reports={ceoReports} setReports={setCeoReports} />
+          <CeoReportManager reports={ceoReports} setReports={setCeoReports} onRefresh={loadData} />
         )}
         {currentMenu === 'slots' && (
           <SlotManager articles={articles} slots={slots} setSlots={setSlots} />
         )}
         {currentMenu === 'ads' && (
-          <AdManager banners={banners} setBanners={setBanners} />
+          <AdManager banners={banners} setBanners={setBanners} onRefresh={loadData} />
         )}
       </main>
     </div>
