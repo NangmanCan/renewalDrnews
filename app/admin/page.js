@@ -423,10 +423,10 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
       setEditingItem(null);
       setActiveTab('list');
       alert(editingItem ? '수정되었습니다.' : '발행되었습니다.');
-      if (onRefresh) onRefresh();
+      if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Error saving:', error);
-      alert('저장 중 오류가 발생했습니다.');
+      alert(`저장 중 오류가 발생했습니다: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -442,10 +442,10 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
         await api.remove('articles', item.id);
       }
       alert('삭제되었습니다.');
-      if (onRefresh) onRefresh();
+      if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Error deleting:', error);
-      alert('삭제 중 오류가 발생했습니다.');
+      alert(`삭제 중 오류가 발생했습니다: ${error.message}`);
     }
   };
 
@@ -842,10 +842,10 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
 
       await Promise.all(updates);
       alert('슬롯 배치가 저장되었습니다.');
-      if (onRefresh) onRefresh();
+      if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Error saving slots:', error);
-      alert('저장 중 오류가 발생했습니다.');
+      alert(`저장 중 오류가 발생했습니다: ${error.message}\n\nSupabase에 placement 컬럼이 있는지 확인하세요.`);
     } finally {
       setSaving(false);
     }
