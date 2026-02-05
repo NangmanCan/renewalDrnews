@@ -159,17 +159,22 @@ function ImageUploader({ currentImage, onImageChange, guide }) {
 
 // 기사 에디터 컴포넌트
 function ArticleEditor({ article, onSave, onCancel, placement }) {
+  const initialPlacement = article?.placement || placement || 'news';
+  const defaultCategory = initialPlacement === 'opinion' ? '칼럼' : '정책';
+
   const [form, setForm] = useState({
     title: article?.title || '',
-    category: article?.category || '정책',
+    category: article?.category || defaultCategory,
     author: article?.author || '',
     summary: article?.summary || '',
     content: article?.content || '',
     image: article?.image || '',
-    placement: article?.placement || placement || 'news',
+    placement: initialPlacement,
   });
 
-  const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오'];
+  const articleCategories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오'];
+  const opinionCategories = ['칼럼', '기고'];
+  const categories = form.placement === 'opinion' ? opinionCategories : articleCategories;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -204,7 +209,10 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setForm({ ...form, placement: opt.id })}
+                onClick={() => {
+                  const newCategory = opt.id === 'opinion' ? '칼럼' : '정책';
+                  setForm({ ...form, placement: opt.id, category: newCategory });
+                }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   form.placement === opt.id
                     ? `bg-${opt.color}-500 text-white`
@@ -335,7 +343,7 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions }) {
         authorTitle: form.author.split('/')[1]?.trim() || '',
         authorImage: form.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
         date: editingItem?.date || new Date().toISOString().split('T')[0],
-        category: form.category === '정책' ? '칼럼' : '기고',
+        category: form.category,
       };
       if (editingItem?.type === 'opinion') {
         setOpinions(opinions.map(o => o.id === editingItem.id ? newOpinion : o));
