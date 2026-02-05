@@ -39,9 +39,9 @@ export async function generateMetadata({ params }) {
 export default function ArticlePage({ params }) {
   const article = articles.find((a) => a.id === parseInt(params.id));
 
-  // 사이드바 배너 가져오기
+  // 사이드바 배너 가져오기 (상단 + 하단 모두)
   const sidebarBanners = initialBanners.filter(
-    (b) => b.type === 'sidebar' && b.isActive && (!b.positions || b.positions.sidebarPC)
+    (b) => b.type === 'sidebar' && b.isActive && (b.positions?.sidebarTop || b.positions?.sidebarBottom)
   );
 
   if (!article) {

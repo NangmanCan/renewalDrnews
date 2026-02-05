@@ -884,9 +884,10 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
     image: ad?.image || '',
     link: ad?.link || '',
     positions: ad?.positions || {
-      sidebarPC: true,
-      mobileBetween: true,
-      mobileInline: true,
+      sidebarTop: true,
+      sidebarBottom: false,
+      mobileBetween: false,
+      mobileInline: false,
     },
   });
 
@@ -978,7 +979,8 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">노출 위치</label>
             <div className="flex flex-wrap gap-2">
               {[
-                { key: 'sidebarPC', label: 'PC 사이드바' },
+                { key: 'sidebarTop', label: 'PC 상단 사이드바' },
+                { key: 'sidebarBottom', label: 'PC 하단 사이드바' },
                 { key: 'mobileBetween', label: '모바일: 뉴스 사이' },
                 { key: 'mobileInline', label: '모바일: 목록 내' },
               ].map(({ key, label }) => (
@@ -1033,7 +1035,8 @@ function AdManager({ banners, setBanners }) {
   };
 
   const positionLabels = {
-    sidebarPC: 'PC 사이드바',
+    sidebarTop: 'PC 상단 사이드바',
+    sidebarBottom: 'PC 하단 사이드바',
     mobileBetween: '모바일: 뉴스 사이',
     mobileInline: '모바일: 목록 내',
   };
@@ -1050,8 +1053,8 @@ function AdManager({ banners, setBanners }) {
     setBanners(banners.map((b) => {
       if (b.id === id) {
         const newPositions = {
-          ...(b.positions || { sidebarPC: true, mobileBetween: true, mobileInline: true }),
-          [position]: !(b.positions?.[position] ?? true),
+          ...(b.positions || { sidebarTop: true, sidebarBottom: false, mobileBetween: false, mobileInline: false }),
+          [position]: !(b.positions?.[position] ?? false),
         };
         return { ...b, positions: newPositions };
       }

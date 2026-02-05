@@ -31,7 +31,7 @@ export const initialBanners = [
     isActive: true,
     order: 1,
   },
-  // 사이드바 광고
+  // 사이드바 광고 - 상단 슬롯
   {
     id: 6,
     title: '병원 경영 컨설팅',
@@ -42,9 +42,10 @@ export const initialBanners = [
     isActive: true,
     order: 1,
     positions: {
-      sidebarPC: true,
+      sidebarTop: true,
+      sidebarBottom: false,
       mobileBetween: true,
-      mobileInline: true,
+      mobileInline: false,
     },
   },
   {
@@ -57,7 +58,41 @@ export const initialBanners = [
     isActive: true,
     order: 2,
     positions: {
-      sidebarPC: true,
+      sidebarTop: true,
+      sidebarBottom: false,
+      mobileBetween: false,
+      mobileInline: true,
+    },
+  },
+  // 사이드바 광고 - 하단 슬롯
+  {
+    id: 8,
+    title: '의료 AI 세미나 2026',
+    description: '인공지능이 바꾸는 의료의 미래',
+    image: 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=800&h=400&fit=crop',
+    link: '#',
+    type: 'sidebar',
+    isActive: true,
+    order: 3,
+    positions: {
+      sidebarTop: false,
+      sidebarBottom: true,
+      mobileBetween: false,
+      mobileInline: true,
+    },
+  },
+  {
+    id: 9,
+    title: '헬스케어 스타트업 투자 설명회',
+    description: '유망 스타트업과 투자자의 만남',
+    image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=400&fit=crop',
+    link: '#',
+    type: 'sidebar',
+    isActive: true,
+    order: 4,
+    positions: {
+      sidebarTop: false,
+      sidebarBottom: true,
       mobileBetween: false,
       mobileInline: true,
     },

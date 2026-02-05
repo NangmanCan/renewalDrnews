@@ -58,9 +58,13 @@ export default async function Home({ searchParams }) {
     .filter((b) => b.type === 'sidebar' && b.isActive)
     .sort((a, b) => a.order - b.order);
 
-  // PC 사이드바용
-  const sidebarBanners = allSidebarBanners.filter(
-    (b) => !b.positions || b.positions.sidebarPC
+  // PC 사이드바 상단용
+  const sidebarTopBanners = allSidebarBanners.filter(
+    (b) => b.positions?.sidebarTop
+  );
+  // PC 사이드바 하단용
+  const sidebarBottomBanners = allSidebarBanners.filter(
+    (b) => b.positions?.sidebarBottom
   );
   // 모바일: 많이본뉴스-제약바이오 사이
   const mobileBetweenBanners = allSidebarBanners.filter(
@@ -104,12 +108,12 @@ export default async function Home({ searchParams }) {
                   )}
                 </div>
 
-                {/* 우측 사이드바: 오피니언 + 많이본뉴스 + 배너광고 */}
+                {/* 우측 사이드바: 오피니언 + 많이본뉴스 + 배너광고(상단) */}
                 <aside className="w-72 flex-shrink-0 space-y-4">
                   <Opinion opinions={latestOpinions} />
                   <PopularNews articles={popularArticles} />
-                  {sidebarBanners.length > 0 && (
-                    <SidebarAd banners={sidebarBanners} />
+                  {sidebarTopBanners.length > 0 && (
+                    <SidebarAd banners={sidebarTopBanners} />
                   )}
                 </aside>
               </div>
@@ -126,10 +130,10 @@ export default async function Home({ searchParams }) {
                   <NewsList articles={listArticles} />
                 </div>
 
-                {/* 사이드바 광고 */}
-                {sidebarBanners.length > 0 && (
+                {/* 사이드바 광고 (하단) */}
+                {sidebarBottomBanners.length > 0 && (
                   <aside className="hidden lg:block w-72 flex-shrink-0">
-                    <SidebarAd banners={sidebarBanners} sticky={false} showInquiry={false} />
+                    <SidebarAd banners={sidebarBottomBanners} sticky={false} showInquiry={false} />
                   </aside>
                 )}
               </div>
@@ -144,8 +148,11 @@ export default async function Home({ searchParams }) {
               </section>
               <aside className="hidden lg:block w-72 flex-shrink-0 space-y-6">
                 <PopularNews articles={popularArticles} />
-                {sidebarBanners.length > 0 && (
-                  <SidebarAd banners={sidebarBanners} />
+                {sidebarTopBanners.length > 0 && (
+                  <SidebarAd banners={sidebarTopBanners} />
+                )}
+                {sidebarBottomBanners.length > 0 && (
+                  <SidebarAd banners={sidebarBottomBanners} sticky={false} showInquiry={false} />
                 )}
               </aside>
             </div>

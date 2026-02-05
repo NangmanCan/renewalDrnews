@@ -39,9 +39,9 @@ export default async function OpinionPage({ params }) {
   const { id } = await params;
   const opinion = opinions.find((o) => o.id === parseInt(id));
 
-  // 사이드바 배너 가져오기
+  // 사이드바 배너 가져오기 (상단 + 하단 모두)
   const sidebarBanners = initialBanners.filter(
-    (b) => b.type === 'sidebar' && b.isActive && (!b.positions || b.positions.sidebarPC)
+    (b) => b.type === 'sidebar' && b.isActive && (b.positions?.sidebarTop || b.positions?.sidebarBottom)
   );
 
   if (!opinion) {
