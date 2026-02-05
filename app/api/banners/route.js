@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { initialBanners as staticBanners } from '@/data/banners';
 
+export const runtime = 'edge';
+
 export async function GET() {
   if (!supabase) {
     return NextResponse.json(staticBanners);

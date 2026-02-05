@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { opinions as staticOpinions } from '@/data/opinions';
 
+export const runtime = 'edge';
+
 export async function GET() {
   if (!supabase) {
     return NextResponse.json(staticOpinions);
