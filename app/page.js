@@ -100,20 +100,20 @@ export default async function Home({ searchParams }) {
               </div>
 
               {/* 하단 영역: 바이오속보 | 최신뉴스 | 배너광고 */}
-              <div className="flex gap-6">
-                {/* 제약*바이오 속보 (확대) */}
-                <div className="w-72 flex-shrink-0">
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* 제약·바이오 속보 */}
+                <div className="w-full lg:w-72 flex-shrink-0">
                   <BioPharmNews articles={bioPharmArticles} />
                 </div>
 
                 {/* 최신 뉴스 목록 */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <NewsList articles={listArticles} />
                 </div>
 
                 {/* 배너 광고 */}
                 {sidebarBanners.length > 0 && (
-                  <div className="w-64 flex-shrink-0">
+                  <div className="hidden lg:block w-72 flex-shrink-0">
                     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
                       <h3 className="text-sm font-bold text-gray-500 mb-3">광고</h3>
                       <div className="space-y-4">
@@ -145,11 +145,11 @@ export default async function Home({ searchParams }) {
 
           {/* 카테고리 필터 적용 시 */}
           {category && (
-            <div className="flex gap-6">
-              <section className="flex-1">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <section className="flex-1 min-w-0">
                 <NewsList articles={listArticles} />
               </section>
-              <aside className="w-72 flex-shrink-0 space-y-6">
+              <aside className="hidden lg:block w-72 flex-shrink-0 space-y-6">
                 <PopularNews articles={popularArticles} />
                 {sidebarBanners.length > 0 && (
                   <SidebarAd banners={sidebarBanners} />
@@ -184,7 +184,7 @@ export default async function Home({ searchParams }) {
               {/* 많이 본 뉴스 */}
               <PopularNews articles={popularArticles} />
 
-              {/* 제약*바이오 속보 */}
+              {/* 제약·바이오 속보 */}
               <BioPharmNews articles={bioPharmArticles} />
             </>
           )}

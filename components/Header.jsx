@@ -71,8 +71,8 @@ const Header = () => {
         </div>
       </div>
 
-      {/* 하단 카테고리 바 */}
-      <div className="bg-slate-800">
+      {/* 하단 카테고리 바 (데스크탑) */}
+      <div className="hidden md:block bg-slate-800">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between">
             {/* 카테고리 메뉴 */}
