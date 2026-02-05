@@ -109,14 +109,14 @@ const Header = () => {
       </div>
 
       {/* 모바일 카테고리 (스크롤) */}
-      <div className="md:hidden bg-slate-800 overflow-x-auto border-t border-slate-700">
-        <nav className="flex items-center min-w-max">
+      <div className="md:hidden bg-slate-800 overflow-x-auto border-t border-slate-700 scrollbar-hide">
+        <nav className="flex items-center px-2">
           {categories.map((category, index) => (
             <Link
               key={category}
               href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
               className={`
-                px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap
+                flex-shrink-0 px-3 py-2.5 text-sm font-medium transition-colors whitespace-nowrap relative
                 ${category === '오피니언'
                   ? 'text-amber-400'
                   : 'text-gray-300 active:bg-slate-700'
