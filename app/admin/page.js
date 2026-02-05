@@ -21,44 +21,38 @@ const api = {
     }
   },
   async create(endpoint, data) {
-    try {
-      const res = await fetch(`/api/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to create');
-      return await res.json();
-    } catch (error) {
-      console.error(`Error creating ${endpoint}:`, error);
-      return null;
+    const res = await fetch(`/api/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to create');
     }
+    return await res.json();
   },
   async update(endpoint, id, data) {
-    try {
-      const res = await fetch(`/api/${endpoint}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to update');
-      return await res.json();
-    } catch (error) {
-      console.error(`Error updating ${endpoint}:`, error);
-      return null;
+    const res = await fetch(`/api/${endpoint}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to update');
     }
+    return await res.json();
   },
   async remove(endpoint, id) {
-    try {
-      const res = await fetch(`/api/${endpoint}/${id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete');
-      return await res.json();
-    } catch (error) {
-      console.error(`Error deleting ${endpoint}:`, error);
-      return null;
+    const res = await fetch(`/api/${endpoint}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to delete');
     }
+    return await res.json();
   },
 };
 
@@ -1199,15 +1193,21 @@ function AdManager({ banners, setBanners, onRefresh }) {
     .filter((b) => b.type === selectedType)
     .sort((a, b) => a.order - b.order);
 
+  const [toggling, setToggling] = useState(null);
+
   const toggleActive = async (id) => {
     const banner = banners.find(b => b.id === id);
     if (!banner) return;
 
+    setToggling(id);
     try {
       await api.update('banners', id, { ...banner, isActive: !banner.isActive });
-      if (onRefresh) onRefresh();
+      if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Error toggling active:', error);
+      alert(`광고 상태 변경 실패: ${error.message}\n\nCloudflare에 SUPABASE_SERVICE_ROLE_KEY가 설정되어 있는지 확인하세요.`);
+    } finally {
+      setToggling(null);
     }
   };
 
@@ -1222,9 +1222,10 @@ function AdManager({ banners, setBanners, onRefresh }) {
 
     try {
       await api.update('banners', id, { ...banner, positions: newPositions });
-      if (onRefresh) onRefresh();
+      if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Error toggling position:', error);
+      alert(`노출위치 변경 실패: ${error.message}`);
     }
   };
 
@@ -1351,11 +1352,12 @@ function AdManager({ banners, setBanners, onRefresh }) {
                     </button>
                     <button
                       onClick={() => toggleActive(banner.id)}
-                      className={`px-4 py-2 rounded-full font-medium ${
+                      disabled={toggling === banner.id}
+                      className={`px-4 py-2 rounded-full font-medium min-w-[60px] ${
                         banner.isActive ? 'bg-green-500 text-white' : 'bg-gray-300'
-                      }`}
+                      } ${toggling === banner.id ? 'opacity-50' : ''}`}
                     >
-                      {banner.isActive ? 'ON' : 'OFF'}
+                      {toggling === banner.id ? '...' : (banner.isActive ? 'ON' : 'OFF')}
                     </button>
                   </div>
                 </div>
