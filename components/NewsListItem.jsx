@@ -34,7 +34,7 @@ const NewsListItem = ({ article }) => {
             className="object-cover rounded-lg"
           />
         </div>
-        <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed flex-1">
+        <p className="text-sm text-gray-500 leading-relaxed flex-1">
           {article.content}
         </p>
       </div>
