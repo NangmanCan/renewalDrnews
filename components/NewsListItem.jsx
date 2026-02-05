@@ -25,8 +25,8 @@ const NewsListItem = ({ article }) => {
       </h4>
 
       {/* 하단: 사진(좌) + 텍스트(우) */}
-      <div className="flex gap-4">
-        <div className="relative w-32 h-20 flex-shrink-0">
+      <div className="flex gap-3 sm:gap-4">
+        <div className="relative w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0">
           <Image
             src={article.image}
             alt={article.title}
@@ -34,7 +34,7 @@ const NewsListItem = ({ article }) => {
             className="object-cover rounded-lg"
           />
         </div>
-        <p className="text-sm text-gray-500 leading-relaxed flex-1">
+        <p className="text-xs sm:text-sm text-gray-500 leading-relaxed flex-1 line-clamp-3 sm:line-clamp-none">
           {article.content}
         </p>
       </div>
