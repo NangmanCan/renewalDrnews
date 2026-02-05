@@ -6,11 +6,12 @@ export const runtime = 'edge';
 export async function PUT(request, { params }) {
   const serviceClient = getServiceSupabase();
   if (!serviceClient) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'Supabase not configured. SUPABASE_SERVICE_ROLE_KEY 환경변수를 확인하세요.' }, { status: 500 });
   }
 
   try {
     const { id } = await params;
+    const bannerId = parseInt(id, 10);
     const body = await request.json();
     const { data, error } = await serviceClient
       .from('banners')
@@ -27,20 +28,24 @@ export async function PUT(request, { params }) {
         position_mobile_between: body.positions?.mobileBetween ?? false,
         position_mobile_inline: body.positions?.mobileInline ?? false
       })
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', bannerId)
+      .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: '배너를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const updated = data[0];
     return NextResponse.json({
-      ...data,
-      isActive: data.is_active,
-      order: data.sort_order,
+      ...updated,
+      isActive: updated.is_active,
+      order: updated.sort_order,
       positions: {
-        sidebarTop: data.position_sidebar_top,
-        sidebarBottom: data.position_sidebar_bottom,
-        mobileBetween: data.position_mobile_between,
-        mobileInline: data.position_mobile_inline
+        sidebarTop: updated.position_sidebar_top,
+        sidebarBottom: updated.position_sidebar_bottom,
+        mobileBetween: updated.position_mobile_between,
+        mobileInline: updated.position_mobile_inline
       }
     });
   } catch (error) {
@@ -57,10 +62,11 @@ export async function DELETE(request, { params }) {
 
   try {
     const { id } = await params;
+    const bannerId = parseInt(id, 10);
     const { error } = await serviceClient
       .from('banners')
       .delete()
-      .eq('id', id);
+      .eq('id', bannerId);
 
     if (error) throw error;
     return NextResponse.json({ success: true });

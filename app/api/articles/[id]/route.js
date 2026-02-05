@@ -11,9 +11,10 @@ export async function PUT(request, { params }) {
 
   try {
     const { id } = await params;
+    const articleId = parseInt(id, 10);
     const body = await request.json();
 
-    // 기본 업데이트 데이터 (placement 없이)
+    // 기본 업데이트 데이터
     const updateData = {
       title: body.title,
       summary: body.summary,
@@ -24,7 +25,7 @@ export async function PUT(request, { params }) {
       is_headline: body.isHeadline || body.placement === 'headline'
     };
 
-    // placement 필드가 있으면 추가 (컬럼이 없으면 에러 발생할 수 있음)
+    // placement 필드가 있으면 추가
     if (body.placement !== undefined) {
       updateData.placement = body.placement;
     }
@@ -32,17 +33,20 @@ export async function PUT(request, { params }) {
     const { data, error } = await serviceClient
       .from('articles')
       .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', articleId)
+      .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: '기사를 찾을 수 없습니다.' }, { status: 404 });
+    }
 
+    const updated = data[0];
     // 응답 데이터 포맷 변환
     return NextResponse.json({
-      ...data,
-      isHeadline: data.is_headline,
-      placement: data.placement || (data.is_headline ? 'headline' : 'news'),
+      ...updated,
+      isHeadline: updated.is_headline,
+      placement: updated.placement || (updated.is_headline ? 'headline' : 'news'),
     });
   } catch (error) {
     console.error('Error updating article:', error);
@@ -58,10 +62,11 @@ export async function DELETE(request, { params }) {
 
   try {
     const { id } = await params;
+    const articleId = parseInt(id, 10);
     const { error } = await serviceClient
       .from('articles')
       .delete()
-      .eq('id', id);
+      .eq('id', articleId);
 
     if (error) throw error;
     return NextResponse.json({ success: true });

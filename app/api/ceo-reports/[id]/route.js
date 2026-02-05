@@ -11,6 +11,7 @@ export async function PUT(request, { params }) {
 
   try {
     const { id } = await params;
+    const reportId = parseInt(id, 10);
     const body = await request.json();
     const { data, error } = await serviceClient
       .from('ceo_reports')
@@ -24,16 +25,20 @@ export async function PUT(request, { params }) {
         author_image: body.authorImage,
         week_number: body.weekNumber
       })
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', reportId)
+      .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: 'CEO 리포트를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const updated = data[0];
     return NextResponse.json({
-      ...data,
-      authorTitle: data.author_title,
-      authorImage: data.author_image,
-      weekNumber: data.week_number
+      ...updated,
+      authorTitle: updated.author_title,
+      authorImage: updated.author_image,
+      weekNumber: updated.week_number
     });
   } catch (error) {
     console.error('Error updating CEO report:', error);
@@ -49,10 +54,11 @@ export async function DELETE(request, { params }) {
 
   try {
     const { id } = await params;
+    const reportId = parseInt(id, 10);
     const { error } = await serviceClient
       .from('ceo_reports')
       .delete()
-      .eq('id', id);
+      .eq('id', reportId);
 
     if (error) throw error;
     return NextResponse.json({ success: true });

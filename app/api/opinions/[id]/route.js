@@ -11,6 +11,7 @@ export async function PUT(request, { params }) {
 
   try {
     const { id } = await params;
+    const opinionId = parseInt(id, 10);
     const body = await request.json();
     const { data, error } = await serviceClient
       .from('opinions')
@@ -23,15 +24,19 @@ export async function PUT(request, { params }) {
         author_title: body.authorTitle,
         author_image: body.authorImage
       })
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', opinionId)
+      .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: '오피니언을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const updated = data[0];
     return NextResponse.json({
-      ...data,
-      authorTitle: data.author_title,
-      authorImage: data.author_image
+      ...updated,
+      authorTitle: updated.author_title,
+      authorImage: updated.author_image
     });
   } catch (error) {
     console.error('Error updating opinion:', error);
@@ -47,10 +52,11 @@ export async function DELETE(request, { params }) {
 
   try {
     const { id } = await params;
+    const opinionId = parseInt(id, 10);
     const { error } = await serviceClient
       .from('opinions')
       .delete()
-      .eq('id', id);
+      .eq('id', opinionId);
 
     if (error) throw error;
     return NextResponse.json({ success: true });
