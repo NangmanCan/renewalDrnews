@@ -820,9 +820,41 @@ function CeoReportManager({ reports, setReports, onRefresh }) {
 }
 
 // 슬롯 관리 탭
-function SlotManager({ articles, slots, setSlots }) {
+function SlotManager({ articles, slots, setSlots, onRefresh }) {
+  const [saving, setSaving] = useState(false);
+
   const getSlotArticles = (placement) => {
     return slots[placement] || [];
+  };
+
+  // 슬롯 저장 - 각 기사의 placement 업데이트
+  const saveSlots = async () => {
+    setSaving(true);
+    try {
+      const updates = [];
+
+      // 모든 슬롯의 기사들에 대해 placement 업데이트
+      for (const [placement, slotArticles] of Object.entries(slots)) {
+        for (const article of slotArticles) {
+          updates.push(
+            api.update('articles', article.id, {
+              ...article,
+              placement,
+              isHeadline: placement === 'headline',
+            })
+          );
+        }
+      }
+
+      await Promise.all(updates);
+      alert('슬롯 배치가 저장되었습니다.');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error saving slots:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const availableArticles = articles.filter(a => {
@@ -938,7 +970,31 @@ function SlotManager({ articles, slots, setSlots }) {
 
       {/* 우측: 슬롯 배치 */}
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">슬롯 배치</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">슬롯 배치</h2>
+          <button
+            onClick={saveSlots}
+            disabled={saving}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            {saving ? (
+              <>
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                저장 중...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                저장
+              </>
+            )}
+          </button>
+        </div>
         {PLACEMENT_OPTIONS.map(opt => (
           <SlotSection
             key={opt.id}
@@ -1383,7 +1439,17 @@ export default function AdminPage() {
         api.fetchData('banners'),
       ]);
 
-      if (articlesData) setArticles(articlesData);
+      if (articlesData) {
+        setArticles(articlesData);
+        // 슬롯 데이터도 함께 업데이트
+        const newSlots = {
+          headline: articlesData.filter(a => a.placement === 'headline' || a.is_headline || a.isHeadline),
+          subheadline: articlesData.filter(a => a.placement === 'subheadline'),
+          news: articlesData.filter(a => a.placement === 'news' || (!a.placement && !a.is_headline && !a.isHeadline)),
+          opinion: articlesData.filter(a => a.placement === 'opinion'),
+        };
+        setSlots(newSlots);
+      }
       if (opinionsData) setOpinions(opinionsData);
       if (ceoData) setCeoReports(ceoData);
       if (bannersData) setBanners(bannersData);
@@ -1444,7 +1510,7 @@ export default function AdminPage() {
           <CeoReportManager reports={ceoReports} setReports={setCeoReports} onRefresh={loadData} />
         )}
         {currentMenu === 'slots' && (
-          <SlotManager articles={articles} slots={slots} setSlots={setSlots} />
+          <SlotManager articles={articles} slots={slots} setSlots={setSlots} onRefresh={loadData} />
         )}
         {currentMenu === 'ads' && (
           <AdManager banners={banners} setBanners={setBanners} onRefresh={loadData} />
