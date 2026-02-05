@@ -4,10 +4,17 @@ import { initialBanners as staticBanners } from '@/data/banners';
 
 export const runtime = 'edge';
 
+// 캐시 방지 헤더
+const noCacheHeaders = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function GET() {
   const client = supabase;
   if (!client) {
-    return NextResponse.json(staticBanners);
+    return NextResponse.json(staticBanners, { headers: noCacheHeaders });
   }
 
   try {
@@ -31,10 +38,10 @@ export async function GET() {
       }
     })) || [];
 
-    return NextResponse.json(formatted.length > 0 ? formatted : staticBanners);
+    return NextResponse.json(formatted.length > 0 ? formatted : staticBanners, { headers: noCacheHeaders });
   } catch (error) {
     console.error('Error fetching banners:', error);
-    return NextResponse.json(staticBanners);
+    return NextResponse.json(staticBanners, { headers: noCacheHeaders });
   }
 }
 

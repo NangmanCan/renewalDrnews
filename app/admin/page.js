@@ -423,10 +423,11 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
         }
       }
 
+      // 먼저 데이터를 새로고침하고, 그 후에 UI 상태 변경
+      if (onRefresh) await onRefresh();
       setEditingItem(null);
       setActiveTab('list');
       alert(editingItem ? '수정되었습니다.' : '발행되었습니다.');
-      if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Error saving:', error);
       alert(`저장 중 오류가 발생했습니다: ${error.message}`);
@@ -444,8 +445,8 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
       } else {
         await api.remove('articles', item.id);
       }
-      alert('삭제되었습니다.');
       if (onRefresh) await onRefresh();
+      alert('삭제되었습니다.');
     } catch (error) {
       console.error('Error deleting:', error);
       alert(`삭제 중 오류가 발생했습니다: ${error.message}`);
@@ -727,10 +728,11 @@ function CeoReportManager({ reports, setReports, onRefresh }) {
         await api.create('ceo-reports', reportData);
       }
 
+      // 먼저 데이터를 새로고침하고, 그 후에 UI 상태 변경
+      if (onRefresh) await onRefresh();
       setEditingReport(null);
       setActiveTab('list');
       alert(editingReport ? '수정되었습니다.' : '발행되었습니다.');
-      if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error saving CEO report:', error);
       alert('저장 중 오류가 발생했습니다.');
@@ -743,8 +745,8 @@ function CeoReportManager({ reports, setReports, onRefresh }) {
     if (!confirm('정말 삭제하시겠습니까?')) return;
     try {
       await api.remove('ceo-reports', id);
+      if (onRefresh) await onRefresh();
       alert('삭제되었습니다.');
-      if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error deleting CEO report:', error);
       alert('삭제 중 오류가 발생했습니다.');
@@ -1254,10 +1256,11 @@ function AdManager({ banners, setBanners, onRefresh }) {
         await api.create('banners', bannerData);
       }
 
+      // 먼저 데이터를 새로고침하고, 그 후에 UI 상태 변경
+      if (onRefresh) await onRefresh();
       setEditingAd(null);
       setActiveTab('list');
       alert(editingAd ? '수정되었습니다.' : '등록되었습니다.');
-      if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error saving banner:', error);
       alert('저장 중 오류가 발생했습니다.');
@@ -1270,8 +1273,8 @@ function AdManager({ banners, setBanners, onRefresh }) {
     if (!confirm('정말 삭제하시겠습니까?')) return;
     try {
       await api.remove('banners', id);
+      if (onRefresh) await onRefresh();
       alert('삭제되었습니다.');
-      if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error deleting banner:', error);
       alert('삭제 중 오류가 발생했습니다.');

@@ -4,10 +4,17 @@ import { ceoReports as staticCeoReports } from '@/data/ceoReports';
 
 export const runtime = 'edge';
 
+// 캐시 방지 헤더
+const noCacheHeaders = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function GET() {
   const client = supabase;
   if (!client) {
-    return NextResponse.json(staticCeoReports);
+    return NextResponse.json(staticCeoReports, { headers: noCacheHeaders });
   }
 
   try {
@@ -26,10 +33,10 @@ export async function GET() {
       weekNumber: item.week_number
     })) || [];
 
-    return NextResponse.json(formatted.length > 0 ? formatted : staticCeoReports);
+    return NextResponse.json(formatted.length > 0 ? formatted : staticCeoReports, { headers: noCacheHeaders });
   } catch (error) {
     console.error('Error fetching CEO reports:', error);
-    return NextResponse.json(staticCeoReports);
+    return NextResponse.json(staticCeoReports, { headers: noCacheHeaders });
   }
 }
 

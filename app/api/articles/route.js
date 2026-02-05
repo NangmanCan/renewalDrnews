@@ -4,10 +4,17 @@ import { articles as staticArticles } from '@/data/articles';
 
 export const runtime = 'edge';
 
+// 캐시 방지 헤더
+const noCacheHeaders = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function GET() {
   const client = supabase;
   if (!client) {
-    return NextResponse.json(staticArticles);
+    return NextResponse.json(staticArticles, { headers: noCacheHeaders });
   }
 
   try {
@@ -25,10 +32,10 @@ export async function GET() {
       placement: item.placement || (item.is_headline ? 'headline' : 'news'),
     })) || [];
 
-    return NextResponse.json(formatted.length > 0 ? formatted : staticArticles);
+    return NextResponse.json(formatted.length > 0 ? formatted : staticArticles, { headers: noCacheHeaders });
   } catch (error) {
     console.error('Error fetching articles:', error);
-    return NextResponse.json(staticArticles);
+    return NextResponse.json(staticArticles, { headers: noCacheHeaders });
   }
 }
 

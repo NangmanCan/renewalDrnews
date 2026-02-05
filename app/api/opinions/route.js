@@ -4,10 +4,17 @@ import { opinions as staticOpinions } from '@/data/opinions';
 
 export const runtime = 'edge';
 
+// 캐시 방지 헤더
+const noCacheHeaders = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function GET() {
   const client = supabase;
   if (!client) {
-    return NextResponse.json(staticOpinions);
+    return NextResponse.json(staticOpinions, { headers: noCacheHeaders });
   }
 
   try {
@@ -25,10 +32,10 @@ export async function GET() {
       authorImage: item.author_image
     })) || [];
 
-    return NextResponse.json(formatted.length > 0 ? formatted : staticOpinions);
+    return NextResponse.json(formatted.length > 0 ? formatted : staticOpinions, { headers: noCacheHeaders });
   } catch (error) {
     console.error('Error fetching opinions:', error);
-    return NextResponse.json(staticOpinions);
+    return NextResponse.json(staticOpinions, { headers: noCacheHeaders });
   }
 }
 
