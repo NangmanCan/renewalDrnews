@@ -5,54 +5,129 @@ import { usePathname } from 'next/navigation';
 
 const Header = () => {
   const pathname = usePathname();
-  const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오'];
+  const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '오피니언'];
+
+  // 현재 날짜 포맷
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  });
 
   return (
-    <header className="bg-navy text-white sticky top-0 z-50 shadow-lg">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <span className="text-2xl font-bold text-white">Dr.News</span>
-          </Link>
+    <header className="bg-white sticky top-0 z-50 shadow-sm">
+      {/* 상단 로고 영역 */}
+      <div className="border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-20">
+            {/* 왼쪽: 날짜 */}
+            <div className="hidden md:flex flex-col items-start min-w-[180px]">
+              <span className="text-xs text-gray-500 font-medium tracking-wide">
+                {dateStr}
+              </span>
+              <span className="text-[10px] text-gray-400 mt-0.5">
+                대한민국 의료 전문 미디어
+              </span>
+            </div>
 
-          {/* GNB Menu */}
-          <nav className="hidden md:flex items-center gap-8">
-            {categories.map((category) => (
-              <Link
-                key={category}
-                href={`/?category=${encodeURIComponent(category)}`}
-                className="text-gray-300 hover:text-white transition-colors font-medium"
-              >
-                {category}
-              </Link>
-            ))}
-          </nav>
+            {/* 가운데: 로고 */}
+            <Link href="/" className="flex flex-col items-center hover:opacity-80 transition-opacity">
+              {/* 메인 로고 */}
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  Dr.
+                </span>
+                <span className="text-3xl md:text-4xl font-black text-sky-600 tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  News
+                </span>
+              </div>
+              {/* 서브 타이틀 */}
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="h-px w-6 bg-gray-300"></span>
+                <span className="text-[10px] text-gray-500 font-medium tracking-widest uppercase">
+                  Medical Journal
+                </span>
+                <span className="h-px w-6 bg-gray-300"></span>
+              </div>
+            </Link>
 
-          {/* Admin Button */}
-          <Link
-            href="/admin"
-            className="px-4 py-2 bg-sky-600 hover:bg-sky-700 rounded-md font-medium transition-colors"
-          >
-            관리자
-          </Link>
+            {/* 오른쪽: 배너 광고 영역 */}
+            <div className="hidden md:flex items-center min-w-[180px] justify-end">
+              <div className="w-[160px] h-[50px] bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                <span className="text-xs text-gray-400">AD 160x50</span>
+              </div>
+            </div>
+
+            {/* 모바일: 관리자 버튼 */}
+            <Link
+              href="/admin"
+              className="md:hidden px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-sm font-medium transition-colors"
+            >
+              관리자
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      <nav className="md:hidden border-t border-slate-700">
-        <div className="flex justify-around py-3">
+      {/* 하단 카테고리 바 */}
+      <div className="bg-slate-800">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between">
+            {/* 카테고리 메뉴 */}
+            <nav className="flex items-center">
+              {categories.map((category, index) => (
+                <Link
+                  key={category}
+                  href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
+                  className={`
+                    px-4 py-3 text-sm font-medium transition-colors relative
+                    ${category === '오피니언'
+                      ? 'text-amber-400 hover:text-amber-300'
+                      : 'text-gray-300 hover:text-white hover:bg-slate-700'
+                    }
+                  `}
+                >
+                  {category}
+                  {index < categories.length - 1 && (
+                    <span className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-slate-600"></span>
+                  )}
+                </Link>
+              ))}
+            </nav>
+
+            {/* 관리자 버튼 (데스크탑) */}
+            <Link
+              href="/admin"
+              className="hidden md:block px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded text-sm font-medium transition-colors"
+            >
+              관리자
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* 모바일 카테고리 (스크롤) */}
+      <div className="md:hidden bg-slate-800 overflow-x-auto">
+        <div className="flex items-center px-2 py-2 gap-1 min-w-max">
           {categories.map((category) => (
             <Link
               key={category}
-              href={`/?category=${encodeURIComponent(category)}`}
-              className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
+              href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
+              className={`
+                px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap
+                ${category === '오피니언'
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                }
+              `}
             >
               {category}
             </Link>
           ))}
         </div>
-      </nav>
+      </div>
     </header>
   );
 };
