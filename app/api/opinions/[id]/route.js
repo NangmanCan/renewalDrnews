@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getServiceSupabase } from '@/lib/supabase';
 
 export const runtime = 'edge';
 
 export async function PUT(request, { params }) {
-  if (!supabase) {
+  const serviceClient = getServiceSupabase();
+  if (!serviceClient) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { data, error } = await supabase
+    const { data, error } = await serviceClient
       .from('opinions')
       .update({
         title: body.title,
@@ -39,13 +40,14 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-  if (!supabase) {
+  const serviceClient = getServiceSupabase();
+  if (!serviceClient) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
   }
 
   try {
     const { id } = await params;
-    const { error } = await supabase
+    const { error } = await serviceClient
       .from('opinions')
       .delete()
       .eq('id', id);
