@@ -17,7 +17,15 @@ export async function GET() {
       .order('date', { ascending: false });
 
     if (error) throw error;
-    return NextResponse.json(data?.length > 0 ? data : staticArticles);
+
+    // DB 필드명을 JS 형식으로 변환
+    const formatted = data?.map(item => ({
+      ...item,
+      isHeadline: item.is_headline,
+      placement: item.placement || (item.is_headline ? 'headline' : 'news'),
+    })) || [];
+
+    return NextResponse.json(formatted.length > 0 ? formatted : staticArticles);
   } catch (error) {
     console.error('Error fetching articles:', error);
     return NextResponse.json(staticArticles);
