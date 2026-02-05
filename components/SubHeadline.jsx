@@ -11,9 +11,9 @@ const SubHeadline = ({ article }) => {
       href={`/article/${article.id}`}
       className="block bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden"
     >
-      <div className="flex gap-5 p-5">
-        {/* 좌측 썸네일 */}
-        <div className="relative w-64 h-44 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 p-4 sm:p-5">
+        {/* 썸네일 */}
+        <div className="relative w-full sm:w-64 aspect-video sm:aspect-[16/11] flex-shrink-0">
           <Image
             src={article.image}
             alt={article.title}
@@ -22,7 +22,7 @@ const SubHeadline = ({ article }) => {
           />
         </div>
 
-        {/* 우측 텍스트 */}
+        {/* 텍스트 */}
         <div className="flex flex-col flex-1 min-w-0">
           <span className="text-xs font-medium text-sky-600 mb-2">
             {article.category}
