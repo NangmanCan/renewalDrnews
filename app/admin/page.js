@@ -12,7 +12,10 @@ import { initialBanners as staticBanners } from '@/data/banners';
 const api = {
   async fetchData(endpoint) {
     try {
-      const res = await fetch(`/api/${endpoint}`);
+      // 캐시 방지를 위해 타임스탬프 추가
+      const res = await fetch(`/api/${endpoint}?t=${Date.now()}`, {
+        cache: 'no-store',
+      });
       if (!res.ok) throw new Error('Failed to fetch');
       return await res.json();
     } catch (error) {
