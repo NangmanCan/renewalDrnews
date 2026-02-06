@@ -21,13 +21,14 @@ export async function GET() {
     const { data, error } = await client
       .from('articles')
       .select('*')
-      .order('date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
     // DB 필드명을 JS 형식으로 변환
     const formatted = data?.map(item => ({
       ...item,
+      date: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : null,
       isHeadline: item.is_headline,
       placement: item.placement || (item.is_headline ? 'headline' : 'news'),
     })) || [];
