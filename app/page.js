@@ -32,7 +32,10 @@ export default async function Home({ searchParams }) {
     getBanners()
   ]);
 
-  let regularArticles = allArticles.filter((a) => !a.isHeadline && !a.is_headline);
+  // 미배치(placement: 'none') 기사는 프론트엔드에서 제외
+  const visibleArticles = allArticles.filter(a => a.placement !== 'none');
+
+  let regularArticles = visibleArticles.filter((a) => !a.isHeadline && !a.is_headline);
 
   // 서브 헤드라인 (최신 1개)
   const subHeadlineArticles = await getSubHeadlineArticles(1);
@@ -42,7 +45,7 @@ export default async function Home({ searchParams }) {
   let listArticles = regularArticles.filter(a => a.id !== subHeadlineArticle?.id);
 
   // 바이오/제약/AI 속보 (산업, AI 카테고리) - 5개로 확대
-  const bioPharmArticles = allArticles
+  const bioPharmArticles = visibleArticles
     .filter(a => a.category === '산업' || a.category === 'AI' || a.category === '제약·바이오')
     .slice(0, 5);
 
