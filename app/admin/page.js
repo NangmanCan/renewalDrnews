@@ -855,7 +855,7 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
       if (onRefresh) await onRefresh();
     } catch (error) {
       console.error('Error saving slots:', error);
-      alert(`저장 중 오류가 발생했습니다: ${error.message}\n\nSupabase에 placement 컬럼이 있는지 확인하세요.`);
+      alert(`저장 중 오류가 발생했습니다: ${error.message}\n\n슬롯에 배치된 기사가 Supabase에 실제로 존재하는지 확인하세요.\n(정적 데이터는 저장할 수 없습니다)`);
     } finally {
       setSaving(false);
     }
