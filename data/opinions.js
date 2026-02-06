@@ -12,7 +12,8 @@ export const opinions = [
     authorTitle: "前 식품의약품안전처 의료기기심사부장",
     authorImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
     date: "2026-02-03",
-    category: "칼럼"
+    category: "칼럼",
+    isFeatured: true
   },
   {
     id: 2,
@@ -27,7 +28,8 @@ export const opinions = [
     authorTitle: "의료경영학 박사 / 헬스케어 컨설턴트",
     authorImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
     date: "2026-02-01",
-    category: "기고"
+    category: "기고",
+    isFeatured: true
   },
   {
     id: 3,
@@ -42,7 +44,8 @@ export const opinions = [
     authorTitle: "서울대학교 의과대학 교수",
     authorImage: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop",
     date: "2026-01-28",
-    category: "칼럼"
+    category: "칼럼",
+    isFeatured: true
   }
 ];
 

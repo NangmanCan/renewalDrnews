@@ -27,9 +27,13 @@ CREATE TABLE IF NOT EXISTS opinions (
   author TEXT NOT NULL,
   author_title TEXT,
   author_image TEXT,
+  is_featured BOOLEAN DEFAULT TRUE, -- 슬롯 관리: 프론트엔드 오피니언 섹션 노출 여부
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 기존 DB 마이그레이션: opinions 테이블에 is_featured 컬럼 추가
+-- ALTER TABLE opinions ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT TRUE;
 
 -- 3. CEO Reports (CEO 리포트) 테이블
 CREATE TABLE IF NOT EXISTS ceo_reports (

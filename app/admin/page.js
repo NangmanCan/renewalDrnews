@@ -69,7 +69,7 @@ const PLACEMENT_OPTIONS = [
   { id: 'headline', label: '헤드라인 슬라이더', color: 'red', max: 1 },
   { id: 'subheadline', label: '서브헤드라인', color: 'blue', max: 1 },
   { id: 'news', label: '최신뉴스 목록', color: 'gray', max: null },
-  { id: 'opinion', label: '오피니언 기고란', color: 'violet', max: 2 },
+  { id: 'opinion', label: '오피니언 기고란', color: 'violet', max: 3 },
 ];
 
 // 이미지 사이즈 가이드
@@ -824,25 +824,32 @@ function CeoReportManager({ reports, setReports, onRefresh }) {
 }
 
 // 슬롯 관리 탭
-function SlotManager({ articles, slots, setSlots, onRefresh }) {
+function SlotManager({ articles, opinions, slots, setSlots, onRefresh }) {
   const [saving, setSaving] = useState(false);
 
-  const getSlotArticles = (placement) => {
+  // 기사 슬롯 옵션 (오피니언 제외)
+  const articlePlacementOptions = PLACEMENT_OPTIONS.filter(opt => opt.id !== 'opinion');
+  const opinionOption = PLACEMENT_OPTIONS.find(opt => opt.id === 'opinion');
+
+  const getSlotItems = (placement) => {
     return slots[placement] || [];
   };
 
-  // 슬롯 저장 - 각 기사의 placement 업데이트
+  // 슬롯 저장
   const saveSlots = async () => {
     setSaving(true);
     try {
       const updates = [];
 
-      // 현재 슬롯에 배치된 기사 ID 목록
-      const slottedIds = new Set(Object.values(slots).flat().map(a => a.id));
+      // --- 기사 슬롯 저장 (headline, subheadline, news) ---
+      const articleSlotIds = new Set(
+        ['headline', 'subheadline', 'news']
+          .flatMap(p => (slots[p] || []).map(a => a.id))
+      );
 
-      // 1. 슬롯에 배치된 기사들: placement가 변경된 경우만 업데이트
-      for (const [placement, slotArticles] of Object.entries(slots)) {
-        for (const article of slotArticles) {
+      // 1. 기사 슬롯에 배치된 기사들: placement가 변경된 경우만 업데이트
+      for (const placement of ['headline', 'subheadline', 'news']) {
+        for (const article of (slots[placement] || [])) {
           if (article.placement !== placement) {
             updates.push(
               api.update('articles', article.id, {
@@ -855,14 +862,29 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
         }
       }
 
-      // 2. 슬롯에서 제거된 기사들은 미배치('none')로 변경
+      // 2. 기사 슬롯에서 제거된 기사들은 미배치('none')로 변경
       for (const article of articles) {
-        if (!slottedIds.has(article.id) && article.placement !== 'none') {
+        if (!articleSlotIds.has(article.id) && article.placement !== 'none') {
           updates.push(
             api.update('articles', article.id, {
               ...article,
               placement: 'none',
               isHeadline: false,
+            })
+          );
+        }
+      }
+
+      // --- 오피니언 슬롯 저장 (is_featured 업데이트) ---
+      const featuredOpinionIds = new Set((slots.opinion || []).map(o => o.id));
+      for (const opinion of opinions) {
+        const shouldBeFeatured = featuredOpinionIds.has(opinion.id);
+        const currentlyFeatured = opinion.isFeatured !== false;
+        if (shouldBeFeatured !== currentlyFeatured) {
+          updates.push(
+            api.update('opinions', opinion.id, {
+              ...opinion,
+              isFeatured: shouldBeFeatured,
             })
           );
         }
@@ -875,19 +897,26 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
       alert('슬롯 배치가 저장되었습니다.');
     } catch (error) {
       console.error('Error saving slots:', error);
-      alert(`저장 중 오류가 발생했습니다: ${error.message}\n\n슬롯에 배치된 기사가 Supabase에 실제로 존재하는지 확인하세요.\n(정적 데이터는 저장할 수 없습니다)`);
+      alert(`저장 중 오류가 발생했습니다: ${error.message}\n\n데이터가 Supabase에 실제로 존재하는지 확인하세요.\n(정적 데이터는 저장할 수 없습니다)`);
     } finally {
       setSaving(false);
     }
   };
 
+  // 기사 슬롯에 배치되지 않은 기사들
   const availableArticles = articles.filter(a => {
-    // 이미 슬롯에 배치된 기사 제외
-    const allSlotIds = Object.values(slots).flat().map(a => a.id);
-    return !allSlotIds.includes(a.id);
+    const allArticleSlotIds = ['headline', 'subheadline', 'news']
+      .flatMap(p => (slots[p] || []).map(a => a.id));
+    return !allArticleSlotIds.includes(a.id);
   });
 
-  const addToSlot = (placement, article) => {
+  // 오피니언 슬롯에 배치되지 않은 오피니언들
+  const availableOpinions = opinions.filter(o => {
+    const opinionSlotIds = (slots.opinion || []).map(o => o.id);
+    return !opinionSlotIds.includes(o.id);
+  });
+
+  const addToSlot = (placement, item) => {
     const opt = PLACEMENT_OPTIONS.find(o => o.id === placement);
     const currentSlot = slots[placement] || [];
 
@@ -898,46 +927,50 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
 
     setSlots({
       ...slots,
-      [placement]: [...currentSlot, article],
+      [placement]: [...currentSlot, item],
     });
   };
 
-  const removeFromSlot = (placement, articleId) => {
+  const removeFromSlot = (placement, itemId) => {
     setSlots({
       ...slots,
-      [placement]: (slots[placement] || []).filter(a => a.id !== articleId),
+      [placement]: (slots[placement] || []).filter(a => a.id !== itemId),
     });
   };
 
   const SlotSection = ({ placement, label, color, max }) => {
-    const slotArticles = getSlotArticles(placement);
+    const slotItems = getSlotItems(placement);
     const borderColors = {
       red: 'border-red-300 bg-red-50',
       blue: 'border-blue-300 bg-blue-50',
       violet: 'border-violet-300 bg-violet-50',
       gray: 'border-gray-300 bg-gray-50',
     };
+    const isOpinion = placement === 'opinion';
 
     return (
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-gray-700">{label}</h3>
           <span className="text-sm text-gray-400">
-            {slotArticles.length}{max ? ` / ${max}` : ''}개
+            {slotItems.length}{max ? ` / ${max}` : ''}개
           </span>
         </div>
         <div className={`p-4 border-2 border-dashed rounded-lg min-h-[80px] ${borderColors[color]}`}>
-          {slotArticles.length > 0 ? (
+          {slotItems.length > 0 ? (
             <div className="space-y-2">
-              {slotArticles.map((article, idx) => (
-                <div key={article.id} className="flex items-center justify-between bg-white p-2 rounded">
-                  <div className="flex items-center gap-2">
+              {slotItems.map((item, idx) => (
+                <div key={item.id} className="flex items-center justify-between bg-white p-2 rounded">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xs font-bold text-gray-400">{idx + 1}</span>
-                    <span className="text-sm font-medium truncate">{article.title}</span>
+                    <span className="text-sm font-medium truncate">{item.title}</span>
+                    {isOpinion && item.author && (
+                      <span className="text-xs text-violet-500 flex-shrink-0">{item.author}</span>
+                    )}
                   </div>
                   <button
-                    onClick={() => removeFromSlot(placement, article.id)}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    onClick={() => removeFromSlot(placement, item.id)}
+                    className="p-1 hover:bg-gray-100 rounded flex-shrink-0"
                   >
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -947,7 +980,9 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 text-center text-sm py-4">기사를 배치하세요</p>
+            <p className="text-gray-400 text-center text-sm py-4">
+              {isOpinion ? '오피니언을 배치하세요' : '기사를 배치하세요'}
+            </p>
           )}
         </div>
       </div>
@@ -956,39 +991,73 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* 좌측: 기사 선택 */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">기사 선택</h2>
-        <div className="space-y-3 max-h-[600px] overflow-y-auto">
-          {availableArticles.map((article) => (
-            <div key={article.id} className="p-3 border border-gray-200 rounded-lg">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                      {article.category}
-                    </span>
-                    <span className="text-xs text-gray-400">{article.date}</span>
+      {/* 좌측: 기사 / 오피니언 선택 */}
+      <div className="space-y-6">
+        {/* 기사 선택 */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">기사 선택</h2>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            {availableArticles.map((article) => (
+              <div key={article.id} className="p-3 border border-gray-200 rounded-lg">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                        {article.category}
+                      </span>
+                      <span className="text-xs text-gray-400">{article.date}</span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 truncate">{article.title}</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-900 truncate">{article.title}</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  {PLACEMENT_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => addToSlot(opt.id, article)}
-                      className="text-[10px] px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded whitespace-nowrap"
-                    >
-                      {opt.label.replace(' 슬라이더', '').replace(' 목록', '').replace(' 기고란', '')}
-                    </button>
-                  ))}
+                  <div className="flex flex-col gap-1">
+                    {articlePlacementOptions.map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => addToSlot(opt.id, article)}
+                        className="text-[10px] px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded whitespace-nowrap"
+                      >
+                        {opt.label.replace(' 슬라이더', '').replace(' 목록', '')}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          {availableArticles.length === 0 && (
-            <p className="text-center text-gray-400 py-8">모든 기사가 배치되었습니다</p>
-          )}
+            ))}
+            {availableArticles.length === 0 && (
+              <p className="text-center text-gray-400 py-4">모든 기사가 배치되었습니다</p>
+            )}
+          </div>
+        </div>
+
+        {/* 오피니언 선택 */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">오피니언 선택</h2>
+          <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            {availableOpinions.map((opinion) => (
+              <div key={opinion.id} className="p-3 border border-violet-200 rounded-lg">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs px-2 py-0.5 bg-violet-100 text-violet-600 rounded">
+                        {opinion.category}
+                      </span>
+                      <span className="text-xs text-gray-400">{opinion.author}</span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 truncate">{opinion.title}</p>
+                  </div>
+                  <button
+                    onClick={() => addToSlot('opinion', opinion)}
+                    className="text-[10px] px-2 py-1 bg-violet-100 hover:bg-violet-200 text-violet-700 rounded whitespace-nowrap"
+                  >
+                    오피니언
+                  </button>
+                </div>
+              </div>
+            ))}
+            {availableOpinions.length === 0 && (
+              <p className="text-center text-gray-400 py-4">모든 오피니언이 배치되었습니다</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1472,22 +1541,22 @@ export default function AdminPage() {
         api.fetchData('banners'),
       ]);
 
-      if (articlesData) {
-        setArticles(articlesData);
-        // 슬롯 데이터도 함께 업데이트 (placement 필드 기준)
-        // API 응답에서 is_headline → placement 매핑이 이미 처리됨
-        // placement가 'none'이거나 null인 기사는 미배치(기사 선택 풀)로 분류
-        const newSlots = {
-          headline: articlesData.filter(a => a.placement === 'headline'),
-          subheadline: articlesData.filter(a => a.placement === 'subheadline'),
-          news: articlesData.filter(a => a.placement === 'news' || (!a.placement && !a.is_headline && !a.isHeadline)),
-          opinion: articlesData.filter(a => a.placement === 'opinion'),
-        };
-        setSlots(newSlots);
-      }
+      if (articlesData) setArticles(articlesData);
       if (opinionsData) setOpinions(opinionsData);
       if (ceoData) setCeoReports(ceoData);
       if (bannersData) setBanners(bannersData);
+
+      // 슬롯 데이터 업데이트
+      // - 기사 슬롯: articles의 placement 필드 기준
+      // - 오피니언 슬롯: opinions의 isFeatured 필드 기준
+      // - placement가 'none'이거나 null인 기사 / isFeatured=false인 오피니언 → 미배치 풀
+      const newSlots = {
+        headline: (articlesData || []).filter(a => a.placement === 'headline'),
+        subheadline: (articlesData || []).filter(a => a.placement === 'subheadline'),
+        news: (articlesData || []).filter(a => a.placement === 'news' || (!a.placement && !a.is_headline && !a.isHeadline)),
+        opinion: (opinionsData || []).filter(o => o.isFeatured !== false),
+      };
+      setSlots(newSlots);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -1545,7 +1614,7 @@ export default function AdminPage() {
           <CeoReportManager reports={ceoReports} setReports={setCeoReports} onRefresh={loadData} />
         )}
         {currentMenu === 'slots' && (
-          <SlotManager articles={articles} slots={slots} setSlots={setSlots} onRefresh={loadData} />
+          <SlotManager articles={articles} opinions={opinions} slots={slots} setSlots={setSlots} onRefresh={loadData} />
         )}
         {currentMenu === 'ads' && (
           <AdManager banners={banners} setBanners={setBanners} onRefresh={loadData} />

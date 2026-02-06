@@ -13,17 +13,23 @@ export async function PUT(request, { params }) {
     const { id } = await params;
     const opinionId = parseInt(id, 10);
     const body = await request.json();
+    const updateData = {
+      title: body.title,
+      summary: body.summary,
+      content: body.content,
+      category: body.category,
+      author: body.author,
+      author_title: body.authorTitle,
+      author_image: body.authorImage,
+    };
+    // is_featured 필드가 있으면 추가 (슬롯 관리에서 사용)
+    if (body.isFeatured !== undefined) {
+      updateData.is_featured = body.isFeatured;
+    }
+
     const { data, error } = await serviceClient
       .from('opinions')
-      .update({
-        title: body.title,
-        summary: body.summary,
-        content: body.content,
-        category: body.category,
-        author: body.author,
-        author_title: body.authorTitle,
-        author_image: body.authorImage
-      })
+      .update(updateData)
       .eq('id', opinionId)
       .select();
 

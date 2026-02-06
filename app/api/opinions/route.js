@@ -29,7 +29,8 @@ export async function GET() {
     const formatted = data?.map(item => ({
       ...item,
       authorTitle: item.author_title,
-      authorImage: item.author_image
+      authorImage: item.author_image,
+      isFeatured: item.is_featured !== false, // 기본값 true (NULL 포함)
     })) || [];
 
     return NextResponse.json(formatted.length > 0 ? formatted : staticOpinions, { headers: noCacheHeaders });
