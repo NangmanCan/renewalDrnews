@@ -154,6 +154,36 @@ export default async function Home({ searchParams }) {
                 <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
               )}
 
+              {/* 최신 뉴스: 헤드라인 바로 밑 - 상단 2열 썸네일 + 텍스트 목록 (10개 제한) */}
+              {listArticles.length > 0 && (
+                <div>
+                  {listArticles.length >= 2 && (
+                    <MobileTopCards articles={listArticles.slice(0, 2)} />
+                  )}
+                  <div className="bg-white border border-gray-200">
+                    <div className="px-4 py-2">
+                      {listArticles.slice(listArticles.length >= 2 ? 2 : 0, 10).map((article, index) => (
+                        <div key={article.id}>
+                          <NewsListItem article={article} compact />
+                          {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
+                            <div className="py-3 border-b border-gray-100">
+                              <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {listArticles.length > 10 && (
+                      <div className="border-t border-gray-200 py-4 text-center">
+                        <a href="/?category=전체" className="text-sm font-bold text-gray-600 hover:text-navy transition-colors">
+                          MORE +
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* 서브 헤드라인 */}
               {subHeadlineArticle && (
                 <SubHeadline article={subHeadlineArticle} />
@@ -170,7 +200,7 @@ export default async function Home({ searchParams }) {
               {/* 많이 본 뉴스 */}
               <PopularNews articles={popularArticles} />
 
-              {/* 네이티브 광고 (많이본뉴스-제약바이오 사이) */}
+              {/* 네이티브 광고 */}
               {sidebarBanners.length > 0 && (
                 <NativeAd banner={sidebarBanners[0]} />
               )}
@@ -180,28 +210,20 @@ export default async function Home({ searchParams }) {
             </>
           )}
 
-          {/* 최신 뉴스: 상단 2열 썸네일 + 텍스트 목록 */}
-          {listArticles.length > 0 && (
-            <div>
-              {/* 상단 2열 썸네일 카드 */}
-              {listArticles.length >= 2 && (
-                <MobileTopCards articles={listArticles.slice(0, 2)} />
-              )}
-
-              {/* 텍스트 헤드라인 목록 */}
-              <div className="bg-white border border-gray-200">
-                <div className="px-4 py-2">
-                  {listArticles.slice(listArticles.length >= 2 ? 2 : 0).map((article, index) => (
-                    <div key={article.id}>
-                      <NewsListItem article={article} compact />
-                      {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
-                        <div className="py-3 border-b border-gray-100">
-                          <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+          {/* 카테고리 필터 시 전체 목록 */}
+          {category && listArticles.length > 0 && (
+            <div className="bg-white border border-gray-200">
+              <div className="px-4 py-2">
+                {listArticles.map((article, index) => (
+                  <div key={article.id}>
+                    <NewsListItem article={article} compact />
+                    {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
+                      <div className="py-3 border-b border-gray-100">
+                        <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
