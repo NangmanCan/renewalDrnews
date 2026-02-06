@@ -840,38 +840,39 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
       // 현재 슬롯에 배치된 기사 ID 목록
       const slottedIds = new Set(Object.values(slots).flat().map(a => a.id));
 
-      // 1. 슬롯에 배치된 기사들의 placement 업데이트
+      // 1. 슬롯에 배치된 기사들: placement가 변경된 경우만 업데이트
       for (const [placement, slotArticles] of Object.entries(slots)) {
         for (const article of slotArticles) {
-          updates.push(
-            api.update('articles', article.id, {
-              ...article,
-              placement,
-              isHeadline: placement === 'headline',
-            })
-          );
-        }
-      }
-
-      // 2. 슬롯에서 제거된 기사들은 'news'로 리셋
-      for (const article of articles) {
-        if (!slottedIds.has(article.id)) {
-          // 기존에 특별한 placement가 있었던 기사만 업데이트
-          if (article.placement && article.placement !== 'news') {
+          if (article.placement !== placement) {
             updates.push(
               api.update('articles', article.id, {
                 ...article,
-                placement: 'news',
-                isHeadline: false,
+                placement,
+                isHeadline: placement === 'headline',
               })
             );
           }
         }
       }
 
-      await Promise.all(updates);
-      alert('슬롯 배치가 저장되었습니다.');
+      // 2. 슬롯에서 제거된 기사들은 미배치('none')로 변경
+      for (const article of articles) {
+        if (!slottedIds.has(article.id) && article.placement !== 'none') {
+          updates.push(
+            api.update('articles', article.id, {
+              ...article,
+              placement: 'none',
+              isHeadline: false,
+            })
+          );
+        }
+      }
+
+      if (updates.length > 0) {
+        await Promise.all(updates);
+      }
       if (onRefresh) await onRefresh();
+      alert('슬롯 배치가 저장되었습니다.');
     } catch (error) {
       console.error('Error saving slots:', error);
       alert(`저장 중 오류가 발생했습니다: ${error.message}\n\n슬롯에 배치된 기사가 Supabase에 실제로 존재하는지 확인하세요.\n(정적 데이터는 저장할 수 없습니다)`);
@@ -1473,9 +1474,11 @@ export default function AdminPage() {
 
       if (articlesData) {
         setArticles(articlesData);
-        // 슬롯 데이터도 함께 업데이트
+        // 슬롯 데이터도 함께 업데이트 (placement 필드 기준)
+        // API 응답에서 is_headline → placement 매핑이 이미 처리됨
+        // placement가 'none'이거나 null인 기사는 미배치(기사 선택 풀)로 분류
         const newSlots = {
-          headline: articlesData.filter(a => a.placement === 'headline' || a.is_headline || a.isHeadline),
+          headline: articlesData.filter(a => a.placement === 'headline'),
           subheadline: articlesData.filter(a => a.placement === 'subheadline'),
           news: articlesData.filter(a => a.placement === 'news' || (!a.placement && !a.is_headline && !a.isHeadline)),
           opinion: articlesData.filter(a => a.placement === 'opinion'),
