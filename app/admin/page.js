@@ -837,7 +837,10 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
     try {
       const updates = [];
 
-      // 모든 슬롯의 기사들에 대해 placement 업데이트
+      // 현재 슬롯에 배치된 기사 ID 목록
+      const slottedIds = new Set(Object.values(slots).flat().map(a => a.id));
+
+      // 1. 슬롯에 배치된 기사들의 placement 업데이트
       for (const [placement, slotArticles] of Object.entries(slots)) {
         for (const article of slotArticles) {
           updates.push(
@@ -847,6 +850,22 @@ function SlotManager({ articles, slots, setSlots, onRefresh }) {
               isHeadline: placement === 'headline',
             })
           );
+        }
+      }
+
+      // 2. 슬롯에서 제거된 기사들은 'news'로 리셋
+      for (const article of articles) {
+        if (!slottedIds.has(article.id)) {
+          // 기존에 특별한 placement가 있었던 기사만 업데이트
+          if (article.placement && article.placement !== 'news') {
+            updates.push(
+              api.update('articles', article.id, {
+                ...article,
+                placement: 'news',
+                isHeadline: false,
+              })
+            );
+          }
         }
       }
 
