@@ -8,6 +8,9 @@ const nextConfig = {
       },
     ],
   },
+  turbopack: {
+    root: '/home/user/renewalDrnews',
+  },
 };
 
 module.exports = nextConfig;

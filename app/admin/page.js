@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { articles as staticArticles } from '@/data/articles';
@@ -83,6 +84,7 @@ const IMAGE_GUIDES = {
 
 // 사이드바 컴포넌트
 function AdminSidebar({ currentMenu, setCurrentMenu }) {
+  const router = useRouter();
   const menuItems = [
     { id: 'articles', label: '기사 관리', icon: '📰' },
     { id: 'ceo', label: 'CEO 리포트', icon: '✍️' },
@@ -90,8 +92,14 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
     { id: 'ads', label: '광고 관리', icon: '📊' },
   ];
 
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/admin/login');
+    router.refresh();
+  };
+
   return (
-    <aside className="w-64 bg-navy min-h-screen p-4">
+    <aside className="w-64 bg-navy min-h-screen p-4 flex flex-col">
       <div className="mb-8">
         <Link href="/" className="text-xl font-bold text-white">
           Dr.News
@@ -99,7 +107,7 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
         <p className="text-gray-400 text-sm mt-1">관리자 페이지</p>
       </div>
 
-      <nav className="space-y-2">
+      <nav className="space-y-2 flex-1">
         {menuItems.map((item) => (
           <button
             key={item.id}
@@ -116,7 +124,7 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
         ))}
       </nav>
 
-      <div className="mt-8 pt-8 border-t border-slate-700">
+      <div className="mt-8 pt-8 border-t border-slate-700 space-y-3">
         <Link
           href="/"
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
@@ -126,6 +134,15 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
           </svg>
           사이트로 돌아가기
         </Link>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors w-full"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          로그아웃
+        </button>
       </div>
     </aside>
   );
