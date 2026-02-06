@@ -7,8 +7,8 @@ import SidebarAd from '@/components/SidebarAd';
 import { getArticleById, getRelatedArticles, getArticles } from '@/lib/articles';
 import { getBanners } from '@/lib/banners';
 
-// 동적 렌더링 강제 (실시간 데이터 반영)
-export const dynamic = 'force-dynamic';
+// ISR: 60초 캐시 후 자동 갱신
+export const revalidate = 60;
 export const runtime = 'edge';
 
 export async function generateMetadata({ params }) {

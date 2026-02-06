@@ -14,8 +14,8 @@ import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions, getOpinions } from '@/lib/opinions';
 import { getBanners } from '@/lib/banners';
 
-// 동적 렌더링 강제 (CMS 수정 즉시 반영)
-export const dynamic = 'force-dynamic';
+// ISR: 60초 캐시 후 자동 갱신 (CMS 변경 1분 내 반영)
+export const revalidate = 60;
 export const runtime = 'edge';
 
 export default async function Home({ searchParams }) {

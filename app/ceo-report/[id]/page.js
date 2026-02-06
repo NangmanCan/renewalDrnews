@@ -2,8 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getCeoReportById, getCeoReports } from '@/lib/ceoReports';
 
-// 동적 렌더링 강제 (실시간 데이터 반영)
-export const dynamic = 'force-dynamic';
+// ISR: 60초 캐시 후 자동 갱신
+export const revalidate = 60;
 export const runtime = 'edge';
 
 export default async function CeoReportPage({ params }) {
