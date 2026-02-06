@@ -11,8 +11,8 @@ module.exports = {
         'medical-blue': '#0284c7',
       },
       fontFamily: {
-        headline: ['"Noto Serif KR"', 'Georgia', '"Times New Roman"', 'serif'],
-        sans: ['"Noto Sans KR"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        headline: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
     },
   },
