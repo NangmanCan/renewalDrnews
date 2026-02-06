@@ -6,14 +6,20 @@ import Link from 'next/link';
 const NewsListItem = ({ article }) => {
   if (!article) return null;
 
+  const isOpinion = article.category === '칼럼' || article.category === '기고' || article.authorTitle || article.author_title;
+  const href = isOpinion ? `/opinion/${article.id}` : `/article/${article.id}`;
+  const thumbnail = article.image || article.authorImage || article.author_image;
+
   return (
     <Link
-      href={`/article/${article.id}`}
+      href={href}
       className="block py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
     >
       {/* 상단: 카테고리 + 타이틀 */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs font-medium text-sky-600 bg-sky-50 px-2 py-0.5 rounded">
+        <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+          isOpinion ? 'text-violet-600 bg-violet-50' : 'text-sky-600 bg-sky-50'
+        }`}>
           {article.category}
         </span>
         <span className="text-xs text-gray-400">
@@ -26,17 +32,26 @@ const NewsListItem = ({ article }) => {
 
       {/* 하단: 사진(좌) + 텍스트(우) */}
       <div className="flex items-start gap-3 sm:gap-4">
-        <div className="relative w-24 h-16 sm:w-32 sm:h-20 flex-shrink-0">
-          <Image
-            src={article.image}
-            alt={article.title}
-            fill
-            className="object-cover rounded-lg"
-          />
+        {thumbnail && (
+          <div className={`relative flex-shrink-0 overflow-hidden ${
+            isOpinion ? 'w-12 h-12 sm:w-16 sm:h-16 rounded-full' : 'w-24 h-16 sm:w-32 sm:h-20 rounded-lg'
+          }`}>
+            <Image
+              src={thumbnail}
+              alt={article.title}
+              fill
+              className="object-cover"
+            />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          {isOpinion && (
+            <p className="text-xs text-gray-400 mb-1">{article.author} · {article.authorTitle || article.author_title}</p>
+          )}
+          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed line-clamp-2 sm:line-clamp-3">
+            {article.summary || article.content}
+          </p>
         </div>
-        <p className="text-xs sm:text-sm text-gray-500 leading-relaxed flex-1 line-clamp-2 sm:line-clamp-3">
-          {article.content}
-        </p>
       </div>
     </Link>
   );

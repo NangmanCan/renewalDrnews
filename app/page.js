@@ -11,7 +11,7 @@ import SidebarAd from '@/components/SidebarAd';
 import NativeAd from '@/components/NativeAd';
 import { getArticles, getHeadlineArticle, getSubHeadlineArticles, getPopularArticles, getArticlesByCategory } from '@/lib/articles';
 import { getLatestCeoReport } from '@/lib/ceoReports';
-import { getLatestOpinions } from '@/lib/opinions';
+import { getLatestOpinions, getOpinions } from '@/lib/opinions';
 import { getBanners } from '@/lib/banners';
 
 // 동적 렌더링 강제 (CMS 수정 즉시 반영)
@@ -50,9 +50,15 @@ export default async function Home({ searchParams }) {
     .slice(0, 5);
 
   if (category) {
-    const categoryArticles = await getArticlesByCategory(category);
-    regularArticles = categoryArticles;
-    listArticles = categoryArticles;
+    if (category === '오피니언') {
+      const allOpinions = await getOpinions();
+      regularArticles = allOpinions;
+      listArticles = allOpinions;
+    } else {
+      const categoryArticles = await getArticlesByCategory(category);
+      regularArticles = categoryArticles;
+      listArticles = categoryArticles;
+    }
   }
 
   // 활성화된 배너 필터링

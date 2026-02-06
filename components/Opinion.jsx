@@ -70,7 +70,7 @@ const Opinion = ({ opinions }) => {
       {/* 더보기 */}
       <div className="px-4 py-3 border-t border-gray-100">
         <Link
-          href="/opinion"
+          href="/?category=오피니언"
           className="text-xs text-violet-600 hover:text-violet-800 font-medium flex items-center justify-center gap-1"
         >
           오피니언 더보기
