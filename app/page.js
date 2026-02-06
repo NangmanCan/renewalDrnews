@@ -86,11 +86,9 @@ export default async function Home({ searchParams }) {
         {/* PC 레이아웃 */}
         <div className="hidden lg:block">
           {!category && (
-            <>
-              {/* 상단 영역: 헤드라인 + 서브헤드 | 많이본뉴스 + 배너 */}
-              <div className="flex gap-6 mb-8">
-                {/* 좌측: 헤드라인 슬라이더 + 서브헤드 */}
-                <div className="flex-1 space-y-6">
+              <div className="flex gap-6">
+                {/* 좌측: 메인 콘텐츠 */}
+                <div className="flex-1 min-w-0 space-y-6">
                   {/* 헤드라인 슬라이더 */}
                   {headlineArticles.length > 0 && (
                     <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
@@ -105,31 +103,29 @@ export default async function Home({ searchParams }) {
                   {latestCeoReport && (
                     <CeoReport report={latestCeoReport} />
                   )}
+
+                  {/* 제약·바이오 속보 + 최신뉴스 */}
+                  <div className="flex gap-6">
+                    <div className="w-72 flex-shrink-0">
+                      <BioPharmNews articles={bioPharmArticles} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <NewsList articles={listArticles} />
+                    </div>
+                  </div>
                 </div>
 
-                {/* 우측 사이드바: 오피니언 + 많이본뉴스 + 배너광고 */}
-                <aside className="w-72 flex-shrink-0 space-y-4">
-                  <Opinion opinions={latestOpinions} />
-                  <PopularNews articles={popularArticles} />
-                  {sidebarBanners.length > 0 && (
-                    <SidebarAd banners={sidebarBanners} />
-                  )}
+                {/* 우측 사이드바 (sticky) */}
+                <aside className="w-72 flex-shrink-0">
+                  <div className="sticky top-24 space-y-4">
+                    <Opinion opinions={latestOpinions} />
+                    <PopularNews articles={popularArticles} />
+                    {sidebarBanners.length > 0 && (
+                      <SidebarAd banners={sidebarBanners} sticky={false} />
+                    )}
+                  </div>
                 </aside>
               </div>
-
-              {/* 하단 영역: 바이오속보 | 최신뉴스 */}
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* 제약·바이오 속보 */}
-                <div className="w-full lg:w-72 flex-shrink-0">
-                  <BioPharmNews articles={bioPharmArticles} />
-                </div>
-
-                {/* 최신 뉴스 목록 */}
-                <div className="flex-1 min-w-0">
-                  <NewsList articles={listArticles} />
-                </div>
-              </div>
-            </>
           )}
 
           {/* 카테고리 필터 적용 시 */}
