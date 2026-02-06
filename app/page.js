@@ -9,6 +9,7 @@ import Opinion from '@/components/Opinion';
 import BioPharmNews from '@/components/BioPharmNews';
 import SidebarAd from '@/components/SidebarAd';
 import NativeAd from '@/components/NativeAd';
+import MobileTopCards from '@/components/MobileTopCards';
 import { getArticles, getHeadlineArticles, getSubHeadlineArticles, getPopularArticles, getArticlesByCategory } from '@/lib/articles';
 import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions, getOpinions } from '@/lib/opinions';
@@ -179,22 +180,31 @@ export default async function Home({ searchParams }) {
             </>
           )}
 
-          {/* 최신 뉴스 목록 - 텍스트 헤드라인 전용 */}
-          <div className="bg-white border border-gray-200">
-            <div className="px-4 py-2">
-              {listArticles.map((article, index) => (
-                <div key={article.id}>
-                  <NewsListItem article={article} compact />
-                  {/* 6개마다 네이티브 광고 삽입 (등록된 광고 롤링) */}
-                  {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
-                    <div className="py-3 border-b border-gray-100">
-                      <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
+          {/* 최신 뉴스: 상단 2열 썸네일 + 텍스트 목록 */}
+          {listArticles.length > 0 && (
+            <div>
+              {/* 상단 2열 썸네일 카드 */}
+              {listArticles.length >= 2 && (
+                <MobileTopCards articles={listArticles.slice(0, 2)} />
+              )}
+
+              {/* 텍스트 헤드라인 목록 */}
+              <div className="bg-white border border-gray-200">
+                <div className="px-4 py-2">
+                  {listArticles.slice(listArticles.length >= 2 ? 2 : 0).map((article, index) => (
+                    <div key={article.id}>
+                      <NewsListItem article={article} compact />
+                      {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
+                        <div className="py-3 border-b border-gray-100">
+                          <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {listArticles.length === 0 && (
