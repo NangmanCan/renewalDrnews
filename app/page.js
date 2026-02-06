@@ -66,27 +66,13 @@ export default async function Home({ searchParams }) {
     .filter((b) => b.type === 'headline' && b.isActive)
     .sort((a, b) => a.order - b.order);
 
-  // 사이드바 광고 (위치별 필터링)
+  // 사이드바 광고 (통합 - positions 필터 없이 전체 사용)
   const allSidebarBanners = allBanners
     .filter((b) => b.type === 'sidebar' && b.isActive)
     .sort((a, b) => a.order - b.order);
 
-  // PC 사이드바 상단용
-  const sidebarTopBanners = allSidebarBanners.filter(
-    (b) => b.positions?.sidebarTop
-  );
-  // PC 사이드바 하단용
-  const sidebarBottomBanners = allSidebarBanners.filter(
-    (b) => b.positions?.sidebarBottom
-  );
-  // 모바일: 많이본뉴스-제약바이오 사이
-  const mobileBetweenBanners = allSidebarBanners.filter(
-    (b) => b.positions?.mobileBetween
-  );
-  // 모바일: 최신뉴스 목록 내
-  const mobileInlineBanners = allSidebarBanners.filter(
-    (b) => b.positions?.mobileInline
-  );
+  // 사이드바 광고는 positions 구분 없이 통합 사용
+  const sidebarBanners = allSidebarBanners;
 
   return (
     <>
@@ -121,17 +107,17 @@ export default async function Home({ searchParams }) {
                   )}
                 </div>
 
-                {/* 우측 사이드바: 오피니언 + 많이본뉴스 + 배너광고(상단) */}
+                {/* 우측 사이드바: 오피니언 + 많이본뉴스 + 배너광고 */}
                 <aside className="w-72 flex-shrink-0 space-y-4">
                   <Opinion opinions={latestOpinions} />
                   <PopularNews articles={popularArticles} />
-                  {sidebarTopBanners.length > 0 && (
-                    <SidebarAd banners={sidebarTopBanners} />
+                  {sidebarBanners.length > 0 && (
+                    <SidebarAd banners={sidebarBanners} />
                   )}
                 </aside>
               </div>
 
-              {/* 하단 영역: 바이오속보 | 최신뉴스 | 배너광고 */}
+              {/* 하단 영역: 바이오속보 | 최신뉴스 */}
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* 제약·바이오 속보 */}
                 <div className="w-full lg:w-72 flex-shrink-0">
@@ -142,13 +128,6 @@ export default async function Home({ searchParams }) {
                 <div className="flex-1 min-w-0">
                   <NewsList articles={listArticles} />
                 </div>
-
-                {/* 사이드바 광고 (하단) */}
-                {sidebarBottomBanners.length > 0 && (
-                  <aside className="hidden lg:block w-72 flex-shrink-0">
-                    <SidebarAd banners={sidebarBottomBanners} sticky={false} showInquiry={false} />
-                  </aside>
-                )}
               </div>
             </>
           )}
@@ -161,11 +140,8 @@ export default async function Home({ searchParams }) {
               </section>
               <aside className="hidden lg:block w-72 flex-shrink-0 space-y-6">
                 <PopularNews articles={popularArticles} />
-                {sidebarTopBanners.length > 0 && (
-                  <SidebarAd banners={sidebarTopBanners} />
-                )}
-                {sidebarBottomBanners.length > 0 && (
-                  <SidebarAd banners={sidebarBottomBanners} sticky={false} showInquiry={false} />
+                {sidebarBanners.length > 0 && (
+                  <SidebarAd banners={sidebarBanners} />
                 )}
               </aside>
             </div>
@@ -198,8 +174,8 @@ export default async function Home({ searchParams }) {
               <PopularNews articles={popularArticles} />
 
               {/* 네이티브 광고 (많이본뉴스-제약바이오 사이) */}
-              {mobileBetweenBanners.length > 0 && (
-                <NativeAd banner={mobileBetweenBanners[0]} />
+              {sidebarBanners.length > 0 && (
+                <NativeAd banner={sidebarBanners[0]} />
               )}
 
               {/* 제약·바이오 속보 */}
@@ -213,10 +189,10 @@ export default async function Home({ searchParams }) {
               {listArticles.map((article, index) => (
                 <div key={article.id}>
                   <NewsListItem article={article} />
-                  {/* 4개마다 네이티브 광고 삽입 */}
-                  {(index + 1) % 4 === 0 && mobileInlineBanners.length > 0 && (
+                  {/* 4개마다 네이티브 광고 삽입 (등록된 광고 롤링) */}
+                  {(index + 1) % 4 === 0 && sidebarBanners.length > 0 && (
                     <div className="py-4 border-b border-gray-100">
-                      <NativeAd banner={mobileInlineBanners[Math.floor(index / 4) % mobileInlineBanners.length]} />
+                      <NativeAd banner={sidebarBanners[Math.floor(index / 4) % sidebarBanners.length]} />
                     </div>
                   )}
                 </div>

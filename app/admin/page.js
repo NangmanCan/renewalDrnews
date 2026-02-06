@@ -1150,12 +1150,7 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
     description: ad?.description || '',
     image: ad?.image || '',
     link: ad?.link || '',
-    positions: ad?.positions || {
-      sidebarTop: true,
-      sidebarBottom: false,
-      mobileBetween: false,
-      mobileInline: false,
-    },
+    positions: ad?.positions || {},
   });
 
   const handleSubmit = (e) => {
@@ -1240,40 +1235,11 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
           />
         </div>
 
-        {/* 사이드바 광고일 때 노출 위치 선택 */}
+        {/* 사이드바 광고 안내 */}
         {adType === 'sidebar' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">노출 위치</label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { key: 'sidebarTop', label: 'PC 상단 사이드바' },
-                { key: 'sidebarBottom', label: 'PC 하단 사이드바' },
-                { key: 'mobileBetween', label: '모바일: 뉴스 사이' },
-                { key: 'mobileInline', label: '모바일: 목록 내' },
-              ].map(({ key, label }) => (
-                <label
-                  key={key}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-                    form.positions[key]
-                      ? 'bg-sky-100 text-sky-700 border border-sky-300'
-                      : 'bg-gray-100 text-gray-500 border border-gray-200'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.positions[key]}
-                    onChange={() => setForm({
-                      ...form,
-                      positions: { ...form.positions, [key]: !form.positions[key] },
-                    })}
-                    className="sr-only"
-                  />
-                  <span className={`w-3 h-3 rounded-full ${form.positions[key] ? 'bg-sky-500' : 'bg-gray-300'}`} />
-                  {label}
-                </label>
-              ))}
-            </div>
-          </div>
+          <p className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+            등록된 사이드바 광고는 PC 사이드바 및 모바일 뉴스 목록에 자동 롤링 노출됩니다.
+          </p>
         )}
 
         <button
@@ -1302,13 +1268,6 @@ function AdManager({ banners, setBanners, onRefresh }) {
     gnb: 'GNB 상단배너',
   };
 
-  const positionLabels = {
-    sidebarTop: 'PC 상단 사이드바',
-    sidebarBottom: 'PC 하단 사이드바',
-    mobileBetween: '모바일: 뉴스 사이',
-    mobileInline: '모바일: 목록 내',
-  };
-
   const filteredBanners = banners
     .filter((b) => b.type === selectedType)
     .sort((a, b) => a.order - b.order);
@@ -1328,24 +1287,6 @@ function AdManager({ banners, setBanners, onRefresh }) {
       alert(`광고 상태 변경 실패: ${error.message}\n\nCloudflare에 SUPABASE_SERVICE_ROLE_KEY가 설정되어 있는지 확인하세요.`);
     } finally {
       setToggling(null);
-    }
-  };
-
-  const togglePosition = async (id, position) => {
-    const banner = banners.find(b => b.id === id);
-    if (!banner) return;
-
-    const newPositions = {
-      ...(banner.positions || { sidebarTop: true, sidebarBottom: false, mobileBetween: false, mobileInline: false }),
-      [position]: !(banner.positions?.[position] ?? false),
-    };
-
-    try {
-      await api.update('banners', id, { ...banner, positions: newPositions });
-      if (onRefresh) await onRefresh();
-    } catch (error) {
-      console.error('Error toggling position:', error);
-      alert(`노출위치 변경 실패: ${error.message}`);
     }
   };
 
@@ -1483,35 +1424,11 @@ function AdManager({ banners, setBanners, onRefresh }) {
                   </div>
                 </div>
 
-                {/* 사이드바 광고일 때 노출 위치 선택 */}
+                {/* 사이드바 광고 노출 안내 */}
                 {selectedType === 'sidebar' && banner.isActive && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <p className="text-xs font-medium text-gray-500 mb-2">노출 위치</p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(positionLabels).map(([key, label]) => {
-                        const isChecked = banner.positions?.[key] ?? true;
-                        return (
-                          <label
-                            key={key}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-                              isChecked
-                                ? 'bg-sky-100 text-sky-700 border border-sky-300'
-                                : 'bg-gray-100 text-gray-500 border border-gray-200'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => togglePosition(banner.id, key)}
-                              className="sr-only"
-                            />
-                            <span className={`w-3 h-3 rounded-full ${isChecked ? 'bg-sky-500' : 'bg-gray-300'}`} />
-                            {label}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <p className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
+                    PC 사이드바 + 모바일 뉴스 목록에 자동 롤링 노출
+                  </p>
                 )}
               </div>
             ))}
