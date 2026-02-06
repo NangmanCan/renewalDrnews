@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SidebarAd from '@/components/SidebarAd';
-import { getOpinionById, getOpinions } from '@/lib/opinions';
+import { getOpinionById, getRelatedOpinions } from '@/lib/opinions';
 import { getBanners } from '@/lib/banners';
 
 // ISR: 60초 캐시 후 자동 갱신
@@ -35,15 +35,17 @@ export async function generateMetadata({ params }) {
 
 export default async function OpinionPage({ params }) {
   const { id } = await params;
-  const [opinion, allBanners, allOpinions] = await Promise.all([
+  // cache()로 generateMetadata와 중복 호출 제거됨
+  // getRelatedOpinions로 전체 조회 대신 3건만 조회
+  const [opinion, allBanners, otherOpinions] = await Promise.all([
     getOpinionById(id),
     getBanners(),
-    getOpinions()
+    getRelatedOpinions(id, 3)
   ]);
 
-  // 사이드바 배너 가져오기 (상단 + 하단 모두)
+  // 사이드바 배너 (통합 - positions 필터 없이 전체 사용)
   const sidebarBanners = allBanners.filter(
-    (b) => b.type === 'sidebar' && b.isActive && (b.positions?.sidebarTop || b.positions?.sidebarBottom)
+    (b) => b.type === 'sidebar' && b.isActive
   );
 
   if (!opinion) {
@@ -60,9 +62,6 @@ export default async function OpinionPage({ params }) {
       </>
     );
   }
-
-  // 다른 오피니언 목록
-  const otherOpinions = allOpinions.filter((o) => o.id !== opinion.id).slice(0, 3);
 
   return (
     <>

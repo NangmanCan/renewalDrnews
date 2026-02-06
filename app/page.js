@@ -22,10 +22,11 @@ export default async function Home({ searchParams }) {
   const params = await searchParams;
   const category = params?.category;
 
-  // Supabase에서 데이터 가져오기 (fallback 포함)
-  const [allArticles, headlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners] = await Promise.all([
+  // Supabase에서 데이터 가져오기 (모든 쿼리 병렬 실행)
+  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners] = await Promise.all([
     getArticles(),
     getHeadlineArticles(2),
+    getSubHeadlineArticles(1),
     getPopularArticles(5),
     getLatestCeoReport(),
     getLatestOpinions(3),
@@ -38,7 +39,6 @@ export default async function Home({ searchParams }) {
   let regularArticles = visibleArticles.filter((a) => !a.isHeadline && !a.is_headline);
 
   // 서브 헤드라인 (최신 1개)
-  const subHeadlineArticles = await getSubHeadlineArticles(1);
   const subHeadlineArticle = subHeadlineArticles[0];
 
   // 서브 헤드라인 제외한 나머지 기사 (목록용)

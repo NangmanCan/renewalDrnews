@@ -37,14 +37,15 @@ export async function generateMetadata({ params }) {
 
 export default async function ArticlePage({ params }) {
   const { id } = await params;
+  // cache()로 generateMetadata와 중복 호출 제거됨
   const [article, allBanners] = await Promise.all([
     getArticleById(id),
     getBanners()
   ]);
 
-  // 사이드바 배너 가져오기 (상단 + 하단 모두)
+  // 사이드바 배너 (통합 - positions 필터 없이 전체 사용)
   const sidebarBanners = allBanners.filter(
-    (b) => b.type === 'sidebar' && b.isActive && (b.positions?.sidebarTop || b.positions?.sidebarBottom)
+    (b) => b.type === 'sidebar' && b.isActive
   );
 
   if (!article) {

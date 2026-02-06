@@ -10,7 +10,7 @@ export default async function CeoReportPage({ params }) {
   const { id } = await params;
   const [report, allReports] = await Promise.all([
     getCeoReportById(id),
-    getCeoReports(100)
+    getCeoReports(10)
   ]);
 
   if (!report) {
