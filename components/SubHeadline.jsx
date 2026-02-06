@@ -9,7 +9,7 @@ const SubHeadline = ({ article }) => {
   return (
     <Link
       href={`/article/${article.id}`}
-      className="block bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden"
+      className="block bg-white border border-gray-200 hover:border-gray-300 transition-colors overflow-hidden"
     >
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 p-4 sm:p-5">
         {/* 썸네일 */}
@@ -18,16 +18,13 @@ const SubHeadline = ({ article }) => {
             src={article.image}
             alt={article.title}
             fill
-            className="object-cover rounded-lg"
+            className="object-cover"
           />
         </div>
 
         {/* 텍스트 */}
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-xs font-medium text-sky-600 mb-2">
-            {article.category}
-          </span>
-          <h3 className="text-xl font-bold text-gray-900 line-clamp-2 mb-3 leading-tight">
+          <h3 className="font-headline text-xl font-bold text-gray-900 line-clamp-2 mb-3 leading-tight hover:underline">
             {article.title}
           </h3>
           <p className="text-sm text-gray-600 line-clamp-4 leading-relaxed flex-1">

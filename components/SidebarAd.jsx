@@ -23,7 +23,7 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
             href={banner.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="block bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow border border-gray-100"
+            className="block bg-white overflow-hidden border border-gray-200 hover:border-gray-300 transition-colors"
           >
             {/* 가로로 긴 이미지 */}
             <div className="relative">
@@ -35,7 +35,7 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
                   className="object-cover"
                   unoptimized={banner.image?.endsWith('.gif')}
                 />
-                <span className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
+                <span className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5">
                   AD
                 </span>
               </div>
@@ -56,15 +56,15 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
 
       {/* 광고 문의 */}
       {showInquiry && (
-        <div className="mt-4 bg-gradient-to-br from-sky-50 to-blue-100 rounded-lg p-4 border border-sky-200">
+        <div className="mt-4 bg-gray-50 p-4 border border-gray-200">
           <div className="text-center">
-            <span className="inline-block px-2 py-0.5 bg-sky-500 text-white text-xs rounded mb-2">
+            <span className="inline-block px-2 py-0.5 bg-navy text-white text-xs mb-2">
               AD
             </span>
             <p className="text-navy font-medium text-sm">
               Dr.News와 함께하는
             </p>
-            <p className="text-sky-600 font-bold">
+            <p className="text-navy font-bold">
               광고 문의
             </p>
             <p className="text-gray-500 text-xs mt-2">

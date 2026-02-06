@@ -10,6 +10,10 @@ module.exports = {
         navy: '#0f172a',
         'medical-blue': '#0284c7',
       },
+      fontFamily: {
+        headline: ['"Noto Serif KR"', 'Georgia', '"Times New Roman"', 'serif'],
+        sans: ['"Noto Sans KR"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+      },
     },
   },
   plugins: [],

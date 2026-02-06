@@ -13,20 +13,15 @@ const NewsListItem = ({ article }) => {
   return (
     <Link
       href={href}
-      className="block py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
+      className="block py-4 border-b border-gray-100 hover:bg-gray-50/50 transition-colors group"
     >
-      {/* 상단: 카테고리 + 타이틀 */}
-      <div className="flex items-center gap-2 mb-3">
-        <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-          isOpinion ? 'text-violet-600 bg-violet-50' : 'text-sky-600 bg-sky-50'
-        }`}>
-          {article.category}
-        </span>
+      {/* 상단: 날짜 */}
+      <div className="flex items-center gap-2 mb-2">
         <span className="text-xs text-gray-400">
           {article.date}
         </span>
       </div>
-      <h4 className="text-base font-bold text-gray-900 group-hover:text-sky-600 transition-colors mb-3 leading-snug">
+      <h4 className="font-headline text-base font-bold text-gray-900 group-hover:underline transition-colors mb-2 leading-snug">
         {article.title}
       </h4>
 
@@ -34,7 +29,7 @@ const NewsListItem = ({ article }) => {
       <div className="flex items-start gap-3 sm:gap-4">
         {thumbnail && (
           <div className={`relative flex-shrink-0 overflow-hidden ${
-            isOpinion ? 'w-12 h-12 sm:w-16 sm:h-16 rounded-full' : 'w-24 h-16 sm:w-32 sm:h-20 rounded-lg'
+            isOpinion ? 'w-12 h-12 sm:w-16 sm:h-16 rounded-full' : 'w-24 h-16 sm:w-32 sm:h-20'
           }`}>
             <Image
               src={thumbnail}
@@ -61,9 +56,9 @@ const NewsList = ({ articles, title }) => {
   if (!articles || articles.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+    <div className="bg-white border border-gray-200">
       {title && (
-        <h3 className="text-lg font-bold text-gray-900 px-4 pt-4 pb-2 border-b border-gray-100">
+        <h3 className="font-headline text-base font-bold text-gray-900 px-4 pt-4 pb-2 border-b border-gray-200">
           {title}
         </h3>
       )}

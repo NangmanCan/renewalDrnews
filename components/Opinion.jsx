@@ -9,7 +9,7 @@ const OpinionCard = ({ opinion }) => {
   return (
     <Link
       href={`/opinion/${opinion.id}`}
-      className="block p-4 rounded-lg hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+      className="block p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
     >
       <div className="flex items-start gap-3">
         {/* 저자 이미지 */}
@@ -25,12 +25,9 @@ const OpinionCard = ({ opinion }) => {
         {/* 콘텐츠 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded">
-              {opinion.category}
-            </span>
             <span className="text-xs text-gray-400">{opinion.date}</span>
           </div>
-          <h4 className="text-sm font-bold text-gray-900 line-clamp-1 mb-1">
+          <h4 className="text-sm font-bold text-gray-900 line-clamp-1 mb-1 hover:underline">
             {opinion.title}
           </h4>
           <p className="text-xs text-gray-500 line-clamp-1 mb-1">
@@ -49,11 +46,11 @@ const Opinion = ({ opinions }) => {
   if (!opinions || opinions.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white border border-gray-200 overflow-hidden">
       {/* 타이틀 헤더 */}
-      <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3">
-        <h2 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-          <svg className="w-5 h-5 text-violet-200" fill="currentColor" viewBox="0 0 20 20">
+      <div className="bg-navy px-4 py-3">
+        <h2 className="font-headline text-sm font-bold text-white tracking-wide flex items-center gap-2">
+          <svg className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
           </svg>
           오피니언
@@ -71,7 +68,7 @@ const Opinion = ({ opinions }) => {
       <div className="px-4 py-3 border-t border-gray-100">
         <Link
           href="/?category=오피니언"
-          className="text-xs text-violet-600 hover:text-violet-800 font-medium flex items-center justify-center gap-1"
+          className="text-xs text-navy hover:underline font-medium flex items-center justify-center gap-1"
         >
           오피니언 더보기
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

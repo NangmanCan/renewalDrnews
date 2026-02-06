@@ -22,9 +22,9 @@ const Header = () => {
   });
 
   return (
-    <header className="bg-white sticky top-0 z-50 shadow-sm">
+    <header className="bg-white sticky top-0 z-50 border-b border-gray-200">
       {/* 상단 로고 영역 */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-20">
             {/* 왼쪽: 날짜 */}
@@ -39,16 +39,14 @@ const Header = () => {
 
             {/* 가운데: 로고 */}
             <Link href="/" className="flex flex-col items-center hover:opacity-80 transition-opacity">
-              {/* 메인 로고 */}
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                <span className="font-headline text-3xl md:text-4xl font-black text-navy tracking-tight">
                   Dr.
                 </span>
-                <span className="text-3xl md:text-4xl font-black text-sky-600 tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                <span className="font-headline text-3xl md:text-4xl font-black text-navy tracking-tight">
                   News
                 </span>
               </div>
-              {/* 서브 타이틀 */}
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="h-px w-6 bg-gray-300"></span>
                 <span className="text-[10px] text-gray-500 font-medium tracking-widest uppercase">
@@ -65,7 +63,7 @@ const Header = () => {
                   href={gnbBanner.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative w-[234px] h-[60px] rounded overflow-hidden hover:opacity-90 transition-opacity"
+                  className="relative w-[234px] h-[60px] overflow-hidden hover:opacity-90 transition-opacity"
                 >
                   <Image
                     src={gnbBanner.image}
@@ -76,7 +74,7 @@ const Header = () => {
                   />
                 </a>
               ) : (
-                <div className="w-[234px] h-[60px] bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                <div className="w-[234px] h-[60px] bg-gray-50 border border-gray-200 flex items-center justify-center">
                   <span className="text-xs text-gray-400">AD 234x60</span>
                 </div>
               )}
@@ -85,7 +83,7 @@ const Header = () => {
             {/* 모바일: 관리자 버튼 */}
             <Link
               href="/admin"
-              className="md:hidden px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-sm font-medium transition-colors"
+              className="md:hidden px-3 py-1.5 bg-navy text-white text-sm font-medium transition-colors"
             >
               관리자
             </Link>
@@ -94,7 +92,7 @@ const Header = () => {
       </div>
 
       {/* 하단 카테고리 바 (데스크탑) */}
-      <div className="hidden md:block bg-slate-800">
+      <div className="hidden md:block bg-navy">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between">
             {/* 카테고리 메뉴 */}
@@ -104,7 +102,7 @@ const Header = () => {
                   key={category}
                   href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
                   className={`
-                    px-5 py-3.5 text-base font-medium transition-colors relative
+                    px-5 py-3 text-sm font-medium transition-colors relative
                     ${category === '오피니언'
                       ? 'text-amber-400 hover:text-amber-300'
                       : 'text-gray-300 hover:text-white hover:bg-slate-700'
@@ -122,7 +120,7 @@ const Header = () => {
             {/* 관리자 버튼 (데스크탑) */}
             <Link
               href="/admin"
-              className="hidden md:block px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded text-sm font-medium transition-colors"
+              className="hidden md:block px-4 py-1.5 border border-gray-400 text-gray-300 hover:text-white hover:border-white text-sm font-medium transition-colors"
             >
               관리자
             </Link>
@@ -131,7 +129,7 @@ const Header = () => {
       </div>
 
       {/* 모바일 카테고리 (스크롤) */}
-      <div className="md:hidden bg-slate-800 overflow-x-auto border-t border-slate-700 scrollbar-hide">
+      <div className="md:hidden bg-navy overflow-x-auto border-t border-slate-700 scrollbar-hide">
         <nav className="flex items-center px-2">
           {categories.map((category, index) => (
             <Link

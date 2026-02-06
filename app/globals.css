@@ -1,11 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #111827;
+}
+
+/* 신문 스타일 제목 폰트 */
+.font-headline {
+  font-family: 'Noto Serif KR', Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+/* 구분선 */
+.news-divider {
+  border-top: 1px solid #e5e7eb;
+}
+
+.news-divider-thick {
+  border-top: 3px solid #0f172a;
 }
 
 /* 모바일 카테고리 스크롤바 숨김 */

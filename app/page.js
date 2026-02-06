@@ -80,7 +80,7 @@ export default async function Home({ searchParams }) {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* 카테고리 타이틀 */}
         {category && (
-          <h1 className="text-3xl font-bold text-navy mb-8">{category} 뉴스</h1>
+          <h1 className="font-headline text-2xl font-bold text-navy mb-8">{category} 뉴스</h1>
         )}
 
         {/* PC 레이아웃 */}
@@ -180,7 +180,7 @@ export default async function Home({ searchParams }) {
           )}
 
           {/* 최신 뉴스 목록 (4개마다 네이티브 광고 삽입) */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+          <div className="bg-white border border-gray-200">
             <div className="px-4">
               {listArticles.map((article, index) => (
                 <div key={article.id}>
