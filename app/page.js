@@ -179,16 +179,16 @@ export default async function Home({ searchParams }) {
             </>
           )}
 
-          {/* 최신 뉴스 목록 (4개마다 네이티브 광고 삽입) */}
+          {/* 최신 뉴스 목록 - 텍스트 헤드라인 전용 */}
           <div className="bg-white border border-gray-200">
-            <div className="px-4">
+            <div className="px-4 py-2">
               {listArticles.map((article, index) => (
                 <div key={article.id}>
-                  <NewsListItem article={article} />
-                  {/* 4개마다 네이티브 광고 삽입 (등록된 광고 롤링) */}
-                  {(index + 1) % 4 === 0 && sidebarBanners.length > 0 && (
-                    <div className="py-4 border-b border-gray-100">
-                      <NativeAd banner={sidebarBanners[Math.floor(index / 4) % sidebarBanners.length]} />
+                  <NewsListItem article={article} compact />
+                  {/* 6개마다 네이티브 광고 삽입 (등록된 광고 롤링) */}
+                  {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
+                    <div className="py-3 border-b border-gray-100">
+                      <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
                     </div>
                   )}
                 </div>

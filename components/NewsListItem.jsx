@@ -3,12 +3,26 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-const NewsListItem = ({ article }) => {
+const NewsListItem = ({ article, compact = false }) => {
   if (!article) return null;
 
   const isOpinion = article.category === '칼럼' || article.category === '기고' || article.authorTitle || article.author_title;
   const href = isOpinion ? `/opinion/${article.id}` : `/article/${article.id}`;
   const thumbnail = article.image || article.authorImage || article.author_image;
+
+  // 모바일 텍스트 전용 모드 (compact)
+  if (compact) {
+    return (
+      <Link
+        href={href}
+        className="block py-2.5 border-b border-gray-100 hover:bg-gray-50/50 transition-colors group"
+      >
+        <h4 className="text-[14px] font-bold text-gray-900 group-hover:underline leading-snug line-clamp-1">
+          {article.title}
+        </h4>
+      </Link>
+    );
+  }
 
   return (
     <Link
@@ -43,8 +57,8 @@ const NewsListItem = ({ article }) => {
           {isOpinion && (
             <p className="text-xs text-gray-400 mb-1">{article.author} · {article.authorTitle || article.author_title}</p>
           )}
-          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed line-clamp-2 sm:line-clamp-3">
-            {article.summary || article.content}
+          <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
+            {article.content || article.summary}
           </p>
         </div>
       </div>
