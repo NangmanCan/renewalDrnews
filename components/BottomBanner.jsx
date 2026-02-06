@@ -34,6 +34,7 @@ const BottomBanner = ({ banners = [] }) => {
             alt={current.title}
             fill
             className="object-cover"
+            unoptimized={current.image?.endsWith('.gif')}
           />
         </div>
 

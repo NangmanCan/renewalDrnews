@@ -9,7 +9,7 @@ import Opinion from '@/components/Opinion';
 import BioPharmNews from '@/components/BioPharmNews';
 import SidebarAd from '@/components/SidebarAd';
 import NativeAd from '@/components/NativeAd';
-import { getArticles, getHeadlineArticle, getSubHeadlineArticles, getPopularArticles, getArticlesByCategory } from '@/lib/articles';
+import { getArticles, getHeadlineArticles, getSubHeadlineArticles, getPopularArticles, getArticlesByCategory } from '@/lib/articles';
 import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions, getOpinions } from '@/lib/opinions';
 import { getBanners } from '@/lib/banners';
@@ -23,9 +23,9 @@ export default async function Home({ searchParams }) {
   const category = params?.category;
 
   // Supabase에서 데이터 가져오기 (fallback 포함)
-  const [allArticles, headline, popularArticles, latestCeoReport, latestOpinions, allBanners] = await Promise.all([
+  const [allArticles, headlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners] = await Promise.all([
     getArticles(),
-    getHeadlineArticle(),
+    getHeadlineArticles(2),
     getPopularArticles(5),
     getLatestCeoReport(),
     getLatestOpinions(3),
@@ -106,8 +106,8 @@ export default async function Home({ searchParams }) {
                 {/* 좌측: 헤드라인 슬라이더 + 서브헤드 */}
                 <div className="flex-1 space-y-6">
                   {/* 헤드라인 슬라이더 */}
-                  {headline && (
-                    <HeadlineSlider article={headline} banners={headlineBanners} />
+                  {headlineArticles.length > 0 && (
+                    <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
                   )}
 
                   {/* 서브 헤드라인 */}
@@ -177,8 +177,8 @@ export default async function Home({ searchParams }) {
           {!category && (
             <>
               {/* 헤드라인 슬라이더 */}
-              {headline && (
-                <HeadlineSlider article={headline} banners={headlineBanners} />
+              {headlineArticles.length > 0 && (
+                <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
               )}
 
               {/* 서브 헤드라인 */}

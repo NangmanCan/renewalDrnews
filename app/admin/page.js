@@ -67,7 +67,7 @@ const api = {
 
 // 게재영역 정의
 const PLACEMENT_OPTIONS = [
-  { id: 'headline', label: '헤드라인 슬라이더', color: 'red', max: 1 },
+  { id: 'headline', label: '헤드라인 슬라이더', color: 'red', max: 2 },
   { id: 'subheadline', label: '서브헤드라인', color: 'blue', max: 1 },
   { id: 'news', label: '최신뉴스 목록', color: 'gray', max: null },
   { id: 'opinion', label: '오피니언 기고란', color: 'violet', max: 3 },
@@ -149,15 +149,17 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
 }
 
 // 이미지 업로더 컴포넌트
-function ImageUploader({ currentImage, onImageChange, guide }) {
+// allowGif: GIF 애니메이션 파일 허용 여부 (헤드라인 기사 이미지 제외)
+function ImageUploader({ currentImage, onImageChange, guide, allowGif = false }) {
   const fileInputRef = useRef(null);
   const [preview, setPreview] = useState(currentImage || '');
+  const [isGif, setIsGif] = useState(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // 실제로는 서버에 업로드하고 URL을 받아야 함
-      // 여기서는 미리보기용 Data URL 생성
+      const gif = file.type === 'image/gif';
+      setIsGif(gif);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
@@ -184,7 +186,7 @@ function ImageUploader({ currentImage, onImageChange, guide }) {
       {/* 미리보기 */}
       {preview && (
         <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
-          <Image src={preview} alt="미리보기" fill className="object-cover" />
+          <Image src={preview} alt="미리보기" fill className="object-cover" unoptimized={isGif || preview.endsWith('.gif')} />
           <button
             type="button"
             onClick={() => { setPreview(''); onImageChange(''); }}
@@ -212,7 +214,7 @@ function ImageUploader({ currentImage, onImageChange, guide }) {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={allowGif ? "image/*,.gif" : "image/jpeg,image/png,image/webp"}
           onChange={handleFileChange}
           className="hidden"
         />
@@ -349,6 +351,7 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
           currentImage={form.image}
           onImageChange={(url) => setForm({ ...form, image: url })}
           guide={currentGuide}
+          allowGif={form.placement !== 'headline'}
         />
 
         {/* 요약 */}
@@ -699,6 +702,7 @@ function CeoReportEditor({ report, onSave, onCancel }) {
           currentImage={form.authorImage}
           onImageChange={(url) => setForm({ ...form, authorImage: url })}
           guide={IMAGE_GUIDES.ceo}
+          allowGif
         />
 
         {/* 본문 */}
@@ -1219,7 +1223,7 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
           />
           {form.image && (
             <div className="mt-2 relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
-              <Image src={form.image} alt="미리보기" fill className="object-cover" />
+              <Image src={form.image} alt="미리보기" fill className="object-cover" unoptimized={adType !== 'headline' && form.image.endsWith('.gif')} />
             </div>
           )}
         </div>

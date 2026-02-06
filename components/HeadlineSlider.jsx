@@ -4,25 +4,25 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const HeadlineSlider = ({ article, banners = [] }) => {
+const HeadlineSlider = ({ articles = [], banners = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // 슬라이드 아이템 구성: 헤드라인 기사 + 광고 배너
+  // 슬라이드 아이템 구성: 헤드라인 기사들 + 광고 배너
   const slides = [];
 
-  if (article) {
+  articles.forEach((art) => {
     slides.push({
       type: 'article',
-      id: article.id,
-      title: article.title,
-      summary: article.summary,
-      image: article.image,
-      category: article.category,
-      author: article.author,
-      date: article.date,
-      link: `/article/${article.id}`,
+      id: art.id,
+      title: art.title,
+      summary: art.summary,
+      image: art.image,
+      category: art.category,
+      author: art.author,
+      date: art.date,
+      link: `/article/${art.id}`,
     });
-  }
+  });
 
   banners.forEach((banner) => {
     slides.push({

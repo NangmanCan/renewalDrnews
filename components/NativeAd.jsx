@@ -19,6 +19,7 @@ const NativeAd = ({ banner }) => {
             alt={banner.title}
             fill
             className="object-cover rounded-lg"
+            unoptimized={banner.image?.endsWith('.gif')}
           />
         </div>
         <div className="flex flex-col justify-center flex-1 min-w-0">

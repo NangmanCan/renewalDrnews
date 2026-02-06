@@ -72,6 +72,7 @@ const Header = () => {
                     alt={gnbBanner.title}
                     fill
                     className="object-cover"
+                    unoptimized={gnbBanner.image?.endsWith('.gif')}
                   />
                 </a>
               ) : (
