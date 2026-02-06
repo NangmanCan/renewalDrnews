@@ -22,6 +22,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# MCP config (contains secrets)
+.mcp.json
+
 # IDE
 .vscode
 .idea
