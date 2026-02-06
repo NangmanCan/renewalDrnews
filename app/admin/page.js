@@ -245,7 +245,7 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
     placement: initialPlacement,
   });
 
-  const articleCategories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오'];
+  const articleCategories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '해외뉴스'];
   const opinionCategories = ['칼럼', '기고'];
   const categories = form.placement === 'opinion' ? opinionCategories : articleCategories;
 

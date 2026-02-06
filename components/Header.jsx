@@ -7,7 +7,7 @@ import { initialBanners } from '@/data/banners';
 
 const Header = () => {
   const pathname = usePathname();
-  const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '오피니언'];
+  const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '해외뉴스', '오피니언'];
 
   // GNB 배너 가져오기
   const gnbBanner = initialBanners.find((b) => b.type === 'gnb' && b.isActive);
