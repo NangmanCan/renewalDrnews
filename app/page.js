@@ -14,6 +14,8 @@ import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions } from '@/lib/opinions';
 import { getBanners } from '@/lib/banners';
 
+// 동적 렌더링 강제 (CMS 수정 즉시 반영)
+export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
 export default async function Home({ searchParams }) {

@@ -12,9 +12,14 @@ import { initialBanners as staticBanners } from '@/data/banners';
 const api = {
   async fetchData(endpoint) {
     try {
-      // 캐시 방지를 위해 타임스탬프 추가
+      // 캐시 방지를 위해 타임스탬프 + 헤더 추가
       const res = await fetch(`/api/${endpoint}?t=${Date.now()}`, {
+        method: 'GET',
         cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
       });
       if (!res.ok) throw new Error('Failed to fetch');
       return await res.json();
