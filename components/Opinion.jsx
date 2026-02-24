@@ -16,7 +16,7 @@ const OpinionCard = ({ opinion }) => {
         <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-gray-200">
           <Image
             src={opinion.authorImage}
-            alt={opinion.author}
+            alt={`${opinion.author} ${opinion.authorTitle} 프로필 사진`}
             fill
             className="object-cover"
           />

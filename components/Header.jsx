@@ -34,7 +34,7 @@ const Header = () => {
               <span className="text-xs text-gray-500 font-medium tracking-wide">
                 {dateStr}
               </span>
-              <span className="text-[10px] text-gray-400 mt-0.5">
+              <span className="text-xs text-gray-400 mt-0.5">
                 대한민국 의료 전문 미디어
               </span>
             </div>
@@ -42,8 +42,9 @@ const Header = () => {
             {/* 모바일: 햄버거 버튼 */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5"
-              aria-label="메뉴"
+              className="md:hidden flex flex-col justify-center items-center w-12 h-12 gap-1.5"
+              aria-label={mobileMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
+              aria-expanded={mobileMenuOpen}
             >
               <span className={`block w-6 h-0.5 bg-navy transition-transform ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
               <span className={`block w-6 h-0.5 bg-navy transition-opacity ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
@@ -62,7 +63,7 @@ const Header = () => {
               </div>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="h-px w-6 bg-gray-300"></span>
-                <span className="text-[10px] text-gray-500 font-medium tracking-widest uppercase">
+                <span className="text-xs text-gray-500 font-medium tracking-widest uppercase">
                   Medical Journal
                 </span>
                 <span className="h-px w-6 bg-gray-300"></span>

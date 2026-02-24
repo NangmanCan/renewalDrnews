@@ -48,10 +48,10 @@ const CeoReport = ({ report }) => {
 
           {/* 저자 정보 */}
           <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
-            <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-200">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-gray-200">
               <Image
                 src={report.authorImage}
-                alt={report.author}
+                alt={`${report.author} ${report.authorTitle} 프로필 사진`}
                 fill
                 className="object-cover"
               />

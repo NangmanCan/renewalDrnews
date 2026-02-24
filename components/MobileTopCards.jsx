@@ -16,7 +16,7 @@ const MobileTopCards = ({ articles = [] }) => {
           <Link key={article.id} href={href} className="relative block h-[180px] overflow-hidden group">
             <Image
               src={article.image}
-              alt={article.title}
+              alt={`${article.category} 기사 썸네일: ${article.title}`}
               fill
               className="object-cover"
             />

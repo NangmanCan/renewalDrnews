@@ -21,7 +21,7 @@ const BioPharmNews = ({ articles }) => {
             className="block p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0"
           >
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-bold text-white bg-emerald-600 px-1.5 py-0.5">
+              <span className="text-xs font-bold text-white bg-emerald-600 px-1.5 py-0.5">
                 속보
               </span>
               <span className="text-xs text-gray-400">{article.category}</span>

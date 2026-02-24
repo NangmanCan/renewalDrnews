@@ -60,7 +60,7 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
           <Link href={current.link} className="block w-full h-full">
             <Image
               src={current.image}
-              alt={current.title}
+              alt={`${current.category} 헤드라인 뉴스: ${current.title}`}
               fill
               priority
               className="object-cover"
@@ -70,7 +70,7 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
           <a href={current.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
             <Image
               src={current.image}
-              alt={current.title}
+              alt={`광고: ${current.title}`}
               fill
               priority
               className="object-cover"
@@ -120,16 +120,18 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
           <button
             onClick={goPrev}
             className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="이전 슬라이드"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button
             onClick={goNext}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label="다음 슬라이드"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -138,15 +140,19 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
 
       {/* 인디케이터 */}
       {slides.length > 1 && (
-        <div className="absolute bottom-3 right-5 flex gap-1.5">
+        <div className="absolute bottom-3 right-5 flex gap-1">
           {slides.map((_, idx) => (
             <button
               key={idx}
               onClick={() => goTo(idx)}
-              className={`w-2 h-2 transition-colors ${
-                idx === currentIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'
-              }`}
-            />
+              className="p-2 transition-colors"
+              aria-label={`${idx + 1}번 슬라이드로 이동`}
+              aria-current={idx === currentIndex ? 'true' : 'false'}
+            >
+              <span className={`block w-2 h-2 rounded-full ${
+                idx === currentIndex ? 'bg-white' : 'bg-white/40'
+              }`} />
+            </button>
           ))}
         </div>
       )}

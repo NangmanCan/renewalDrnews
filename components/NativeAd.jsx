@@ -23,7 +23,7 @@ const NativeAd = ({ banner }) => {
           />
         </div>
         <div className="flex flex-col justify-center flex-1 min-w-0">
-          <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 font-semibold mb-1 w-fit">
+          <span className="inline-flex items-center gap-1 text-xs text-gray-500 font-semibold mb-1 w-fit">
             Sponsored
           </span>
           <p className="text-sm font-semibold text-gray-800 line-clamp-2 mb-1">

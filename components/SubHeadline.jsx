@@ -16,7 +16,7 @@ const SubHeadline = ({ article }) => {
         <div className="relative w-full aspect-video">
           <Image
             src={article.image}
-            alt={article.title}
+            alt={`서브 헤드라인: ${article.title}`}
             fill
             className="object-cover"
           />
@@ -41,7 +41,7 @@ const SubHeadline = ({ article }) => {
         <div className="relative w-64 aspect-[16/11] flex-shrink-0">
           <Image
             src={article.image}
-            alt={article.title}
+            alt={`서브 헤드라인: ${article.title}`}
             fill
             className="object-cover"
           />
