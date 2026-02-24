@@ -80,7 +80,7 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
       </div>
 
       {/* 그라데이션 오버레이 */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
       {/* 콘텐츠 */}
       <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
@@ -91,13 +91,13 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
         )}
         {current.type === 'article' ? (
           <Link href={current.link}>
-            <h2 className="font-headline text-xl md:text-3xl font-bold text-white mb-2 leading-tight hover:underline">
+            <h2 className="text-[22px] md:text-[32px] font-bold text-white mb-2 leading-[1.35] hover:underline drop-shadow-lg">
               {current.title}
             </h2>
           </Link>
         ) : (
           <a href={current.link} target="_blank" rel="noopener noreferrer">
-            <h2 className="font-headline text-xl md:text-3xl font-bold text-white mb-2 leading-tight hover:underline">
+            <h2 className="text-[22px] md:text-[32px] font-bold text-white mb-2 leading-[1.35] hover:underline drop-shadow-lg">
               {current.title}
             </h2>
           </a>

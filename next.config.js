@@ -14,6 +14,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.supabase.in',
       },
+      {
+        protocol: 'https',
+        hostname: 'i.ibb.co',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,

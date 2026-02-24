@@ -78,10 +78,10 @@ export default async function Home({ searchParams }) {
   return (
     <>
       <Header />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-0 lg:px-4 lg:py-8 py-0">
         {/* 카테고리 타이틀 */}
         {category && (
-          <h1 className="font-headline text-2xl font-bold text-navy mb-8">{category} 뉴스</h1>
+          <h1 className="text-2xl font-bold text-navy mb-8 px-4 lg:px-0">{category} 뉴스</h1>
         )}
 
         {/* PC 레이아웃 */}
@@ -146,10 +146,10 @@ export default async function Home({ searchParams }) {
         </div>
 
         {/* 모바일/태블릿 레이아웃 */}
-        <div className="lg:hidden space-y-6">
+        <div className="lg:hidden space-y-4">
           {!category && (
             <>
-              {/* 헤드라인 슬라이더 */}
+              {/* 헤드라인 슬라이더 - 풀와이드 */}
               {headlineArticles.length > 0 && (
                 <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
               )}
@@ -160,19 +160,17 @@ export default async function Home({ searchParams }) {
                   {listArticles.length >= 2 && (
                     <MobileTopCards articles={listArticles.slice(0, 2)} />
                   )}
-                  <div className="bg-white border border-gray-200">
-                    <div className="px-4 py-2">
-                      {listArticles.slice(listArticles.length >= 2 ? 2 : 0, 10).map((article, index) => (
-                        <div key={article.id}>
-                          <NewsListItem article={article} compact />
-                          {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
-                            <div className="py-3 border-b border-gray-100">
-                              <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                  <div className="bg-white px-4">
+                    {listArticles.slice(listArticles.length >= 2 ? 2 : 0, 10).map((article, index) => (
+                      <div key={article.id}>
+                        <NewsListItem article={article} compact />
+                        {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
+                          <div className="py-3 border-b border-gray-100">
+                            <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
+                          </div>
+                        )}
+                      </div>
+                    ))}
                     {listArticles.length > 10 && (
                       <div className="border-t border-gray-200 py-4 text-center">
                         <a href="/?category=전체" className="text-sm font-bold text-gray-600 hover:text-navy transition-colors">
@@ -184,7 +182,7 @@ export default async function Home({ searchParams }) {
                 </div>
               )}
 
-              {/* 서브 헤드라인 */}
+              {/* 서브 헤드라인 - 풀와이드 */}
               {subHeadlineArticle && (
                 <SubHeadline article={subHeadlineArticle} />
               )}
@@ -212,19 +210,17 @@ export default async function Home({ searchParams }) {
 
           {/* 카테고리 필터 시 전체 목록 */}
           {category && listArticles.length > 0 && (
-            <div className="bg-white border border-gray-200">
-              <div className="px-4 py-2">
-                {listArticles.map((article, index) => (
-                  <div key={article.id}>
-                    <NewsListItem article={article} compact />
-                    {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
-                      <div className="py-3 border-b border-gray-100">
-                        <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+            <div className="bg-white px-4">
+              {listArticles.map((article, index) => (
+                <div key={article.id}>
+                  <NewsListItem article={article} compact />
+                  {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
+                    <div className="py-3 border-b border-gray-100">
+                      <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -10,7 +10,7 @@ const NativeAd = ({ banner }) => {
       href={banner.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="block bg-gray-50 overflow-hidden border border-gray-200 hover:border-gray-300 transition-colors"
+      className="block bg-gray-50 overflow-hidden sm:border sm:border-gray-200 sm:hover:border-gray-300 transition-colors"
     >
       <div className="flex gap-4 p-4">
         <div className="relative w-24 h-24 flex-shrink-0">

@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { initialBanners } from '@/data/banners';
 
 const Header = () => {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '해외뉴스', '오피니언'];
 
   // GNB 배너 가져오기
@@ -37,13 +39,24 @@ const Header = () => {
               </span>
             </div>
 
+            {/* 모바일: 햄버거 버튼 */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5"
+              aria-label="메뉴"
+            >
+              <span className={`block w-6 h-0.5 bg-navy transition-transform ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+              <span className={`block w-6 h-0.5 bg-navy transition-opacity ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
+              <span className={`block w-6 h-0.5 bg-navy transition-transform ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+            </button>
+
             {/* 가운데: 로고 */}
             <Link href="/" className="flex flex-col items-center hover:opacity-80 transition-opacity">
               <div className="flex items-baseline gap-1">
-                <span className="font-headline text-3xl md:text-4xl font-black text-navy tracking-tight">
+                <span className="text-3xl md:text-4xl font-black text-navy tracking-tight">
                   Dr.
                 </span>
-                <span className="font-headline text-3xl md:text-4xl font-black text-navy tracking-tight">
+                <span className="text-3xl md:text-4xl font-black text-navy tracking-tight">
                   News
                 </span>
               </div>
@@ -128,29 +141,29 @@ const Header = () => {
         </div>
       </div>
 
-      {/* 모바일 카테고리 (스크롤) */}
-      <div className="md:hidden bg-navy overflow-x-auto border-t border-slate-700 scrollbar-hide">
-        <nav className="flex items-center px-2">
-          {categories.map((category, index) => (
-            <Link
-              key={category}
-              href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
-              className={`
-                flex-shrink-0 px-3 py-2.5 text-sm font-medium transition-colors whitespace-nowrap relative
-                ${category === '오피니언'
-                  ? 'text-amber-400'
-                  : 'text-gray-300 active:bg-slate-700'
-                }
-              `}
-            >
-              {category}
-              {index < categories.length - 1 && (
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3 bg-slate-600"></span>
-              )}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      {/* 모바일 카테고리 (드롭다운) */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-navy border-t border-slate-700">
+          <nav className="flex flex-col">
+            {categories.map((category) => (
+              <Link
+                key={category}
+                href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`
+                  px-4 py-3 text-sm font-medium transition-colors border-b border-slate-700
+                  ${category === '오피니언'
+                    ? 'text-amber-400'
+                    : 'text-gray-300 active:bg-slate-700'
+                  }
+                `}
+              >
+                {category}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 };
