@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
+import { verifySessionToken, COOKIE_NAME } from '@/lib/auth';
 
 export const runtime = 'edge';
 
 export async function PUT(request, { params }) {
+  // 인증 확인
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  const payload = await verifySessionToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+  }
+
   const serviceClient = getServiceSupabase();
   if (!serviceClient) {
     return NextResponse.json({ error: 'Supabase not configured. SUPABASE_SERVICE_ROLE_KEY 환경변수를 확인하세요.' }, { status: 500 });
@@ -55,6 +63,13 @@ export async function PUT(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  // 인증 확인
+  const token = request.cookies.get(COOKIE_NAME)?.value;
+  const payload = await verifySessionToken(token);
+  if (!payload) {
+    return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+  }
+
   const serviceClient = getServiceSupabase();
   if (!serviceClient) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
