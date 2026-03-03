@@ -25,9 +25,8 @@ const NewsCard = ({ article }) => {
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">
           {article.summary}
         </p>
-        <div className="flex items-center justify-between text-gray-400 text-xs">
+        <div className="text-gray-400 text-xs">
           <span>{article.author}</span>
-          <span>{article.date}</span>
         </div>
       </div>
     </Link>

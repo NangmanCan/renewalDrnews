@@ -4,7 +4,9 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NewsCard from '@/components/NewsCard';
 import SidebarAd from '@/components/SidebarAd';
-import { getArticleById, getRelatedArticles, getArticles } from '@/lib/articles';
+import LatestNews from '@/components/LatestNews';
+import PopularNews from '@/components/PopularNews';
+import { getArticleById, getRelatedArticles, getArticles, getPopularArticles } from '@/lib/articles';
 import { getBanners } from '@/lib/banners';
 
 // ISR: 60초 캐시 후 자동 갱신
@@ -17,19 +19,37 @@ export async function generateMetadata({ params }) {
 
   if (!article) {
     return {
-      title: '기사를 찾을 수 없습니다 - Dr.News',
+      title: '기사를 찾을 수 없습니다',
     };
   }
 
   return {
-    title: `${article.title} - Dr.News`,
+    title: article.title,
     description: article.summary,
+    authors: [{ name: article.author }],
     openGraph: {
+      type: 'article',
+      url: `https://drnews.co.kr/article/${id}`,
       title: article.title,
       description: article.summary,
-      type: 'article',
       publishedTime: article.date,
+      modifiedTime: article.modifiedDate || article.date,
       authors: [article.author],
+      section: article.category,
+      tags: article.tags || [article.category],
+      images: [
+        {
+          url: article.image,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.summary,
       images: [article.image],
     },
   };
@@ -38,9 +58,11 @@ export async function generateMetadata({ params }) {
 export default async function ArticlePage({ params }) {
   const { id } = await params;
   // cache()로 generateMetadata와 중복 호출 제거됨
-  const [article, allBanners] = await Promise.all([
+  const [article, allBanners, latestArticles, popularArticles] = await Promise.all([
     getArticleById(id),
-    getBanners()
+    getBanners(),
+    getArticles(),
+    getPopularArticles(5)
   ]);
 
   // 사이드바 배너 (통합 - positions 필터 없이 전체 사용)
@@ -65,8 +87,42 @@ export default async function ArticlePage({ params }) {
 
   const relatedArticles = await getRelatedArticles(id, article.category, 3);
 
+  // JSON-LD 구조화 데이터
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: article.title,
+    image: article.image,
+    datePublished: article.date,
+    dateModified: article.modifiedDate || article.date,
+    author: {
+      '@type': 'Person',
+      name: article.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Dr.News',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://drnews.co.kr/logo.png',
+      },
+    },
+    description: article.summary,
+    articleSection: article.category,
+    articleBody: article.content,
+    url: `https://drnews.co.kr/article/${id}`,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://drnews.co.kr/article/${id}`,
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* 뒤로가기 */}
@@ -140,7 +196,11 @@ export default async function ArticlePage({ params }) {
 
         {/* 사이드바 - PC에서만 표시 */}
         <aside className="hidden lg:block w-72 flex-shrink-0">
-          <SidebarAd banners={sidebarBanners} sticky={true} showInquiry={true} />
+          <div className="sticky top-24 space-y-4">
+            <LatestNews articles={latestArticles} currentArticleId={parseInt(id)} />
+            <PopularNews articles={popularArticles} />
+            <SidebarAd banners={sidebarBanners} sticky={false} showInquiry={true} />
+          </div>
         </aside>
         </div>
 

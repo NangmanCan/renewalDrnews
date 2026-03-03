@@ -28,10 +28,8 @@ const SubHeadline = ({ article }) => {
           <p className="text-[14px] text-gray-600 line-clamp-2 leading-[1.6]">
             {article.content}
           </p>
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
+          <div className="mt-3 pt-3 border-t border-gray-100">
             <span className="text-xs text-gray-500">{article.author}</span>
-            <span className="text-xs text-gray-300">|</span>
-            <span className="text-xs text-gray-400">{article.date}</span>
           </div>
         </div>
       </div>
@@ -46,18 +44,13 @@ const SubHeadline = ({ article }) => {
             className="object-cover"
           />
         </div>
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex flex-col justify-between flex-1 min-w-0">
           <h3 className="text-[22px] font-bold text-gray-900 line-clamp-2 mb-2 leading-[1.4] hover:underline">
             {article.title}
           </h3>
-          <p className="text-[15px] text-gray-600 line-clamp-3 leading-[1.7] flex-1">
+          <p className="text-[15px] text-gray-600 line-clamp-5 leading-[1.7]">
             {article.content}
           </p>
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
-            <span className="text-xs text-gray-500">{article.author}</span>
-            <span className="text-xs text-gray-300">|</span>
-            <span className="text-xs text-gray-400">{article.date}</span>
-          </div>
         </div>
       </div>
     </Link>

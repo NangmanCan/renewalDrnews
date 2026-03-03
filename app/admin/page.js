@@ -8,6 +8,7 @@ import { articles as staticArticles } from '@/data/articles';
 import { ceoReports as staticCeoReports } from '@/data/ceoReports';
 import { opinions as staticOpinions } from '@/data/opinions';
 import { initialBanners as staticBanners } from '@/data/banners';
+import { uploadImage } from '@/lib/storage';
 
 // API 유틸리티 함수
 const api = {
@@ -150,26 +151,121 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
 
 // 이미지 업로더 컴포넌트
 // allowGif: GIF 애니메이션 파일 허용 여부 (헤드라인 기사 이미지 제외)
-function ImageUploader({ currentImage, onImageChange, guide, allowGif = false }) {
+// folder: Storage 저장 폴더 (articles, opinions, ceo, banners)
+// 이미지 리사이징 함수
+async function resizeImage(file, maxWidth, maxHeight) {
+  return new Promise((resolve) => {
+    const img = document.createElement('img');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    img.onload = () => {
+      // 비율 유지하면서 최대 크기에 맞춤
+      let { width, height } = img;
+      
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      if (height > maxHeight) {
+        width = (width * maxHeight) / height;
+        height = maxHeight;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          const resizedFile = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          resolve(resizedFile);
+        },
+        'image/jpeg',
+        0.9
+      );
+    };
+
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles' }) {
   const fileInputRef = useRef(null);
   const [preview, setPreview] = useState(currentImage || '');
   const [isGif, setIsGif] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
 
-  const handleFileChange = (e) => {
+  // guide에서 규격 파싱 (예: "1200x300" → {width: 1200, height: 300})
+  const parseGuide = (guideStr) => {
+    if (!guideStr) return null;
+    const str = typeof guideStr === 'object' ? guideStr.imageGuide || guideStr.label : guideStr;
+    const match = str?.match(/(\d+)x(\d+)/);
+    if (match) {
+      return { width: parseInt(match[1]), height: parseInt(match[2]) };
+    }
+    return null;
+  };
+
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const gif = file.type === 'image/gif';
-      setIsGif(gif);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-        onImageChange(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // 파일 크기 체크 (10MB 제한)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      setUploadError('파일 크기는 10MB 이하여야 합니다.');
+      return;
+    }
+
+    const gif = file.type === 'image/gif';
+    setIsGif(gif);
+    setUploadError(null);
+    setUploading(true);
+
+    // 로컬 미리보기 (빠른 UX)
+    const localPreview = URL.createObjectURL(file);
+    setPreview(localPreview);
+
+    try {
+      // GIF가 아니면 리사이징
+      let fileToUpload = file;
+      if (!gif) {
+        const size = parseGuide(guide);
+        if (size) {
+          fileToUpload = await resizeImage(file, size.width, size.height);
+        }
+      }
+
+      // Supabase Storage에 업로드
+      const { url, error } = await uploadImage(fileToUpload, folder);
+
+      if (error) {
+        throw error;
+      }
+
+      // 성공: Storage URL로 교체
+      setPreview(url);
+      onImageChange(url);
+      
+      // 로컬 미리보기 URL 해제
+      URL.revokeObjectURL(localPreview);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setUploadError(err.message || '업로드에 실패했습니다.');
+      setPreview('');
+      URL.revokeObjectURL(localPreview);
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleUrlInput = (url) => {
+    setUploadError(null);
     setPreview(url);
     onImageChange(url);
   };
@@ -183,19 +279,39 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false })
         )}
       </div>
 
+      {/* 에러 메시지 */}
+      {uploadError && (
+        <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          {uploadError}
+        </div>
+      )}
+
       {/* 미리보기 */}
       {preview && (
         <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
           <Image src={preview} alt="미리보기" fill className="object-cover" unoptimized={isGif || preview.endsWith('.gif')} />
-          <button
-            type="button"
-            onClick={() => { setPreview(''); onImageChange(''); }}
-            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          {uploading && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <div className="flex items-center gap-2 text-white">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>업로드 중...</span>
+              </div>
+            </div>
+          )}
+          {!uploading && (
+            <button
+              type="button"
+              onClick={() => { setPreview(''); onImageChange(''); setUploadError(null); }}
+              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       )}
 
@@ -204,12 +320,25 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false })
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2"
+          disabled={uploading}
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          파일 업로드
+          {uploading ? (
+            <>
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              업로드 중...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              파일 업로드
+            </>
+          )}
         </button>
         <input
           ref={fileInputRef}
@@ -226,7 +355,8 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false })
         placeholder="또는 이미지 URL 입력"
         value={preview}
         onChange={(e) => handleUrlInput(e.target.value)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+        disabled={uploading}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent disabled:opacity-50"
       />
     </div>
   );
@@ -352,6 +482,7 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
           onImageChange={(url) => setForm({ ...form, image: url })}
           guide={currentGuide}
           allowGif={form.placement !== 'headline'}
+          folder={form.placement === 'opinion' ? 'opinions' : 'articles'}
         />
 
         {/* 요약 */}
@@ -703,6 +834,7 @@ function CeoReportEditor({ report, onSave, onCancel }) {
           onImageChange={(url) => setForm({ ...form, authorImage: url })}
           guide={IMAGE_GUIDES.ceo}
           allowGif
+          folder="ceo"
         />
 
         {/* 본문 */}
@@ -1133,12 +1265,12 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
     },
     sidebar: {
       label: '사이드바 광고',
-      imageGuide: '800x400',
-      description: 'PC 사이드바 및 모바일 뉴스 사이에 노출',
+      imageGuide: '1200x300',
+      description: 'PC 사이드바 및 모바일 뉴스 사이에 노출 (4:1 비율)',
     },
     gnb: {
       label: 'GNB 상단배너',
-      imageGuide: '160x50',
+      imageGuide: '234x60',
       description: '상단 로고 옆에 표시되는 소형 배너',
     },
   };
@@ -1206,21 +1338,16 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
         {/* 이미지 */}
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <label className="block text-sm font-medium text-gray-700">이미지 URL</label>
+            <label className="block text-sm font-medium text-gray-700">광고 이미지</label>
             <span className="text-xs text-gray-400">권장: {info.imageGuide}</span>
           </div>
-          <input
-            type="text"
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-            placeholder="https://images.unsplash.com/..."
+          <ImageUploader
+            currentImage={form.image}
+            onImageChange={(url) => setForm({ ...form, image: url })}
+            guide={info.imageGuide}
+            allowGif={adType !== 'headline'}
+            folder="banners"
           />
-          {form.image && (
-            <div className="mt-2 relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden">
-              <Image src={form.image} alt="미리보기" fill className="object-cover" unoptimized={adType !== 'headline' && form.image.endsWith('.gif')} />
-            </div>
-          )}
         </div>
 
         {/* 링크 */}

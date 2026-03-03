@@ -1,38 +1,39 @@
 'use client';
 
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
-const NativeAd = ({ banner }) => {
-  if (!banner) return null;
+const NativeAd = ({ banner, banners }) => {
+  // banners 배열이 있으면 랜덤 선택, 없으면 단일 banner 사용
+  const [selectedBanner, setSelectedBanner] = useState(banner);
+
+  useEffect(() => {
+    if (banners && banners.length > 0) {
+      const randomIndex = Math.floor(Math.random() * banners.length);
+      setSelectedBanner(banners[randomIndex]);
+    }
+  }, [banners]);
+
+  if (!selectedBanner) return null;
 
   return (
     <a
-      href={banner.link}
+      href={selectedBanner.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="block bg-gray-50 overflow-hidden sm:border sm:border-gray-200 sm:hover:border-gray-300 transition-colors"
+      className="block overflow-hidden border-b border-gray-200 hover:opacity-90 transition-opacity my-2"
     >
-      <div className="flex gap-4 p-4">
-        <div className="relative w-24 h-24 flex-shrink-0">
-          <Image
-            src={banner.image}
-            alt={banner.title}
-            fill
-            className="object-cover"
-            unoptimized={banner.image?.endsWith('.gif')}
-          />
-        </div>
-        <div className="flex flex-col justify-center flex-1 min-w-0">
-          <span className="inline-flex items-center gap-1 text-xs text-gray-500 font-semibold mb-1 w-fit">
-            Sponsored
-          </span>
-          <p className="text-sm font-semibold text-gray-800 line-clamp-2 mb-1">
-            {banner.title}
-          </p>
-          <p className="text-xs text-gray-500 line-clamp-1">
-            {banner.description}
-          </p>
-        </div>
+      <div className="relative w-full h-20">
+        <Image
+          src={selectedBanner.image}
+          alt={selectedBanner.title || 'AD'}
+          fill
+          className="object-contain"
+          unoptimized={selectedBanner.image?.endsWith('.gif')}
+        />
+        <span className="absolute top-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">
+          AD
+        </span>
       </div>
     </a>
   );

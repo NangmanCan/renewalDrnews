@@ -166,7 +166,7 @@ export default async function Home({ searchParams }) {
                         <NewsListItem article={article} compact />
                         {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
                           <div className="py-3 border-b border-gray-100">
-                            <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
+                            <NativeAd banners={sidebarBanners} />
                           </div>
                         )}
                       </div>
@@ -198,9 +198,9 @@ export default async function Home({ searchParams }) {
               {/* 많이 본 뉴스 */}
               <PopularNews articles={popularArticles} />
 
-              {/* 네이티브 광고 */}
+              {/* 네이티브 광고 - 랜덤 롤링 */}
               {sidebarBanners.length > 0 && (
-                <NativeAd banner={sidebarBanners[0]} />
+                <NativeAd banners={sidebarBanners} />
               )}
 
               {/* 제약·바이오 속보 */}
@@ -216,7 +216,7 @@ export default async function Home({ searchParams }) {
                   <NewsListItem article={article} compact />
                   {(index + 1) % 6 === 0 && sidebarBanners.length > 0 && (
                     <div className="py-3 border-b border-gray-100">
-                      <NativeAd banner={sidebarBanners[Math.floor(index / 6) % sidebarBanners.length]} />
+                      <NativeAd banners={sidebarBanners} />
                     </div>
                   )}
                 </div>

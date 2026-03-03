@@ -32,7 +32,7 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
                   src={banner.image}
                   alt={banner.title}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   unoptimized={banner.image?.endsWith('.gif')}
                 />
                 <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-1.5 py-0.5">

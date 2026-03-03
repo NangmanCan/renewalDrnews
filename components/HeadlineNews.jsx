@@ -27,10 +27,8 @@ const HeadlineNews = ({ article }) => {
         <p className="text-gray-200 text-base md:text-lg mb-4 line-clamp-2 max-w-3xl">
           {article.summary}
         </p>
-        <div className="flex items-center gap-4 text-gray-300 text-sm">
+        <div className="text-gray-300 text-sm">
           <span>{article.author}</span>
-          <span>|</span>
-          <time>{article.date}</time>
         </div>
       </div>
     </Link>

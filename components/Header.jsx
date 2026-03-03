@@ -97,13 +97,8 @@ const Header = () => {
               )}
             </div>
 
-            {/* 모바일: 관리자 버튼 */}
-            <Link
-              href="/admin"
-              className="md:hidden px-3 py-1.5 bg-navy text-white text-sm font-medium transition-colors"
-            >
-              관리자
-            </Link>
+            {/* 모바일: 검색 버튼 자리 (placeholder) */}
+            <div className="md:hidden w-12 h-12"></div>
           </div>
         </div>
       </div>
@@ -134,13 +129,7 @@ const Header = () => {
               ))}
             </nav>
 
-            {/* 관리자 버튼 (데스크탑) */}
-            <Link
-              href="/admin"
-              className="hidden md:block px-4 py-1.5 border border-gray-400 text-gray-300 hover:text-white hover:border-white text-sm font-medium transition-colors"
-            >
-              관리자
-            </Link>
+
           </div>
         </div>
       </div>
