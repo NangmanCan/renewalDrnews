@@ -53,21 +53,21 @@ const Header = () => {
 
             {/* 가운데: 로고 */}
             <Link href="/" className="hover:opacity-80 transition-opacity">
-              {/* 모바일: 높이 36px */}
+              {/* 모바일: 높이 44px */}
               <Image
                 src="/logo.jpg"
                 alt="닥터뉴스 DR.NEWS"
-                width={78}
-                height={36}
+                width={95}
+                height={44}
                 className="md:hidden"
                 priority
               />
-              {/* PC: 높이 48px */}
+              {/* PC: 높이 60px */}
               <Image
                 src="/logo.jpg"
                 alt="닥터뉴스 DR.NEWS"
-                width={104}
-                height={48}
+                width={130}
+                height={60}
                 className="hidden md:block"
                 priority
               />
