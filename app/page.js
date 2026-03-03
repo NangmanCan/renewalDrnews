@@ -55,6 +55,9 @@ export default async function Home({ searchParams }) {
       const allOpinions = await getOpinions();
       regularArticles = allOpinions;
       listArticles = allOpinions;
+    } else if (category === '전체') {
+      // 전체 기사 (헤드라인 제외한 모든 기사)
+      listArticles = visibleArticles.filter(a => !a.isHeadline && !a.is_headline);
     } else {
       const categoryArticles = await getArticlesByCategory(category);
       regularArticles = categoryArticles;

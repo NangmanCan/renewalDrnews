@@ -55,8 +55,8 @@ function parseArticle(html, meta) {
   const dateStr = dateMatch[1];
   const timeStr = dateMatch[2];
   
-  // 3월 기사만 필터링
-  if (!dateStr.startsWith('2026-03')) {
+  // 2월 마지막주 + 3월 기사 필터링 (2026-02-24 이후)
+  if (dateStr < '2026-02-24') {
     return null;
   }
   
@@ -209,10 +209,10 @@ async function crawlAllPages() {
     await new Promise(r => setTimeout(r, 100));
   }
   
-  console.log(`\n\n✅ 3월 기사 ${articles.length}개 수집 완료!\n`);
+  console.log(`\n\n✅ 2월말~3월 기사 ${articles.length}개 수집 완료!\n`);
   
   // 결과 저장
-  const outputPath = path.join(OUTPUT_DIR, 'march-2026-articles.json');
+  const outputPath = path.join(OUTPUT_DIR, 'recent-articles.json');
   fs.writeFileSync(outputPath, JSON.stringify(articles, null, 2), 'utf-8');
   console.log(`💾 저장됨: ${outputPath}`);
   
