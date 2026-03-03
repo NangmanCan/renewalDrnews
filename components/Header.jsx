@@ -52,22 +52,25 @@ const Header = () => {
             </button>
 
             {/* 가운데: 로고 */}
-            <Link href="/" className="flex flex-col items-center hover:opacity-80 transition-opacity">
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl md:text-4xl font-black text-navy tracking-tight">
-                  Dr.
-                </span>
-                <span className="text-3xl md:text-4xl font-black text-navy tracking-tight">
-                  News
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="h-px w-6 bg-gray-300"></span>
-                <span className="text-xs text-gray-500 font-medium tracking-widest uppercase">
-                  Medical Journal
-                </span>
-                <span className="h-px w-6 bg-gray-300"></span>
-              </div>
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              {/* 모바일: 높이 36px */}
+              <Image
+                src="/logo.jpg"
+                alt="닥터뉴스 DR.NEWS"
+                width={78}
+                height={36}
+                className="md:hidden"
+                priority
+              />
+              {/* PC: 높이 48px */}
+              <Image
+                src="/logo.jpg"
+                alt="닥터뉴스 DR.NEWS"
+                width={104}
+                height={48}
+                className="hidden md:block"
+                priority
+              />
             </Link>
 
             {/* 오른쪽: 배너 광고 영역 */}
