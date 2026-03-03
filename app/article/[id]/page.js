@@ -170,9 +170,9 @@ export default async function ArticlePage({ params }) {
           </div>
 
           {/* 기사 본문 */}
-          <div className="prose prose-lg max-w-none mb-12">
+          <div className="max-w-none mb-12">
             {article.content.split('\n\n').map((paragraph, index) => (
-              <p key={index} className="text-gray-800 leading-relaxed mb-4">
+              <p key={index} className="text-[18px] text-gray-800 leading-[1.9] mb-6">
                 {paragraph}
               </p>
             ))}
