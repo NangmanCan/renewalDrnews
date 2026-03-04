@@ -55,26 +55,30 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
   return (
     <div className="relative w-full h-[300px] md:h-[380px] overflow-hidden group">
       {/* 슬라이드 이미지 */}
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full bg-gray-300">
         {current.type === 'article' ? (
           <Link href={current.link} className="block w-full h-full">
-            <Image
-              src={current.image}
-              alt={`${current.category} 헤드라인 뉴스: ${current.title}`}
-              fill
-              priority
-              className="object-cover"
-            />
+            {current.image && (
+              <Image
+                src={current.image}
+                alt={`${current.category} 헤드라인 뉴스: ${current.title}`}
+                fill
+                priority
+                className="object-cover"
+              />
+            )}
           </Link>
         ) : (
           <a href={current.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
-            <Image
-              src={current.image}
-              alt={`광고: ${current.title}`}
-              fill
-              priority
-              className="object-cover"
-            />
+            {current.image && (
+              <Image
+                src={current.image}
+                alt={`광고: ${current.title}`}
+                fill
+                priority
+                className="object-cover"
+              />
+            )}
           </a>
         )}
       </div>

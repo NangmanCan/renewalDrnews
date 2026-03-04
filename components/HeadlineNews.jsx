@@ -9,13 +9,17 @@ const HeadlineNews = ({ article }) => {
       href={`/article/${article.id}`}
       className="block group relative w-full h-[500px] md:h-[600px] rounded-2xl overflow-hidden shadow-2xl"
     >
-      <Image
-        src={article.image}
-        alt={article.title}
-        fill
-        priority
-        className="object-cover group-hover:scale-105 transition-transform duration-700"
-      />
+      {article.image ? (
+        <Image
+          src={article.image}
+          alt={article.title}
+          fill
+          priority
+          className="object-cover group-hover:scale-105 transition-transform duration-700"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gray-300" />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
         <span className="inline-block px-3 py-1 bg-sky-600 text-white text-sm font-semibold rounded mb-4">

@@ -28,14 +28,16 @@ const BottomBanner = ({ banners = [] }) => {
         className="flex items-center p-4 gap-4 hover:bg-white/5 transition-colors"
       >
         {/* 썸네일 */}
-        <div className="w-20 h-20 md:w-24 md:h-24 relative rounded-lg overflow-hidden flex-shrink-0">
-          <Image
-            src={current.image}
-            alt={current.title}
-            fill
-            className="object-cover"
-            unoptimized={current.image?.endsWith('.gif')}
-          />
+        <div className="w-20 h-20 md:w-24 md:h-24 relative rounded-lg overflow-hidden flex-shrink-0 bg-gray-600">
+          {current.image && (
+            <Image
+              src={current.image}
+              alt={current.title}
+              fill
+              className="object-cover"
+              unoptimized={current.image?.endsWith('.gif')}
+            />
+          )}
         </div>
 
         {/* 내용 */}

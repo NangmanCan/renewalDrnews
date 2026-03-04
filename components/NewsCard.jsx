@@ -8,12 +8,16 @@ const NewsCard = ({ article }) => {
       className="block group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
     >
       <div className="relative overflow-hidden h-48">
-        <Image
-          src={article.image}
-          alt={article.title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-        />
+        {article.image ? (
+          <Image
+            src={article.image}
+            alt={article.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gray-200" />
+        )}
         <span className="absolute top-3 left-3 px-2 py-1 bg-navy text-white text-xs font-medium rounded">
           {article.category}
         </span>

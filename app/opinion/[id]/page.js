@@ -101,12 +101,18 @@ export default async function OpinionPage({ params }) {
               {/* 저자 정보 */}
               <div className="flex items-center gap-4 p-4 bg-violet-50 rounded-lg">
                 <div className="relative w-16 h-16 rounded-full overflow-hidden ring-3 ring-violet-200">
-                  <Image
-                    src={opinion.authorImage}
-                    alt={opinion.author}
-                    fill
-                    className="object-cover"
-                  />
+                  {opinion.authorImage ? (
+                    <Image
+                      src={opinion.authorImage}
+                      alt={opinion.author}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-xl font-bold">
+                      {opinion.author?.charAt(0) || '?'}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-lg font-bold text-gray-900">{opinion.author}</p>
@@ -129,12 +135,18 @@ export default async function OpinionPage({ params }) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="relative w-12 h-12 rounded-full overflow-hidden">
-                    <Image
-                      src={opinion.authorImage}
-                      alt={opinion.author}
-                      fill
-                      className="object-cover"
-                    />
+                    {opinion.authorImage ? (
+                      <Image
+                        src={opinion.authorImage}
+                        alt={opinion.author}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-lg font-bold">
+                        {opinion.author?.charAt(0) || '?'}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold text-gray-800">{opinion.author}</p>
@@ -183,12 +195,18 @@ export default async function OpinionPage({ params }) {
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                      <Image
-                        src={o.authorImage}
-                        alt={o.author}
-                        fill
-                        className="object-cover"
-                      />
+                      {o.authorImage ? (
+                        <Image
+                          src={o.authorImage}
+                          alt={o.author}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
+                          {o.author?.charAt(0) || '?'}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-800">{o.author}</p>

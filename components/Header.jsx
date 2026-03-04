@@ -75,7 +75,7 @@ const Header = () => {
 
             {/* 오른쪽: 배너 광고 영역 */}
             <div className="hidden md:flex items-center min-w-[250px] justify-end">
-              {gnbBanner ? (
+              {gnbBanner && gnbBanner.image ? (
                 <a
                   href={gnbBanner.link}
                   target="_blank"
