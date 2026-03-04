@@ -27,14 +27,16 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
           >
             {/* 가로로 긴 이미지 */}
             <div className="relative">
-              <div className="relative w-full h-24">
-                <Image
-                  src={banner.image}
-                  alt={banner.title}
-                  fill
-                  className="object-contain"
-                  unoptimized={banner.image?.endsWith('.gif')}
-                />
+              <div className="relative w-full h-24 bg-gray-100">
+                {banner.image && (
+                  <Image
+                    src={banner.image}
+                    alt={banner.title}
+                    fill
+                    className="object-contain"
+                    unoptimized={banner.image?.endsWith('.gif')}
+                  />
+                )}
                 <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-1.5 py-0.5">
                   AD
                 </span>

@@ -72,12 +72,18 @@ export default async function CeoReportPage({ params }) {
           {/* 저자 정보 */}
           <div className="flex items-center gap-4">
             <div className="relative w-14 h-14 rounded-full overflow-hidden ring-3 ring-amber-400/30">
-              <Image
-                src={report.authorImage}
-                alt={report.author}
-                fill
-                className="object-cover"
-              />
+              {report.authorImage ? (
+                <Image
+                  src={report.authorImage}
+                  alt={report.author}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-600 flex items-center justify-center text-white text-xl font-bold">
+                  {report.author?.charAt(0) || 'C'}
+                </div>
+              )}
             </div>
             <div>
               <p className="text-lg font-semibold">{report.author}</p>
@@ -102,12 +108,18 @@ export default async function CeoReportPage({ params }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative w-12 h-12 rounded-full overflow-hidden">
-                <Image
-                  src={report.authorImage}
-                  alt={report.author}
-                  fill
-                  className="object-cover"
-                />
+                {report.authorImage ? (
+                  <Image
+                    src={report.authorImage}
+                    alt={report.author}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-lg font-bold">
+                    {report.author?.charAt(0) || 'C'}
+                  </div>
+                )}
               </div>
               <div>
                 <p className="font-semibold text-gray-800">{report.author}</p>

@@ -6,6 +6,8 @@ import NewsCard from '@/components/NewsCard';
 import SidebarAd from '@/components/SidebarAd';
 import LatestNews from '@/components/LatestNews';
 import PopularNews from '@/components/PopularNews';
+import ViewTracker from '@/components/ViewTracker';
+import ShareButtons from '@/components/ShareButtons';
 import { getArticleById, getRelatedArticles, getArticles, getPopularArticles } from '@/lib/articles';
 import { getBanners } from '@/lib/banners';
 
@@ -124,6 +126,7 @@ export default async function ArticlePage({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
+      <ViewTracker articleId={id} />
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* 뒤로가기 */}
         <Link
@@ -153,15 +156,17 @@ export default async function ArticlePage({ params }) {
             </div>
 
             {/* 대표 이미지 */}
-            <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-lg">
-              <Image
-                src={article.image}
-                alt={article.title}
-                fill
-                priority
-                className="object-cover"
-              />
-            </div>
+            {article.image && (
+              <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-lg">
+                <Image
+                  src={article.image}
+                  alt={article.title}
+                  fill
+                  priority
+                  className="object-cover"
+                />
+              </div>
+            )}
           </header>
 
           {/* 기사 요약 */}
@@ -170,28 +175,19 @@ export default async function ArticlePage({ params }) {
           </div>
 
           {/* 기사 본문 */}
-          <div className="prose prose-lg max-w-none mb-12">
+          <div className="max-w-none mb-12">
             {article.content.split('\n\n').map((paragraph, index) => (
-              <p key={index} className="text-gray-800 leading-relaxed mb-4">
+              <p key={index} className="text-[18px] text-gray-800 leading-[1.9] mb-6">
                 {paragraph}
               </p>
             ))}
           </div>
 
-          {/* 공유 버튼 */}
-          <div className="flex items-center gap-4 py-6 border-t border-b border-gray-200">
-            <span className="text-gray-600 font-medium">공유하기</span>
-            <button className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
-              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
-              </svg>
-            </button>
-            <button className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors">
-              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-              </svg>
-            </button>
-          </div>
+          <ShareButtons
+            title={article.title}
+            summary={article.summary}
+            url={`https://drnews.co.kr/article/${id}`}
+          />
         </article>
 
         {/* 사이드바 - PC에서만 표시 */}

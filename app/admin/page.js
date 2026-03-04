@@ -83,6 +83,8 @@ const IMAGE_GUIDES = {
   ceo: { width: 100, height: 100, label: '프로필 (100x100)' },
 };
 
+const ARTICLE_IMAGE_PLACEHOLDER = 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop';
+
 // 사이드바 컴포넌트
 function AdminSidebar({ currentMenu, setCurrentMenu }) {
   const router = useRouter();
@@ -362,6 +364,84 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
   );
 }
 
+function PreviewModal({ isOpen, onClose, form }) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const formattedDate = new Date().toLocaleDateString('ko-KR');
+  const imageSrc = form.image || ARTICLE_IMAGE_PLACEHOLDER;
+  const htmlContent = /<[^>]+>/.test(form.content)
+    ? form.content
+    : form.content.replace(/\n/g, '<br />');
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/60 p-4 md:p-6 flex items-center justify-center"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative bg-white w-full max-w-[800px] max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl p-6 md:p-8">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+          aria-label="미리보기 닫기"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <article className="max-w-4xl mx-auto">
+          <header className="mb-8">
+            <span className="inline-block px-3 py-1 bg-navy text-white text-sm font-medium rounded mb-4">
+              {form.category || '카테고리'}
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-navy mb-4 leading-tight">
+              {form.title || '제목을 입력하세요'}
+            </h2>
+            <div className="flex items-center gap-4 text-gray-500 text-sm mb-6">
+              <span className="font-medium">{form.author || '작성자'}</span>
+              <span>|</span>
+              <time>{formattedDate}</time>
+            </div>
+
+            <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-lg bg-gray-100">
+              <Image
+                src={imageSrc}
+                alt={form.title || '기사 미리보기 이미지'}
+                fill
+                className="object-cover"
+                unoptimized={imageSrc.endsWith('.gif')}
+              />
+            </div>
+          </header>
+
+          <div className="bg-gray-50 border-l-4 border-sky-600 p-4 mb-8 rounded-r-lg">
+            <p className="text-gray-700 font-medium">{form.summary || '요약을 입력하세요'}</p>
+          </div>
+
+          <div className="max-w-none mb-2">
+            <div
+              className="text-[18px] text-gray-800 leading-[1.9] [&_p]:mb-6"
+              dangerouslySetInnerHTML={{ __html: htmlContent || '본문을 입력하세요' }}
+            />
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
 // 기사 에디터 컴포넌트
 function ArticleEditor({ article, onSave, onCancel, placement }) {
   const initialPlacement = article?.placement || placement || 'news';
@@ -376,6 +456,7 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
     image: article?.image || '',
     placement: initialPlacement,
   });
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const articleCategories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '해외뉴스'];
   const opinionCategories = ['칼럼', '기고'];
@@ -509,15 +590,30 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
           />
         </div>
 
-        <button
-          type="submit"
-          className={`w-full py-3 text-white font-medium rounded-lg transition-colors ${
-            article ? 'bg-green-600 hover:bg-green-700' : 'bg-sky-600 hover:bg-sky-700'
-          }`}
-        >
-          {article ? '수정 완료' : '발행하기'}
-        </button>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setIsPreviewOpen(true)}
+            className="py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            미리보기
+          </button>
+          <button
+            type="submit"
+            className={`py-3 text-white font-medium rounded-lg transition-colors ${
+              article ? 'bg-green-600 hover:bg-green-700' : 'bg-sky-600 hover:bg-sky-700'
+            }`}
+          >
+            {article ? '수정 완료' : '발행하기'}
+          </button>
+        </div>
       </form>
+
+      <PreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        form={form}
+      />
     </div>
   );
 }
@@ -527,6 +623,8 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
   const [activeTab, setActiveTab] = useState('list');
   const [editingItem, setEditingItem] = useState(null);
   const [filterPlacement, setFilterPlacement] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
   const [saving, setSaving] = useState(false);
 
   // 기사와 오피니언 합쳐서 표시
@@ -535,9 +633,52 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
     ...opinions.map(o => ({ ...o, type: 'opinion', placement: 'opinion' })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const filteredItems = filterPlacement === 'all'
-    ? allItems
-    : allItems.filter(item => item.placement === filterPlacement);
+  const parseItemDate = (dateValue) => {
+    if (!dateValue) return null;
+    const parsed = new Date(dateValue);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const isInDateRange = (itemDate) => {
+    if (dateFilter === 'all') return true;
+    const date = parseItemDate(itemDate);
+    if (!date) return false;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (dateFilter === 'today') {
+      const endOfToday = new Date(startOfToday);
+      endOfToday.setDate(endOfToday.getDate() + 1);
+      return date >= startOfToday && date < endOfToday;
+    }
+
+    if (dateFilter === 'week') {
+      const day = startOfToday.getDay();
+      const diffToMonday = day === 0 ? 6 : day - 1;
+      const startOfWeek = new Date(startOfToday);
+      startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
+      return date >= startOfWeek;
+    }
+
+    if (dateFilter === 'month') {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      return date >= startOfMonth;
+    }
+
+    return true;
+  };
+
+  const filteredItems = allItems.filter((item) => {
+    const placementMatched = filterPlacement === 'all' || item.placement === filterPlacement;
+    const query = searchQuery.trim().toLowerCase();
+    const searchMatched = !query || [item.title, item.content]
+      .filter(Boolean)
+      .some((field) => field.toLowerCase().includes(query));
+    const dateMatched = isInDateRange(item.date);
+
+    return placementMatched && searchMatched && dateMatched;
+  });
 
   const handleSave = async (form) => {
     setSaving(true);
@@ -649,24 +790,65 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
 
       {activeTab === 'list' && (
         <div className="bg-white rounded-xl shadow-sm p-6">
+          {/* 검색 */}
+          <div className="mb-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+              placeholder="제목 또는 내용으로 검색..."
+            />
+          </div>
+
           {/* 필터 */}
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-sm text-gray-500">게재영역:</span>
-            <button
-              onClick={() => setFilterPlacement('all')}
-              className={`px-3 py-1 text-sm rounded-lg ${filterPlacement === 'all' ? 'bg-navy text-white' : 'bg-gray-100'}`}
-            >
-              전체
-            </button>
-            {PLACEMENT_OPTIONS.map(opt => (
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-500">게재영역:</span>
               <button
-                key={opt.id}
-                onClick={() => setFilterPlacement(opt.id)}
-                className={`px-3 py-1 text-sm rounded-lg ${filterPlacement === opt.id ? 'bg-navy text-white' : 'bg-gray-100'}`}
+                onClick={() => setFilterPlacement('all')}
+                className={`px-3 py-1 text-sm rounded-lg ${filterPlacement === 'all' ? 'bg-navy text-white' : 'bg-gray-100'}`}
               >
-                {opt.label}
+                전체
               </button>
-            ))}
+              {PLACEMENT_OPTIONS.map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => setFilterPlacement(opt.id)}
+                  className={`px-3 py-1 text-sm rounded-lg ${filterPlacement === opt.id ? 'bg-navy text-white' : 'bg-gray-100'}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">날짜:</span>
+              <button
+                onClick={() => setDateFilter('all')}
+                className={`px-3 py-1 text-sm rounded-lg ${dateFilter === 'all' ? 'bg-navy text-white' : 'bg-gray-100'}`}
+              >
+                전체
+              </button>
+              <button
+                onClick={() => setDateFilter('today')}
+                className={`px-3 py-1 text-sm rounded-lg ${dateFilter === 'today' ? 'bg-navy text-white' : 'bg-gray-100'}`}
+              >
+                오늘
+              </button>
+              <button
+                onClick={() => setDateFilter('week')}
+                className={`px-3 py-1 text-sm rounded-lg ${dateFilter === 'week' ? 'bg-navy text-white' : 'bg-gray-100'}`}
+              >
+                이번주
+              </button>
+              <button
+                onClick={() => setDateFilter('month')}
+                className={`px-3 py-1 text-sm rounded-lg ${dateFilter === 'month' ? 'bg-navy text-white' : 'bg-gray-100'}`}
+              >
+                이번달
+              </button>
+            </div>
           </div>
 
           {/* 목록 */}

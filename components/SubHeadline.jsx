@@ -13,13 +13,15 @@ const SubHeadline = ({ article }) => {
     >
       {/* 모바일: 이미지 풀와이드 */}
       <div className="sm:hidden">
-        <div className="relative w-full aspect-video">
-          <Image
-            src={article.image}
-            alt={`서브 헤드라인: ${article.title}`}
-            fill
-            className="object-cover"
-          />
+        <div className="relative w-full aspect-video bg-gray-200">
+          {article.image && (
+            <Image
+              src={article.image}
+              alt={`서브 헤드라인: ${article.title}`}
+              fill
+              className="object-cover"
+            />
+          )}
         </div>
         <div className="p-4">
           <h3 className="text-[18px] font-bold text-gray-900 line-clamp-2 mb-2 leading-[1.4]">
@@ -36,13 +38,15 @@ const SubHeadline = ({ article }) => {
 
       {/* 데스크탑: 기존 레이아웃 */}
       <div className="hidden sm:flex flex-row gap-5 p-5">
-        <div className="relative w-64 aspect-[16/11] flex-shrink-0">
-          <Image
-            src={article.image}
-            alt={`서브 헤드라인: ${article.title}`}
-            fill
-            className="object-cover"
-          />
+        <div className="relative w-64 aspect-[16/11] flex-shrink-0 bg-gray-200">
+          {article.image && (
+            <Image
+              src={article.image}
+              alt={`서브 헤드라인: ${article.title}`}
+              fill
+              className="object-cover"
+            />
+          )}
         </div>
         <div className="flex flex-col justify-between flex-1 min-w-0">
           <h3 className="text-[22px] font-bold text-gray-900 line-clamp-2 mb-2 leading-[1.4] hover:underline">

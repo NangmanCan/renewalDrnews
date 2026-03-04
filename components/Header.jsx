@@ -53,12 +53,12 @@ const Header = () => {
 
             {/* 가운데: 로고 */}
             <Link href="/" className="hover:opacity-80 transition-opacity">
-              {/* 모바일: 높이 44px */}
+              {/* 모바일: 높이 55px */}
               <Image
                 src="/logo.jpg"
                 alt="닥터뉴스 DR.NEWS"
-                width={95}
-                height={44}
+                width={120}
+                height={55}
                 className="md:hidden"
                 priority
               />
@@ -75,7 +75,7 @@ const Header = () => {
 
             {/* 오른쪽: 배너 광고 영역 */}
             <div className="hidden md:flex items-center min-w-[250px] justify-end">
-              {gnbBanner ? (
+              {gnbBanner && gnbBanner.image ? (
                 <a
                   href={gnbBanner.link}
                   target="_blank"

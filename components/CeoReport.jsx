@@ -49,12 +49,18 @@ const CeoReport = ({ report }) => {
           {/* 저자 정보 */}
           <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
             <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-gray-200">
-              <Image
-                src={report.authorImage}
-                alt={`${report.author} ${report.authorTitle} 프로필 사진`}
-                fill
-                className="object-cover"
-              />
+              {report.authorImage ? (
+                <Image
+                  src={report.authorImage}
+                  alt={`${report.author} ${report.authorTitle} 프로필 사진`}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-lg font-bold">
+                  {report.author?.charAt(0) || 'C'}
+                </div>
+              )}
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-800">{report.author}</p>

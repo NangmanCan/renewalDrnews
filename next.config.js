@@ -18,6 +18,22 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'i.ibb.co',
       },
+      {
+        protocol: 'https',
+        hostname: '*.kmpnews.co.kr',
+      },
+      {
+        protocol: 'http',
+        hostname: '*.kmpnews.co.kr',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.kmpnews.co.kr',
+      },
+      {
+        protocol: 'http',
+        hostname: 'www.kmpnews.co.kr',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,

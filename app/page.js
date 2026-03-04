@@ -1,5 +1,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Link from 'next/link';
 import HeadlineSlider from '@/components/HeadlineSlider';
 import SubHeadline from '@/components/SubHeadline';
 import CeoReport from '@/components/CeoReport';
@@ -55,6 +56,9 @@ export default async function Home({ searchParams }) {
       const allOpinions = await getOpinions();
       regularArticles = allOpinions;
       listArticles = allOpinions;
+    } else if (category === '전체') {
+      // 전체 기사 (헤드라인 제외한 모든 기사)
+      listArticles = visibleArticles.filter(a => !a.isHeadline && !a.is_headline);
     } else {
       const categoryArticles = await getArticlesByCategory(category);
       regularArticles = categoryArticles;
@@ -111,20 +115,28 @@ export default async function Home({ searchParams }) {
                       <BioPharmNews articles={bioPharmArticles} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <NewsList articles={listArticles} />
+                      <NewsList articles={listArticles.slice(0, 15)} />
+                      {listArticles.length > 15 && (
+                        <div className="border border-t-0 border-gray-200 py-4 text-center bg-white">
+                          <Link
+                            href="/news"
+                            className="text-sm font-bold text-gray-600 hover:text-navy transition-colors"
+                          >
+                            더보기 +
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* 우측 사이드바 (sticky) */}
-                <aside className="w-72 flex-shrink-0">
-                  <div className="sticky top-24 space-y-4">
-                    <Opinion opinions={latestOpinions} />
-                    <PopularNews articles={popularArticles} />
-                    {sidebarBanners.length > 0 && (
-                      <SidebarAd banners={sidebarBanners} sticky={false} />
-                    )}
-                  </div>
+                {/* 우측 사이드바 */}
+                <aside className="w-72 flex-shrink-0 space-y-4">
+                  <Opinion opinions={latestOpinions} />
+                  <PopularNews articles={popularArticles} />
+                  {sidebarBanners.length > 0 && (
+                    <SidebarAd banners={sidebarBanners} sticky={false} />
+                  )}
                 </aside>
               </div>
           )}
