@@ -9,6 +9,7 @@ import { ceoReports as staticCeoReports } from '@/data/ceoReports';
 import { opinions as staticOpinions } from '@/data/opinions';
 import { initialBanners as staticBanners } from '@/data/banners';
 import { uploadImage } from '@/lib/storage';
+import TipTapEditor from '@/components/TipTapEditor';
 
 // API 유틸리티 함수
 const api = {
@@ -581,12 +582,10 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
         {/* 본문 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">본문</label>
-          <textarea
-            value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-            rows={10}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none"
-            placeholder="기사 본문을 입력하세요"
+          <TipTapEditor
+            content={form.content}
+            onChange={(html) => setForm({ ...form, content: html })}
+            placeholder="기사 본문을 입력하세요..."
           />
         </div>
 
@@ -1022,11 +1021,9 @@ function CeoReportEditor({ report, onSave, onCancel }) {
         {/* 본문 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">본문</label>
-          <textarea
-            value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-            rows={12}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 resize-none"
+          <TipTapEditor
+            content={form.content}
+            onChange={(html) => setForm({ ...form, content: html })}
             placeholder="철학적인 에세이 내용을 작성하세요..."
           />
         </div>
