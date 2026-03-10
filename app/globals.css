@@ -282,6 +282,49 @@
   height: 0;
 }
 
+/* 테이블 스타일 */
+.tiptap-editor .ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+
+.tiptap-editor .ProseMirror table td,
+.tiptap-editor .ProseMirror table th {
+  min-width: 1em;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.tiptap-editor .ProseMirror table th {
+  font-weight: 600;
+  text-align: left;
+  background-color: #f3f4f6;
+}
+
+.tiptap-editor .ProseMirror table .selectedCell {
+  background-color: #dbeafe;
+}
+
+.tiptap-editor .ProseMirror table .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #3b82f6;
+  pointer-events: none;
+}
+
+.tiptap-editor .ProseMirror table p {
+  margin: 0;
+}
+
 /* 모바일 반응형 */
 @media (max-width: 768px) {
   .tiptap-editor .ProseMirror {

@@ -10,6 +10,10 @@ import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import FontFamily from '@tiptap/extension-font-family';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
 import { useCallback, useRef, useState } from 'react';
 import { uploadImage } from '@/lib/storage';
 
@@ -116,6 +120,23 @@ export default function TipTapEditor({ content, onChange, placeholder = '본문�
       }),
       FontFamily,
       FontSize,
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'border-collapse border border-gray-300',
+        },
+      }),
+      TableRow,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'border border-gray-300 bg-gray-100 font-semibold p-2',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border border-gray-300 p-2',
+        },
+      }),
     ],
     content: content || '',
     onUpdate: ({ editor }) => {
@@ -412,6 +433,118 @@ export default function TipTapEditor({ content, onChange, placeholder = '본문�
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </ToolbarButton>
+        )}
+
+        <ToolbarDivider />
+
+        {/* 표 삽입 */}
+        <ToolbarButton
+          onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+          title="표 삽입 (3x3)"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </ToolbarButton>
+
+        {/* 표 편집 버튼들 (표 안에서만 활성화) */}
+        {editor.isActive('table') && (
+          <>
+            <div className="relative group">
+              <ToolbarButton title="행 추가">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </ToolbarButton>
+              <div className="absolute top-full left-0 mt-1 hidden group-hover:flex flex-col bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().addRowBefore().run()}
+                  className="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  위에 행 추가
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().addRowAfter().run()}
+                  className="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  아래 행 추가
+                </button>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <ToolbarButton title="열 추가">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                </svg>
+              </ToolbarButton>
+              <div className="absolute top-full left-0 mt-1 hidden group-hover:flex flex-col bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().addColumnBefore().run()}
+                  className="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  왼쪽에 열 추가
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editor.chain().focus().addColumnAfter().run()}
+                  className="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap"
+                >
+                  오른쪽에 열 추가
+                </button>
+              </div>
+            </div>
+
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteRow().run()}
+              title="행 삭제"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteColumn().run()}
+              title="열 삭제"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+              onClick={() => editor.chain().focus().mergeCells().run()}
+              disabled={!editor.can().mergeCells()}
+              title="셀 병합"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+              </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+              onClick={() => editor.chain().focus().splitCell().run()}
+              disabled={!editor.can().splitCell()}
+              title="셀 분할"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v16m8-16v16m8-16v16" />
+              </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+              onClick={() => editor.chain().focus().deleteTable().run()}
+              title="표 삭제"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </ToolbarButton>
+          </>
         )}
       </div>
 

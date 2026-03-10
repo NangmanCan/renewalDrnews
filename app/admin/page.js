@@ -458,6 +458,71 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
     placement: initialPlacement,
   });
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [autoSaveTime, setAutoSaveTime] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showRestoreButton, setShowRestoreButton] = useState(false);
+
+  const autoSaveKey = `article_autosave_${article?.id || 'new'}`;
+
+  // 임시저장 데이터 로드
+  useEffect(() => {
+    const saved = localStorage.getItem(autoSaveKey);
+    if (saved && !article) {
+      setShowRestoreButton(true);
+    }
+  }, [autoSaveKey, article]);
+
+  // 폼 변경 감지
+  useEffect(() => {
+    if (form.title || form.content) {
+      setHasUnsavedChanges(true);
+    }
+  }, [form]);
+
+  // 자동저장 (30초 간격)
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const timer = setTimeout(() => {
+      localStorage.setItem(autoSaveKey, JSON.stringify(form));
+      setAutoSaveTime(new Date().toLocaleTimeString('ko-KR'));
+      setHasUnsavedChanges(false);
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [form, hasUnsavedChanges, autoSaveKey]);
+
+  // 페이지 이탈 경고
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // 임시저장 복원
+  const handleRestore = () => {
+    const saved = localStorage.getItem(autoSaveKey);
+    if (saved) {
+      const restoredForm = JSON.parse(saved);
+      setForm(restoredForm);
+      setShowRestoreButton(false);
+      alert('임시저장된 내용을 복원했습니다.');
+    }
+  };
+
+  // 수동 임시저장
+  const handleManualSave = () => {
+    localStorage.setItem(autoSaveKey, JSON.stringify(form));
+    setAutoSaveTime(new Date().toLocaleTimeString('ko-KR'));
+    setHasUnsavedChanges(false);
+    alert('임시저장되었습니다.');
+  };
 
   const articleCategories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '해외뉴스'];
   const opinionCategories = ['칼럼', '기고'];
@@ -469,6 +534,9 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
       alert('제목과 본문을 입력해주세요.');
       return;
     }
+    // 발행 완료 시 임시저장 데이터 삭제
+    localStorage.removeItem(autoSaveKey);
+    setHasUnsavedChanges(false);
     onSave(form);
   };
 
@@ -477,14 +545,42 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">
-          {article ? '기사 수정' : '기사 작성'}
-        </h2>
-        {onCancel && (
-          <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
-            취소
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            {article ? '기사 수정' : '기사 작성'}
+          </h2>
+          {autoSaveTime && (
+            <p className="text-xs text-gray-500 mt-1">
+              마지막 저장: {autoSaveTime}
+            </p>
+          )}
+          {hasUnsavedChanges && (
+            <p className="text-xs text-orange-500 mt-1">
+              저장되지 않은 변경사항이 있습니다
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {showRestoreButton && (
+            <button
+              onClick={handleRestore}
+              className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg"
+            >
+              임시저장 복원
+            </button>
+          )}
+          <button
+            onClick={handleManualSave}
+            className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg"
+          >
+            임시저장
           </button>
-        )}
+          {onCancel && (
+            <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+              취소
+            </button>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -910,8 +1006,73 @@ function CeoReportEditor({ report, onSave, onCancel }) {
     category: report?.category || '경영철학',
     weekNumber: report?.weekNumber || Math.ceil((new Date().getDate()) / 7),
   });
+  const [autoSaveTime, setAutoSaveTime] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showRestoreButton, setShowRestoreButton] = useState(false);
+
+  const autoSaveKey = `ceo_report_autosave_${report?.id || 'new'}`;
 
   const categories = ['경영철학', '리더십', '의료혁신', '미래전망'];
+
+  // 임시저장 데이터 로드
+  useEffect(() => {
+    const saved = localStorage.getItem(autoSaveKey);
+    if (saved && !report) {
+      setShowRestoreButton(true);
+    }
+  }, [autoSaveKey, report]);
+
+  // 폼 변경 감지
+  useEffect(() => {
+    if (form.title || form.content) {
+      setHasUnsavedChanges(true);
+    }
+  }, [form]);
+
+  // 자동저장 (30초 간격)
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const timer = setTimeout(() => {
+      localStorage.setItem(autoSaveKey, JSON.stringify(form));
+      setAutoSaveTime(new Date().toLocaleTimeString('ko-KR'));
+      setHasUnsavedChanges(false);
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [form, hasUnsavedChanges, autoSaveKey]);
+
+  // 페이지 이탈 경고
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // 임시저장 복원
+  const handleRestore = () => {
+    const saved = localStorage.getItem(autoSaveKey);
+    if (saved) {
+      const restoredForm = JSON.parse(saved);
+      setForm(restoredForm);
+      setShowRestoreButton(false);
+      alert('임시저장된 내용을 복원했습니다.');
+    }
+  };
+
+  // 수동 임시저장
+  const handleManualSave = () => {
+    localStorage.setItem(autoSaveKey, JSON.stringify(form));
+    setAutoSaveTime(new Date().toLocaleTimeString('ko-KR'));
+    setHasUnsavedChanges(false);
+    alert('임시저장되었습니다.');
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -919,20 +1080,51 @@ function CeoReportEditor({ report, onSave, onCancel }) {
       alert('제목과 본문을 입력해주세요.');
       return;
     }
+    // 발행 완료 시 임시저장 데이터 삭제
+    localStorage.removeItem(autoSaveKey);
+    setHasUnsavedChanges(false);
     onSave(form);
   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900">
-          {report ? 'CEO 리포트 수정' : 'CEO 리포트 작성'}
-        </h2>
-        {onCancel && (
-          <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
-            취소
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            {report ? 'CEO 리포트 수정' : 'CEO 리포트 작성'}
+          </h2>
+          {autoSaveTime && (
+            <p className="text-xs text-gray-500 mt-1">
+              마지막 저장: {autoSaveTime}
+            </p>
+          )}
+          {hasUnsavedChanges && (
+            <p className="text-xs text-orange-500 mt-1">
+              저장되지 않은 변경사항이 있습니다
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {showRestoreButton && (
+            <button
+              onClick={handleRestore}
+              className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg"
+            >
+              임시저장 복원
+            </button>
+          )}
+          <button
+            onClick={handleManualSave}
+            className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg"
+          >
+            임시저장
           </button>
-        )}
+          {onCancel && (
+            <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
+              취소
+            </button>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
