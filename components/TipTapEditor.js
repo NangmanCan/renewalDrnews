@@ -88,8 +88,6 @@ const ToolbarDivider = () => <div className="w-px h-6 bg-gray-300 mx-1" />;
 
 export default function TipTapEditor({ content, onChange, placeholder = '본문을 입력하세요...' }) {
   const [uploading, setUploading] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const imageInputRef = useRef(null);
 
   const editor = useEditor({
@@ -249,71 +247,49 @@ export default function TipTapEditor({ content, onChange, placeholder = '본문�
         <ToolbarDivider />
 
         {/* 글자색 */}
-        <div className="relative">
-          <ToolbarButton 
-            title="글자색"
-            onClick={() => {
-              setShowColorPicker(!showColorPicker);
-              setShowHighlightPicker(false);
-            }}
-          >
+        <div className="relative group">
+          <ToolbarButton title="글자색">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10M12 3v18M5 11l7-7 7 7" />
             </svg>
           </ToolbarButton>
-          {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-50">
-              <div className="grid grid-cols-7 gap-1">
-                {['#000000', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'].map(color => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => {
-                      editor.chain().focus().setColor(color).run();
-                      setShowColorPicker(false);
-                    }}
-                    className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
-                ))}
-              </div>
+          <div className="absolute top-full left-0 mt-1 hidden group-hover:block bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-10">
+            <div className="grid grid-cols-6 gap-1">
+              {['#000000', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'].map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => editor.chain().focus().setColor(color).run()}
+                  className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
             </div>
-          )}
+          </div>
         </div>
 
         {/* 배경색 */}
-        <div className="relative">
-          <ToolbarButton 
-            title="배경색"
-            onClick={() => {
-              setShowHighlightPicker(!showHighlightPicker);
-              setShowColorPicker(false);
-            }}
-          >
+        <div className="relative group">
+          <ToolbarButton title="배경색">
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M17.75 7L14 3.25l-10 10V17h3.75l10-10zm2.96-2.96a.75.75 0 010 1.06L19.36 6.45l-1.41-1.41 1.35-1.35a.75.75 0 011.06 0l.35.35zM5 21h14v2H5v-2z" />
             </svg>
           </ToolbarButton>
-          {showHighlightPicker && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-50">
-              <div className="grid grid-cols-7 gap-1">
-                {['#fef3c7', '#fecaca', '#ddd6fe', '#bfdbfe', '#bbf7d0', '#fed7aa', '#e5e5e5'].map(color => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => {
-                      editor.chain().focus().toggleHighlight({ color }).run();
-                      setShowHighlightPicker(false);
-                    }}
-                    className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
-                ))}
-              </div>
+          <div className="absolute top-full left-0 mt-1 hidden group-hover:block bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-10">
+            <div className="grid grid-cols-6 gap-1">
+              {['#fef3c7', '#fecaca', '#ddd6fe', '#bfdbfe', '#bbf7d0', '#fed7aa', '#e5e5e5'].map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleHighlight({ color }).run()}
+                  className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
             </div>
-          )}
+          </div>
         </div>
 
         <ToolbarDivider />
