@@ -175,13 +175,10 @@ export default async function ArticlePage({ params }) {
           </div>
 
           {/* 기사 본문 */}
-          <div className="max-w-none mb-12">
-            {article.content.split('\n\n').map((paragraph, index) => (
-              <p key={index} className="text-[18px] text-gray-800 leading-[1.9] mb-6">
-                {paragraph}
-              </p>
-            ))}
-          </div>
+          <div 
+            className="max-w-none mb-12 text-[18px] text-gray-800 leading-[1.9] [&_p]:mb-6"
+            dangerouslySetInnerHTML={{ __html: article.content }}
+          />
 
           <ShareButtons
             title={article.title}
