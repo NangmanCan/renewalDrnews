@@ -3,6 +3,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+// HTML 태그 제거 (미리보기용)
+const stripHtml = (html) => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+};
+
 const CeoReport = ({ report }) => {
   if (!report) return null;
 
@@ -42,7 +48,7 @@ const CeoReport = ({ report }) => {
           {/* 본문 미리보기 - 인용문 스타일 */}
           <div className="relative pl-4 border-l-4 border-amber-400 bg-gray-50 py-3 pr-4 mb-4">
             <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
-              {report.content}
+              {stripHtml(report.content)}
             </p>
           </div>
 

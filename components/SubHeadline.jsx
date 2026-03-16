@@ -3,6 +3,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+// HTML 태그 제거 (미리보기용)
+const stripHtml = (html) => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+};
+
 const SubHeadline = ({ article }) => {
   if (!article) return null;
 
@@ -28,7 +34,7 @@ const SubHeadline = ({ article }) => {
             {article.title}
           </h3>
           <p className="text-[14px] text-gray-600 line-clamp-2 leading-[1.6]">
-            {article.content}
+            {stripHtml(article.content)}
           </p>
           <div className="mt-3 pt-3 border-t border-gray-100">
             <span className="text-xs text-gray-500">{article.author}</span>
@@ -53,7 +59,7 @@ const SubHeadline = ({ article }) => {
             {article.title}
           </h3>
           <p className="text-[15px] text-gray-600 line-clamp-5 leading-[1.7]">
-            {article.content}
+            {stripHtml(article.content)}
           </p>
         </div>
       </div>
