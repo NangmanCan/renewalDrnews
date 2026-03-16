@@ -2,6 +2,12 @@
 
 import Link from 'next/link';
 
+// HTML 태그 제거 (미리보기용)
+const stripHtml = (html) => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+};
+
 const BioPharmNews = ({ articles }) => {
   if (!articles || articles.length === 0) return null;
 
@@ -30,7 +36,7 @@ const BioPharmNews = ({ articles }) => {
               {article.title}
             </h4>
             <p className="text-[13px] text-gray-500 mt-1.5 leading-[1.5] line-clamp-2">
-              {article.summary || article.content?.substring(0, 80)}
+              {stripHtml(article.summary || article.content)}
             </p>
           </Link>
         ))}
