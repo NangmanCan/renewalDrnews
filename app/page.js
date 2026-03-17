@@ -11,10 +11,12 @@ import BioPharmNews from '@/components/BioPharmNews';
 import SidebarAd from '@/components/SidebarAd';
 import NativeAd from '@/components/NativeAd';
 import MobileTopCards from '@/components/MobileTopCards';
+import StripBanner from '@/components/StripBanner';
+import NewsTicker from '@/components/NewsTicker';
 import { getArticles, getHeadlineArticles, getSubHeadlineArticles, getPopularArticles, getArticlesByCategory } from '@/lib/articles';
 import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions, getOpinions } from '@/lib/opinions';
-import { getBanners } from '@/lib/banners';
+import { getBanners, getStripBanners, getBannersByType } from '@/lib/banners';
 
 // ISR: 60초 캐시 후 자동 갱신 (CMS 변경 1분 내 반영)
 export const revalidate = 60;
@@ -25,18 +27,26 @@ export default async function Home({ searchParams }) {
   const category = params?.category;
 
   // Supabase에서 데이터 가져오기 (모든 쿼리 병렬 실행)
-  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners] = await Promise.all([
+  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, gnbBanners] = await Promise.all([
     getArticles(),
     getHeadlineArticles(2),
     getSubHeadlineArticles(1),
-    getPopularArticles(5),
+    getPopularArticles(8),
     getLatestCeoReport(),
     getLatestOpinions(3),
-    getBanners()
+    getBanners(),
+    getStripBanners(),
+    getBannersByType('gnb')
   ]);
 
-  // 미배치(placement: 'none') 기사는 프론트엔드에서 제외
-  const visibleArticles = allArticles.filter(a => a.placement !== 'none');
+  // GNB 배너 (첫 번째 활성화된 것만)
+  const gnbBanner = gnbBanners[0] || null;
+
+  // 닥터포커스 기사 (placement='focus' 또는 기존 category='닥터포커스')
+  const focusArticlesList = allArticles.filter(a => a.placement === 'focus' || a.category === '닥터포커스');
+
+  // 미배치(placement: 'none') 및 닥터포커스 제외
+  const visibleArticles = allArticles.filter(a => a.placement !== 'none' && a.placement !== 'focus' && a.category !== '닥터포커스');
 
   let regularArticles = visibleArticles.filter((a) => !a.isHeadline && !a.is_headline);
 
@@ -81,7 +91,13 @@ export default async function Home({ searchParams }) {
 
   return (
     <>
-      <Header />
+      <Header gnbBanner={gnbBanner} />
+      
+      {/* 알림 티커 - 모바일만 Header 바로 아래 */}
+      <div className="lg:hidden">
+        {focusArticlesList.length > 0 && <NewsTicker articles={focusArticlesList} />}
+      </div>
+      
       <main className="max-w-7xl mx-auto px-0 lg:px-4 lg:py-8 py-0">
         {/* 카테고리 타이틀 */}
         {category && (
@@ -102,6 +118,18 @@ export default async function Home({ searchParams }) {
                   {/* 서브 헤드라인 */}
                   {subHeadlineArticle && (
                     <SubHeadline article={subHeadlineArticle} />
+                  )}
+
+                  {/* 닥터포커스 + 띠배너 (PC, 간격 없이 붙임) */}
+                  {(focusArticlesList.length > 0 || stripBanners.length > 0) && (
+                    <div className="space-y-0">
+                      {focusArticlesList.length > 0 && (
+                        <NewsTicker articles={focusArticlesList} />
+                      )}
+                      {stripBanners.length > 0 && (
+                        <StripBanner banners={stripBanners} />
+                      )}
+                    </div>
                   )}
 
                   {/* CEO 리포트 */}
@@ -131,9 +159,9 @@ export default async function Home({ searchParams }) {
                 </div>
 
                 {/* 우측 사이드바 */}
-                <aside className="w-72 flex-shrink-0 space-y-4">
-                  <Opinion opinions={latestOpinions} />
-                  <PopularNews articles={popularArticles} />
+                <aside className="w-72 flex-shrink-0 flex flex-col gap-4">
+                  <PopularNews articles={popularArticles} matchHeadline />
+                  <Opinion opinions={latestOpinions} fillHeight />
                   {sidebarBanners.length > 0 && (
                     <SidebarAd banners={sidebarBanners} sticky={false} />
                   )}
@@ -192,6 +220,11 @@ export default async function Home({ searchParams }) {
                     )}
                   </div>
                 </div>
+              )}
+
+              {/* 띠배너 광고 (모바일) */}
+              {stripBanners.length > 0 && (
+                <StripBanner banners={stripBanners} />
               )}
 
               {/* 서브 헤드라인 - 풀와이드 */}

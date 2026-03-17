@@ -72,6 +72,7 @@ const PLACEMENT_OPTIONS = [
   { id: 'headline', label: '헤드라인 슬라이더', color: 'red', max: 2 },
   { id: 'subheadline', label: '서브헤드라인', color: 'blue', max: 1 },
   { id: 'news', label: '최신뉴스 목록', color: 'gray', max: null },
+  { id: 'focus', label: '닥터포커스', color: 'sky', max: null },
   { id: 'opinion', label: '오피니언 기고란', color: 'violet', max: 3 },
 ];
 
@@ -1644,6 +1645,11 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
       imageGuide: '234x60',
       description: '상단 로고 옆에 표시되는 소형 배너',
     },
+    strip: {
+      label: '띠배너 광고',
+      imageGuide: '1200x90',
+      description: 'Header 아래 전체폭 띠배너 (PC 90px, Mobile 60px)',
+    },
   };
 
   const info = typeInfo[adType] || typeInfo.sidebar;
@@ -1764,6 +1770,7 @@ function AdManager({ banners, setBanners, onRefresh }) {
     headline: '헤드라인 광고',
     sidebar: '사이드바 광고',
     gnb: 'GNB 상단배너',
+    strip: '띠배너 광고',
   };
 
   const filteredBanners = banners

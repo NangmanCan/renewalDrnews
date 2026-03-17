@@ -48,11 +48,12 @@ const OpinionCard = ({ opinion }) => {
   );
 };
 
-const Opinion = ({ opinions }) => {
+const Opinion = ({ opinions, fillHeight = false }) => {
   if (!opinions || opinions.length === 0) return null;
 
+  // fillHeight: 서브헤드라인(~216px) + 닥터포커스(40px) + 띠배너(~96px) + 간격(48px) ≈ 400px
   return (
-    <div className="bg-white sm:border sm:border-gray-200 overflow-hidden">
+    <div className={`bg-white sm:border sm:border-gray-200 overflow-hidden ${fillHeight ? 'lg:h-[400px] flex flex-col' : ''}`}>
       {/* 타이틀 헤더 */}
       <div className="bg-navy px-4 py-3">
         <h2 className="text-sm font-bold text-white tracking-wide flex items-center gap-2">
@@ -64,7 +65,7 @@ const Opinion = ({ opinions }) => {
       </div>
 
       {/* 오피니언 목록 */}
-      <div>
+      <div className={fillHeight ? 'flex-1' : ''}>
         {opinions.map((opinion) => (
           <OpinionCard key={opinion.id} opinion={opinion} />
         ))}
