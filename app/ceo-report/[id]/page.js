@@ -95,13 +95,10 @@ export default async function CeoReportPage({ params }) {
 
       {/* 본문 */}
       <article className="max-w-3xl mx-auto px-4 py-12">
-        <div className="prose prose-lg prose-slate max-w-none">
-          {report.content.split('\n\n').map((paragraph, index) => (
-            <p key={index} className="text-gray-700 leading-relaxed mb-6 text-lg">
-              {paragraph}
-            </p>
-          ))}
-        </div>
+        <div 
+          className="prose prose-lg prose-slate max-w-none [&>p]:text-gray-700 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg"
+          dangerouslySetInnerHTML={{ __html: report.content }}
+        />
 
         {/* 서명 영역 */}
         <div className="mt-12 pt-8 border-t border-gray-200">
