@@ -163,6 +163,11 @@ async function resizeImage(file, maxWidth, maxHeight) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
+    // PNG는 PNG 유지, 그 외는 JPEG
+    const isPng = file.type === 'image/png';
+    const outputType = isPng ? 'image/png' : 'image/jpeg';
+    const outputQuality = isPng ? undefined : 0.92; // PNG는 무손실, JPEG는 92%
+
     img.onload = () => {
       // 비율 유지하면서 최대 크기에 맞춤
       let { width, height } = img;
@@ -178,18 +183,25 @@ async function resizeImage(file, maxWidth, maxHeight) {
 
       canvas.width = width;
       canvas.height = height;
+      
+      // 고품질 리사이징 설정
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
       ctx.drawImage(img, 0, 0, width, height);
 
       canvas.toBlob(
         (blob) => {
-          const resizedFile = new File([blob], file.name, {
-            type: 'image/jpeg',
+          const extension = isPng ? '.png' : '.jpg';
+          const fileName = file.name.replace(/\.[^.]+$/, '') + extension;
+          const resizedFile = new File([blob], fileName, {
+            type: outputType,
             lastModified: Date.now(),
           });
           resolve(resizedFile);
         },
-        'image/jpeg',
-        0.9
+        outputType,
+        outputQuality
       );
     };
 
