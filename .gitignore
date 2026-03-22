@@ -39,3 +39,4 @@ coverage
 # Misc
 *.tsbuildinfo
 next-env.d.ts
+supabase/snippets/

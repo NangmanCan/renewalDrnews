@@ -158,10 +158,28 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
 // folder: Storage 저장 폴더 (articles, opinions, ceo, banners)
 // 이미지 리사이징 함수
 async function resizeImage(file, maxWidth, maxHeight) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = document.createElement('img');
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+
+    // 포맷 판별 (MIME 우선, 없으면 확장자 fallback)
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const isPng = file.type === 'image/png' || ext === 'png';
+    const isGif = file.type === 'image/gif' || ext === 'gif';
+    const isWebP = file.type === 'image/webp' || ext === 'webp';
+
+    // GIF는 리사이징하면 움짤이 깨지므로 원본 반환
+    if (isGif) {
+      resolve(file);
+      return;
+    }
+
+    // PNG, WebP는 원본 포맷 유지, 나머지는 JPEG
+    const outputType = isPng ? 'image/png' : isWebP ? 'image/webp' : 'image/jpeg';
+    const outputQuality = isPng ? undefined : 0.92; // PNG는 무손실, JPEG/WebP는 92%
+
+    const objectUrl = URL.createObjectURL(file);
 
     img.onload = () => {
       // 비율 유지하면서 최대 크기에 맞춤
@@ -178,22 +196,41 @@ async function resizeImage(file, maxWidth, maxHeight) {
 
       canvas.width = width;
       canvas.height = height;
+      
+      // 고품질 리사이징 설정
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
       ctx.drawImage(img, 0, 0, width, height);
 
       canvas.toBlob(
         (blob) => {
-          const resizedFile = new File([blob], file.name, {
-            type: 'image/jpeg',
+          URL.revokeObjectURL(objectUrl); // 메모리 해제
+          
+          if (!blob) {
+            reject(new Error('이미지 변환에 실패했습니다.'));
+            return;
+          }
+
+          const extension = isPng ? '.png' : isWebP ? '.webp' : '.jpg';
+          const fileName = file.name.replace(/\.[^.]+$/, '') + extension;
+          const resizedFile = new File([blob], fileName, {
+            type: outputType,
             lastModified: Date.now(),
           });
           resolve(resizedFile);
         },
-        'image/jpeg',
-        0.9
+        outputType,
+        outputQuality
       );
     };
 
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl); // 메모리 해제
+      reject(new Error('이미지를 불러올 수 없습니다.'));
+    };
+
+    img.src = objectUrl;
   });
 }
 
