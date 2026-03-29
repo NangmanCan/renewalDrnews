@@ -1,10 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 const BottomBanner = ({ banners = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef(null);
+  const trackedImpressionsRef = useRef(new Set());
+
+  const trackBanner = async (bannerId, type) => {
+    if (!bannerId) return;
+    fetch(`/api/banners/${bannerId}/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type }),
+    }).catch(() => {});
+  };
 
   // 자동 롤링
   useEffect(() => {
@@ -15,16 +26,35 @@ const BottomBanner = ({ banners = [] }) => {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  if (banners.length === 0) return null;
-
   const current = banners[currentIndex];
 
+  useEffect(() => {
+    if (!current?.id || !containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+        if (trackedImpressionsRef.current.has(current.id)) return;
+        trackedImpressionsRef.current.add(current.id);
+        trackBanner(current.id, 'impression');
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [current?.id]);
+
+  if (banners.length === 0) return null;
+
   return (
-    <div className="bg-gradient-to-r from-navy to-slate-800 rounded-xl overflow-hidden shadow-lg">
+    <div ref={containerRef} className="bg-gradient-to-r from-navy to-slate-800 rounded-xl overflow-hidden shadow-lg">
       <a
         href={current.link}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackBanner(current.id, 'click')}
         className="flex items-center p-4 gap-4 hover:bg-white/5 transition-colors"
       >
         {/* 썸네일 */}

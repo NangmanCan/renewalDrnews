@@ -1,4 +1,5 @@
 import './globals.css';
+import PageViewTracker from '@/components/PageViewTracker';
 
 export const metadata = {
   metadataBase: new URL('https://drnews.co.kr'),
@@ -52,7 +53,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ko">
-      <body className="min-h-screen bg-white">{children}</body>
+      <body className="min-h-screen bg-white">
+        <PageViewTracker />
+        {children}
+      </body>
     </html>
   );
 }

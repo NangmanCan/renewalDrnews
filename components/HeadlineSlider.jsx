@@ -1,11 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 const HeadlineSlider = ({ articles = [], banners = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef(null);
+  const trackedImpressionsRef = useRef(new Set());
+
+  const trackBanner = (bannerId, type) => {
+    if (!bannerId) return;
+    fetch(`/api/banners/${bannerId}/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type }),
+    }).catch(() => {});
+  };
 
   // 슬라이드 아이템 구성: 헤드라인 기사들 + 광고 배너
   const slides = [];
@@ -28,6 +39,7 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
     slides.push({
       type: 'ad',
       id: `ad-${banner.id}`,
+      bannerId: banner.id,
       title: banner.title,
       summary: banner.description,
       image: banner.image,
@@ -48,12 +60,32 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
   const goPrev = () => setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
   const goNext = () => setCurrentIndex((prev) => (prev + 1) % slides.length);
 
+  const current = slides[currentIndex];
+  const isCurrentAd = current?.type === 'ad' && Number.isFinite(Number(current?.bannerId));
+
+  useEffect(() => {
+    if (!isCurrentAd || !containerRef.current) return;
+    const bannerId = Number(current.bannerId);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+        if (trackedImpressionsRef.current.has(bannerId)) return;
+        trackedImpressionsRef.current.add(bannerId);
+        trackBanner(bannerId, 'impression');
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [isCurrentAd, current?.bannerId]);
+
   if (slides.length === 0) return null;
 
-  const current = slides[currentIndex];
-
   return (
-    <div className="relative w-full h-[300px] md:h-[380px] overflow-hidden group">
+    <div ref={containerRef} className="relative w-full h-[300px] md:h-[380px] overflow-hidden group">
       {/* 슬라이드 이미지 */}
       <div className="relative w-full h-full bg-gray-300">
         {current.type === 'article' ? (
@@ -69,7 +101,13 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
             )}
           </Link>
         ) : (
-          <a href={current.link} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+          <a
+            href={current.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackBanner(current.bannerId, 'click')}
+            className="block w-full h-full"
+          >
             {current.image && (
               <Image
                 src={current.image}
@@ -100,7 +138,12 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
             </h2>
           </Link>
         ) : (
-          <a href={current.link} target="_blank" rel="noopener noreferrer">
+          <a
+            href={current.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackBanner(current.bannerId, 'click')}
+          >
             <h2 className="text-[22px] md:text-[32px] font-bold text-white mb-2 leading-[1.35] hover:underline drop-shadow-lg">
               {current.title}
             </h2>

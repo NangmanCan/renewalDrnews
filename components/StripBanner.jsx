@@ -1,10 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 const StripBanner = ({ banners = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef(null);
+  const trackedImpressionsRef = useRef(new Set());
+
+  const trackBanner = async (bannerId, type) => {
+    if (!bannerId) return;
+    fetch(`/api/banners/${bannerId}/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type }),
+    }).catch(() => {});
+  };
 
   // 자동 롤링 (여러 배너가 있을 경우)
   useEffect(() => {
@@ -15,17 +26,36 @@ const StripBanner = ({ banners = [] }) => {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  if (banners.length === 0) return null;
-
   const current = banners[currentIndex];
 
+  useEffect(() => {
+    if (!current?.id || !containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+        if (trackedImpressionsRef.current.has(current.id)) return;
+        trackedImpressionsRef.current.add(current.id);
+        trackBanner(current.id, 'impression');
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [current?.id]);
+
+  if (banners.length === 0) return null;
+
   return (
-    <div className="relative w-full">
+    <div ref={containerRef} className="relative w-full">
       <div className="max-w-7xl mx-auto relative">
         <a
           href={current.link}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackBanner(current.id, 'click')}
           className="block w-full"
         >
           <div className="relative w-full overflow-hidden">

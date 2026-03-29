@@ -1,8 +1,45 @@
 'use client';
 
 import Image from 'next/image';
+import { useEffect, useRef } from 'react';
 
 const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
+  const elementMapRef = useRef(new Map());
+  const trackedImpressionsRef = useRef(new Set());
+
+  const trackBanner = (bannerId, type) => {
+    if (!bannerId) return;
+    fetch(`/api/banners/${bannerId}/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type }),
+    }).catch(() => {});
+  };
+
+  useEffect(() => {
+    if (banners.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const bannerId = Number.parseInt(entry.target.dataset.bannerId, 10);
+          if (!Number.isFinite(bannerId)) return;
+          if (trackedImpressionsRef.current.has(bannerId)) return;
+          trackedImpressionsRef.current.add(bannerId);
+          trackBanner(bannerId, 'impression');
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    elementMapRef.current.forEach((node) => {
+      observer.observe(node);
+    });
+
+    return () => observer.disconnect();
+  }, [banners]);
+
   if (banners.length === 0) return null;
 
   return (
@@ -23,6 +60,15 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
             href={banner.link}
             target="_blank"
             rel="noopener noreferrer"
+            data-banner-id={banner.id}
+            ref={(node) => {
+              if (node) {
+                elementMapRef.current.set(banner.id, node);
+              } else {
+                elementMapRef.current.delete(banner.id);
+              }
+            }}
+            onClick={() => trackBanner(banner.id, 'click')}
             className="block bg-white overflow-hidden border border-gray-200 hover:border-gray-300 transition-colors"
           >
             {/* 가로로 긴 이미지 */}

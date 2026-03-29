@@ -94,7 +94,8 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
     { id: 'articles', label: '기사 관리', icon: '📰' },
     { id: 'ceo', label: 'CEO 리포트', icon: '✍️' },
     { id: 'slots', label: '슬롯 관리', icon: '📋' },
-    { id: 'ads', label: '광고 관리', icon: '📊' },
+    { id: 'ads', label: '광고 관리', icon: '📢' },
+    { id: 'stats', label: '통계', icon: '📊' },
   ];
 
   const handleLogout = async () => {
@@ -1995,6 +1996,167 @@ function AdManager({ banners, setBanners, onRefresh }) {
   );
 }
 
+function StatsManager() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [periodStats, setPeriodStats] = useState({
+    today: { uniqueVisitors: 0, totalViews: 0 },
+    week: { uniqueVisitors: 0, totalViews: 0 },
+    month: { uniqueVisitors: 0, totalViews: 0 },
+  });
+  const [topArticles, setTopArticles] = useState([]);
+  const [bannerStats, setBannerStats] = useState([]);
+
+  const fetchPeriodStats = useCallback(async (period) => {
+    const res = await fetch(`/api/analytics/stats?period=${period}&t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
+    });
+    if (!res.ok) {
+      throw new Error('통계 데이터를 불러오지 못했습니다.');
+    }
+    return res.json();
+  }, []);
+
+  const loadStats = useCallback(async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const [today, week, month] = await Promise.all([
+        fetchPeriodStats('today'),
+        fetchPeriodStats('week'),
+        fetchPeriodStats('month'),
+      ]);
+
+      setPeriodStats({
+        today: {
+          uniqueVisitors: today.uniqueVisitors || 0,
+          totalViews: today.totalViews || 0,
+        },
+        week: {
+          uniqueVisitors: week.uniqueVisitors || 0,
+          totalViews: week.totalViews || 0,
+        },
+        month: {
+          uniqueVisitors: month.uniqueVisitors || 0,
+          totalViews: month.totalViews || 0,
+        },
+      });
+      setTopArticles(month.topArticles || []);
+      setBannerStats((month.bannerStats || []).slice(0, 20));
+    } catch (err) {
+      console.error('Error loading stats:', err);
+      setError(err.message || '통계를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchPeriodStats]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900">방문 및 광고 통계</h2>
+        <button
+          onClick={loadStats}
+          disabled={loading}
+          className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
+        >
+          {loading ? '갱신 중...' : '통계 새로고침'}
+        </button>
+      </div>
+
+      {error && (
+        <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { key: 'today', label: '오늘 방문자' },
+          { key: 'week', label: '이번 주 방문자' },
+          { key: 'month', label: '이번 달 방문자' },
+        ].map((card) => (
+          <div key={card.key} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            <p className="text-sm text-gray-500 mb-2">{card.label}</p>
+            <p className="text-3xl font-bold text-gray-900">
+              {(periodStats[card.key]?.uniqueVisitors || 0).toLocaleString()}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              페이지뷰 {(periodStats[card.key]?.totalViews || 0).toLocaleString()}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">조회수 TOP 10 기사</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-gray-500">
+                <th className="py-2 pr-4">순위</th>
+                <th className="py-2 pr-4">제목</th>
+                <th className="py-2 text-right">조회수</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topArticles.map((article, idx) => (
+                <tr key={article.id} className="border-b border-gray-100">
+                  <td className="py-3 pr-4 font-semibold text-gray-700">{idx + 1}</td>
+                  <td className="py-3 pr-4 text-gray-800">{article.title}</td>
+                  <td className="py-3 text-right font-medium text-gray-900">
+                    {(article.views || 0).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!loading && topArticles.length === 0 && (
+            <p className="py-6 text-center text-gray-500">집계된 기사 조회수가 없습니다.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">배너 성과</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-gray-500">
+                <th className="py-2 pr-4">배너명</th>
+                <th className="py-2 pr-4 text-right">노출수</th>
+                <th className="py-2 pr-4 text-right">클릭수</th>
+                <th className="py-2 text-right">CTR</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bannerStats.map((banner) => (
+                <tr key={banner.id} className="border-b border-gray-100">
+                  <td className="py-3 pr-4 text-gray-800">{banner.title}</td>
+                  <td className="py-3 pr-4 text-right text-gray-900">{banner.impressions.toLocaleString()}</td>
+                  <td className="py-3 pr-4 text-right text-gray-900">{banner.clicks.toLocaleString()}</td>
+                  <td className="py-3 text-right font-medium text-sky-700">{(banner.ctr || 0).toFixed(2)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!loading && bannerStats.length === 0 && (
+            <p className="py-6 text-center text-gray-500">집계된 배너 통계가 없습니다.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // 메인 관리자 페이지
 export default function AdminPage() {
   const [currentMenu, setCurrentMenu] = useState('articles');
@@ -2053,6 +2215,7 @@ export default function AdminPage() {
     ceo: 'CEO 리포트',
     slots: '슬롯 관리',
     ads: '광고 관리',
+    stats: '통계',
   };
 
   return (
@@ -2098,6 +2261,9 @@ export default function AdminPage() {
         )}
         {currentMenu === 'ads' && (
           <AdManager banners={banners} setBanners={setBanners} onRefresh={loadData} />
+        )}
+        {currentMenu === 'stats' && (
+          <StatsManager />
         )}
       </main>
     </div>
