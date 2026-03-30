@@ -10,6 +10,7 @@ import ViewTracker from '@/components/ViewTracker';
 import ShareButtons from '@/components/ShareButtons';
 import { getArticleById, getRelatedArticles, getArticles, getPopularArticles } from '@/lib/articles';
 import { getBanners } from '@/lib/banners';
+import { generateArticleSEO } from '@/lib/seo';
 
 // ISR: 60초 캐시 후 자동 갱신
 export const revalidate = 60;
@@ -25,20 +26,28 @@ export async function generateMetadata({ params }) {
     };
   }
 
+  // SEO 최적화
+  const { keywords, description, canonicalUrl } = generateArticleSEO(article);
+
   return {
     title: article.title,
-    description: article.summary,
+    description,
+    keywords: keywords.join(', '),
     authors: [{ name: article.author }],
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       type: 'article',
-      url: `https://drnews.co.kr/article/${id}`,
+      url: canonicalUrl,
       title: article.title,
-      description: article.summary,
+      description,
+      locale: 'ko_KR',
       publishedTime: article.date,
       modifiedTime: article.modifiedDate || article.date,
       authors: [article.author],
       section: article.category,
-      tags: article.tags || [article.category],
+      tags: keywords,
       images: [
         {
           url: article.image,
@@ -51,7 +60,7 @@ export async function generateMetadata({ params }) {
     twitter: {
       card: 'summary_large_image',
       title: article.title,
-      description: article.summary,
+      description,
       images: [article.image],
     },
   };
