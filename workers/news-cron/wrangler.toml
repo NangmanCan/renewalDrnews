@@ -1,0 +1,10 @@
+name = "drnews-crawl-cron"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["0 21 * * *"]  # UTC 21:00 = KST 06:00
+
+# 환경변수는 wrangler secret 또는 Cloudflare 대시보드에서 설정
+# API_BASE_URL = "https://your-domain.com"
+# CRON_SECRET = "your-secret-key"

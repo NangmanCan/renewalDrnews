@@ -10,6 +10,7 @@ import { opinions as staticOpinions } from '@/data/opinions';
 import { initialBanners as staticBanners } from '@/data/banners';
 import { uploadImage } from '@/lib/storage';
 import TipTapEditor from '@/components/TipTapEditor';
+import NewsSourceManager from '@/components/admin/NewsSourceManager';
 
 // API 유틸리티 함수
 const api = {
@@ -96,6 +97,7 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
     { id: 'slots', label: '슬롯 관리', icon: '📋' },
     { id: 'ads', label: '광고 관리', icon: '📢' },
     { id: 'stats', label: '통계', icon: '📊' },
+    { id: 'news-sources', label: '기사 작성 도우미', icon: '🔍' },
   ];
 
   const handleLogout = async () => {
@@ -2216,6 +2218,7 @@ export default function AdminPage() {
     slots: '슬롯 관리',
     ads: '광고 관리',
     stats: '통계',
+    'news-sources': '기사 작성 도우미',
   };
 
   return (
@@ -2264,6 +2267,9 @@ export default function AdminPage() {
         )}
         {currentMenu === 'stats' && (
           <StatsManager />
+        )}
+        {currentMenu === 'news-sources' && (
+          <NewsSourceManager />
         )}
       </main>
     </div>
