@@ -94,6 +94,13 @@ export async function POST(request) {
   }
 
   try {
+    // 7일 지난 데이터 삭제
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    await serviceClient
+      .from('crawled_news')
+      .delete()
+      .lt('crawled_at', sevenDaysAgo);
+
     const body = await request.json().catch(() => ({}));
     const targetRegion = body.region || 'all';
 
