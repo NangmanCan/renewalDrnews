@@ -27,7 +27,7 @@ function supabasePost(table, data) {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
+        'Prefer': 'return=representation', // 롤백용 id 회수
         'Content-Length': Buffer.byteLength(postData),
       }
     };
@@ -37,7 +37,9 @@ function supabasePost(table, data) {
       res.on('data', chunk => body += chunk);
       res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve({ success: true, status: res.statusCode });
+          let rows = [];
+          try { rows = JSON.parse(body); } catch (_) {}
+          resolve({ success: true, status: res.statusCode, rows });
         } else {
           reject(new Error(`HTTP ${res.statusCode}: ${body}`));
         }
@@ -94,24 +96,27 @@ async function main() {
   let success = 0;
   let failed = 0;
   const errors = [];
+  const insertedIds = [];
 
   console.log('\n🚀 마이그레이션 시작...\n');
 
   for (let i = 0; i < articles.length; i++) {
     const article = articles[i];
     const transformed = transformArticle(article);
-    
+
     const preview = `[${i + 1}/${articles.length}] ${article.title.substring(0, 40)}... → ${article.category}`;
-    
+
     if (dryRun) {
       console.log(`✓ ${preview}`);
       success++;
     } else {
       try {
-        await supabasePost('articles', transformed);
+        const res = await supabasePost('articles', transformed);
+        const id = res.rows && res.rows[0] && res.rows[0].id;
+        if (id) insertedIds.push(id);
         console.log(`✅ ${preview}`);
         success++;
-        
+
         // 속도 제한
         await new Promise(r => setTimeout(r, 100));
       } catch (err) {
@@ -129,6 +134,23 @@ async function main() {
     console.log(`❌ 실패: ${failed}건`);
     console.log('\n실패 목록:');
     errors.forEach(e => console.log(`  - ${e.title.substring(0, 40)}...: ${e.error}`));
+  }
+
+  // 롤백용 id 로그 저장
+  if (!dryRun && insertedIds.length > 0) {
+    const logPath = path.join(
+      path.dirname(INPUT_FILE),
+      `migrated-ids-${new Date().toISOString().slice(0, 10)}.json`
+    );
+    fs.writeFileSync(logPath, JSON.stringify({
+      migratedAt: new Date().toISOString(),
+      table: 'articles',
+      source: 'kmpnews',
+      count: insertedIds.length,
+      ids: insertedIds,
+    }, null, 2), 'utf-8');
+    console.log(`\n🗒  롤백 로그 저장: ${logPath}`);
+    console.log(`   롤백하려면: node scripts/rollback-migration.js ${path.basename(logPath)} --yes`);
   }
 
   if (dryRun) {
