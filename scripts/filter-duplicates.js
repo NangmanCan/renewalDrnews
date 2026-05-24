@@ -11,8 +11,25 @@ const https = require('https');
 const SUPABASE_URL = 'https://xychomcqxbtspqwpxkyx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5Y2hvbWNxeGJ0c3Bxd3B4a3l4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDI5NDM3MywiZXhwIjoyMDg1ODcwMzczfQ.0gVLKno0ANmSryH2ex4draQc_kztFsN0ZcURMoowZr0';
 
-const INPUT_FILE = path.join(__dirname, '../data/crawled/kmpnews/kmpnews_2026-03-04.json');
-const OUTPUT_FILE = path.join(__dirname, '../data/crawled/kmpnews/kmpnews_filtered.json');
+const CRAWL_DIR = path.join(__dirname, '../data/crawled/kmpnews');
+
+// 입력 파일 결정: 인자로 지정하거나, 없으면 가장 최근 크롤링 파일 자동 선택
+function resolveInputFile() {
+  const arg = process.argv[2];
+  if (arg) {
+    return path.isAbsolute(arg) ? arg : path.join(CRAWL_DIR, arg);
+  }
+  const files = fs.readdirSync(CRAWL_DIR)
+    .filter(f => /^kmpnews_\d{4}-\d{2}-\d{2}\.json$/.test(f))
+    .sort();
+  if (files.length === 0) {
+    throw new Error(`크롤링 파일이 없습니다: ${CRAWL_DIR}`);
+  }
+  return path.join(CRAWL_DIR, files[files.length - 1]);
+}
+
+const INPUT_FILE = resolveInputFile();
+const OUTPUT_FILE = path.join(CRAWL_DIR, 'kmpnews_filtered.json');
 
 // Supabase REST API 호출
 function supabaseGet(table, params = '') {
@@ -55,7 +72,7 @@ function isSimilar(title1, title2) {
 }
 
 async function main() {
-  console.log('📂 크롤링 데이터 로드...');
+  console.log(`📂 크롤링 데이터 로드: ${path.basename(INPUT_FILE)}`);
   const crawledArticles = JSON.parse(fs.readFileSync(INPUT_FILE, 'utf-8'));
   console.log(`   크롤링 기사: ${crawledArticles.length}건`);
 

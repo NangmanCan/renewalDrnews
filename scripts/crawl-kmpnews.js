@@ -86,6 +86,50 @@ function extractArticleLinks(html) {
   return articles;
 }
 
+// HTML 엔티티 디코드 (제목·본문 공용)
+function decodeEntities(s) {
+  return (s || '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&lsquo;/g, "'")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&ldquo;/g, '"')
+    .replace(/&rdquo;/g, '"')
+    .replace(/&copy;/g, '©')
+    .replace(/&trade;/g, '™')
+    .replace(/&reg;/g, '®')
+    .replace(/&middot;/g, '·')
+    .replace(/&hellip;/g, '…')
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+    .replace(/&amp;/g, '&'); // 이중 디코드 방지 위해 마지막
+}
+
+// 중첩 div를 고려해 매칭되는 닫는 </div>까지 추출
+function extractDivContent(html, openTagRegex) {
+  const open = openTagRegex.exec(html);
+  if (!open) return null;
+
+  const contentStart = open.index + open[0].length;
+  const tagRegex = /<\/?div\b[^>]*>/gi;
+  tagRegex.lastIndex = contentStart;
+
+  let depth = 1;
+  let token;
+  while ((token = tagRegex.exec(html)) !== null) {
+    if (token[0].startsWith('</')) {
+      depth--;
+      if (depth === 0) return html.slice(contentStart, token.index);
+    } else {
+      depth++;
+    }
+  }
+  return html.slice(contentStart); // 닫는 태그 못 찾으면 끝까지
+}
+
 // 기사 본문 파싱
 function parseArticle(html, idxno) {
   if (!html) return null;
@@ -102,7 +146,7 @@ function parseArticle(html, idxno) {
   // 제목 추출
   const titleMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i) ||
                      html.match(/<h3[^>]*class="[^"]*heading[^"]*"[^>]*>([^<]+)</i);
-  const title = titleMatch ? titleMatch[1].trim() : '';
+  const title = titleMatch ? decodeEntities(titleMatch[1]).trim() : '';
   
   // 카테고리 추출 (og:article:section 또는 breadcrumb)
   const categoryMatch = html.match(/<meta\s+property="og:article:section"\s+content="([^"]+)"/i) ||
@@ -113,34 +157,24 @@ function parseArticle(html, idxno) {
   const dateMatch = html.match(/입력\s*(\d{4}\.\d{2}\.\d{2}\s*\d{2}:\d{2})/);
   const publishedAt = dateMatch ? dateMatch[1] : '';
   
-  // 본문 추출 (article-body, article_body 등)
+  // 본문 추출 (중첩 div 고려, 매칭되는 닫는 태그까지)
   let content = '';
-  const bodyMatch = html.match(/<div[^>]*id="article-view-content-div"[^>]*>([\s\S]*?)<\/div>/i) ||
-                    html.match(/<div[^>]*class="[^"]*article[_-]?body[^"]*"[^>]*>([\s\S]*?)<\/div>/i) ||
-                    html.match(/<div[^>]*itemprop="articleBody"[^>]*>([\s\S]*?)<\/div>/i);
-  
-  if (bodyMatch) {
-    content = bodyMatch[1]
+  const rawBody = extractDivContent(html, /<div[^>]*id="article-view-content-div"[^>]*>/i) ||
+                  extractDivContent(html, /<div[^>]*class="[^"]*article[_-]?body[^"]*"[^>]*>/i) ||
+                  extractDivContent(html, /<div[^>]*itemprop="articleBody"[^>]*>/i);
+
+  if (rawBody) {
+    const stripped = rawBody
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&lsquo;/g, "'")
-      .replace(/&rsquo;/g, "'")
-      .replace(/&ldquo;/g, '"')
-      .replace(/&rdquo;/g, '"')
-      .replace(/&copy;/g, '©')
-      .replace(/&trade;/g, '™')
-      .replace(/&reg;/g, '®')
-      .replace(/&middot;/g, '·')
-      .replace(/&hellip;/g, '…')
-      .replace(/&ndash;/g, '–')
-      .replace(/&mdash;/g, '—')
-      .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+      .replace(/<[^>]+>/g, ' ');
+    content = decodeEntities(stripped)
       .replace(/\s+/g, ' ')
+      .trim()
+      // 본문 div에 포함된 푸터 제거 (저작권 / 기자 바이라인+이메일 / 키워드 태그)
+      .replace(/저작권자\s*©[\s\S]*$/, '')
+      .replace(/[가-힣]{2,4}\s*(?:대)?기자\s+[\w.+-]+@[\w.-]+[\s\S]*$/, '')
+      .replace(/\s*키워드\s*#[\s\S]*$/, '')
       .trim();
   }
   
@@ -166,16 +200,17 @@ function parseArticle(html, idxno) {
   };
 }
 
-// 날짜 필터 (지난주~오늘)
+// 날짜 필터 (최근 30일)
+const DATE_RANGE_DAYS = 30;
 function isWithinDateRange(dateStr) {
   if (!dateStr) return true; // 날짜 없으면 일단 포함
-  
+
   const today = new Date();
-  const lastWeekStart = new Date(today);
-  lastWeekStart.setDate(today.getDate() - 10); // 넉넉하게 10일
-  
+  const rangeStart = new Date(today);
+  rangeStart.setDate(today.getDate() - DATE_RANGE_DAYS);
+
   const articleDate = new Date(dateStr.replace(/\./g, '-').replace(/\s+/, 'T'));
-  return articleDate >= lastWeekStart;
+  return articleDate >= rangeStart;
 }
 
 // 메인 실행
@@ -190,37 +225,39 @@ async function main() {
   
   const allArticles = [];
   const seenIds = new Set();
-  
-  // 페이지별 크롤링 (최대 5페이지)
-  for (let page = 1; page <= 5; page++) {
+  let stopCrawling = false;
+
+  // 페이지별 크롤링 (최대 15페이지, 30일 초과 기사 발견 시 조기 종료)
+  for (let page = 1; page <= 15; page++) {
     console.log(`\n📄 페이지 ${page} 크롤링...`);
-    
+
     const listUrl = `${BASE_URL}/news/articleList.html?page=${page}&sc_area=I&sc_word=${AUTHOR_ID}&view_type=sm`;
-    
+
     try {
       const listHtml = await fetchUrl(listUrl);
       const links = extractArticleLinks(listHtml);
-      
+
       console.log(`   발견: ${links.length}건`);
-      
+
       for (const link of links) {
         if (seenIds.has(link.idxno)) continue;
         seenIds.add(link.idxno);
-        
+
         try {
           // 속도 제한
           await new Promise(r => setTimeout(r, 500));
-          
+
           const articleHtml = await fetchUrl(link.url);
           const article = parseArticle(articleHtml, link.idxno);
-          
+
           if (article && article.title) {
-            // 날짜 필터
+            // 날짜 필터: 기간 외 기사 발견 시 더 오래된 기사가 이어질 것이므로 즉시 종료
             if (!isWithinDateRange(article.publishedAt)) {
               console.log(`   ⏭️  [${article.idxno}] 기간 외 - ${article.publishedAt}`);
-              continue;
+              stopCrawling = true;
+              break;
             }
-            
+
             allArticles.push(article);
             console.log(`   ✅ [${article.idxno}] ${article.title.substring(0, 40)}... → ${article.category}`);
           }
@@ -228,14 +265,12 @@ async function main() {
           console.log(`   ❌ [${link.idxno}] 실패: ${err.message}`);
         }
       }
-      
-      // 오래된 기사가 나오면 중단
-      const lastArticle = allArticles[allArticles.length - 1];
-      if (lastArticle && !isWithinDateRange(lastArticle.publishedAt)) {
+
+      if (stopCrawling) {
         console.log('\n⏹️  기간 외 기사 발견, 크롤링 종료');
         break;
       }
-      
+
     } catch (err) {
       console.error(`페이지 ${page} 오류:`, err.message);
     }
