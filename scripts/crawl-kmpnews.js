@@ -45,13 +45,14 @@ function inferCategory(title, content) {
 // fetch with promise
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, { 
-      headers: { 
+    const req = https.get(url, {
+      headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
         'Accept': 'text/html,application/xhtml+xml',
         'Accept-Language': 'ko-KR,ko;q=0.9',
       }
     }, (res) => {
+      res.setEncoding('utf8'); // UTF-8 멀티바이트 경계가 chunk 사이에 걸려도 안전
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => resolve(data));
@@ -108,6 +109,44 @@ function decodeEntities(s) {
     .replace(/&amp;/g, '&'); // 이중 디코드 방지 위해 마지막
 }
 
+// 저장용 HTML 텍스트 이스케이프 (XSS 방지)
+function escapeHtml(s) {
+  return (s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// 본문 div를 블록 단위로 분리해 문단 텍스트 배열로 반환
+function extractParagraphs(rawBody) {
+  if (!rawBody) return [];
+  const cleaned = rawBody
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?\s*>/gi, '\n');
+  const blocks = cleaned.split(/<\/(?:p|div|h[1-6]|li|blockquote)>/i);
+  const out = [];
+  for (const block of blocks) {
+    const text = decodeEntities(block.replace(/<[^>]+>/g, ' '));
+    for (const line of text.split(/\n+/)) {
+      const t = line.replace(/[ \t]+/g, ' ').trim();
+      if (t) out.push(t);
+    }
+  }
+  return out;
+}
+
+// 한 문단이 푸터/바이라인/키워드 태그인지 판별
+function isFooter(p) {
+  return /^저작권자\s*©/.test(p)
+    || /^[가-힣]{2,4}\s*(?:대)?기자\s*$/.test(p)                    // 기자 이름만 단독 문단
+    || /^[가-힣]{2,4}\s*(?:대)?기자\s+[\w.+-]+@[\w.-]+\s*$/.test(p)  // 기자 이름+이메일
+    || /^[\w.+-]+@[\w.-]+\s*$/.test(p)                                // 이메일 단독 문단
+    || /^키워드\s*##?/.test(p)
+    || /^SNS\s*기사보내기/.test(p)
+    || (/^<.*기자.*>$/.test(p) && /@/.test(p));                       // <연합뉴스 임화섭기자 ,@...> 인용 출처
+}
+
 // 중첩 div를 고려해 매칭되는 닫는 </div>까지 추출
 function extractDivContent(html, openTagRegex) {
   const open = openTagRegex.exec(html);
@@ -159,38 +198,43 @@ function parseArticle(html, idxno) {
   
   // 본문 추출 (중첩 div 고려, 매칭되는 닫는 태그까지)
   let content = '';
+  let plainText = '';
   const rawBody = extractDivContent(html, /<div[^>]*id="article-view-content-div"[^>]*>/i) ||
                   extractDivContent(html, /<div[^>]*class="[^"]*article[_-]?body[^"]*"[^>]*>/i) ||
                   extractDivContent(html, /<div[^>]*itemprop="articleBody"[^>]*>/i);
 
   if (rawBody) {
-    const stripped = rawBody
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ');
-    content = decodeEntities(stripped)
-      .replace(/\s+/g, ' ')
-      .trim()
-      // 본문 div에 포함된 푸터 제거 (저작권 / 기자 바이라인+이메일 / 키워드 태그)
-      .replace(/저작권자\s*©[\s\S]*$/, '')
-      .replace(/[가-힣]{2,4}\s*(?:대)?기자\s+[\w.+-]+@[\w.-]+[\s\S]*$/, '')
-      .replace(/\s*키워드\s*#[\s\S]*$/, '')
-      .trim();
+    let paragraphs = extractParagraphs(rawBody);
+    // 푸터 패턴이 처음 나오는 위치 이후는 모두 잘라냄
+    const footerIdx = paragraphs.findIndex(isFooter);
+    if (footerIdx >= 0) paragraphs = paragraphs.slice(0, footerIdx);
+    // 마지막 문단 끝에 푸터 잔재가 붙어 있는 경우 정리
+    if (paragraphs.length > 0) {
+      const lastIdx = paragraphs.length - 1;
+      paragraphs[lastIdx] = paragraphs[lastIdx]
+        .replace(/저작권자\s*©.*$/, '')
+        .replace(/\s*[가-힣]{2,4}\s*(?:대)?기자\s+[\w.+-]+@[\w.-]+.*$/, '')
+        .replace(/\s*키워드\s*##?.*$/, '')
+        .trim();
+      if (!paragraphs[lastIdx]) paragraphs.pop();
+    }
+    plainText = paragraphs.join(' ');
+    content = paragraphs.map(p => `<p>${escapeHtml(p)}</p>`).join('');
   }
-  
+
   // 썸네일 추출
   const thumbnailMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
   const thumbnail = thumbnailMatch ? thumbnailMatch[1] : '';
-  
-  // 카테고리 매핑
-  const category = CATEGORY_MAP[originalCategory] || inferCategory(title, content);
-  
+
+  // 카테고리 매핑 (추론은 plain text 기준)
+  const category = CATEGORY_MAP[originalCategory] || inferCategory(title, plainText);
+
   return {
     idxno,
     url: `${BASE_URL}/news/articleView.html?idxno=${idxno}`,
     title,
-    content: content.substring(0, 5000), // 5000자 제한
-    summary: content.substring(0, 200),
+    content,                                // HTML (<p>문단</p>...)
+    summary: plainText.substring(0, 200),   // 요약은 평문 200자
     originalCategory,
     category,
     publishedAt,
