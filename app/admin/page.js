@@ -9,8 +9,12 @@ import { ceoReports as staticCeoReports } from '@/data/ceoReports';
 import { opinions as staticOpinions } from '@/data/opinions';
 import { initialBanners as staticBanners } from '@/data/banners';
 import { uploadImage } from '@/lib/storage';
+import Pica from 'pica';
 import TipTapEditor from '@/components/TipTapEditor';
 import NewsSourceManager from '@/components/admin/NewsSourceManager';
+
+// pica 인스턴스(WebWorker 풀)를 매번 새로 만들면 워커가 누적되므로 모듈 레벨에서 1개만 유지
+const picaInstance = typeof window !== 'undefined' ? Pica() : null;
 
 // API 유틸리티 함수
 const api = {
@@ -159,81 +163,81 @@ function AdminSidebar({ currentMenu, setCurrentMenu }) {
 // 이미지 업로더 컴포넌트
 // allowGif: GIF 애니메이션 파일 허용 여부 (헤드라인 기사 이미지 제외)
 // folder: Storage 저장 폴더 (articles, opinions, ceo, banners)
-// 이미지 리사이징 함수
+// 이미지 리사이징 함수 (pica Lanczos3 사용)
 async function resizeImage(file, maxWidth, maxHeight) {
-  return new Promise((resolve, reject) => {
-    const img = document.createElement('img');
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+  // 포맷 판별 (MIME 우선, 없으면 확장자 fallback)
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  const isPng = file.type === 'image/png' || ext === 'png';
+  const isGif = file.type === 'image/gif' || ext === 'gif';
+  const isWebP = file.type === 'image/webp' || ext === 'webp';
 
-    // 포맷 판별 (MIME 우선, 없으면 확장자 fallback)
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    const isPng = file.type === 'image/png' || ext === 'png';
-    const isGif = file.type === 'image/gif' || ext === 'gif';
-    const isWebP = file.type === 'image/webp' || ext === 'webp';
+  // GIF는 리사이징하면 움짤이 깨지므로 원본 반환
+  if (isGif) return file;
 
-    // GIF는 리사이징하면 움짤이 깨지므로 원본 반환
-    if (isGif) {
-      resolve(file);
-      return;
-    }
+  // PNG, WebP는 원본 포맷 유지, 나머지는 JPEG
+  const outputType = isPng ? 'image/png' : isWebP ? 'image/webp' : 'image/jpeg';
+  const outputQuality = isPng ? undefined : 0.92; // PNG는 무손실, JPEG/WebP는 92%
 
-    // PNG, WebP는 원본 포맷 유지, 나머지는 JPEG
-    const outputType = isPng ? 'image/png' : isWebP ? 'image/webp' : 'image/jpeg';
-    const outputQuality = isPng ? undefined : 0.92; // PNG는 무손실, JPEG/WebP는 92%
+  // 원본 이미지 로드
+  const objectUrl = URL.createObjectURL(file);
+  let img;
+  try {
+    img = await new Promise((resolve, reject) => {
+      const im = document.createElement('img');
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error('이미지를 불러올 수 없습니다.'));
+      im.src = objectUrl;
+    });
+  } catch (err) {
+    URL.revokeObjectURL(objectUrl);
+    throw err;
+  }
 
-    const objectUrl = URL.createObjectURL(file);
+  // 비율 유지하면서 최대 크기에 맞춤
+  let width = img.naturalWidth;
+  let height = img.naturalHeight;
+  if (width > maxWidth) {
+    height = (height * maxWidth) / width;
+    width = maxWidth;
+  }
+  if (height > maxHeight) {
+    width = (width * maxHeight) / height;
+    height = maxHeight;
+  }
+  width = Math.round(width);
+  height = Math.round(height);
 
-    img.onload = () => {
-      // 비율 유지하면서 최대 크기에 맞춤
-      let { width, height } = img;
-      
-      if (width > maxWidth) {
-        height = (height * maxWidth) / width;
-        width = maxWidth;
-      }
-      if (height > maxHeight) {
-        width = (width * maxHeight) / height;
-        height = maxHeight;
-      }
+  // 축소가 필요 없으면 원본 그대로 반환 (재인코딩 손실 방지)
+  if (width >= img.naturalWidth && height >= img.naturalHeight) {
+    URL.revokeObjectURL(objectUrl);
+    return file;
+  }
 
-      canvas.width = width;
-      canvas.height = height;
-      
-      // 고품질 리사이징 설정
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      
-      ctx.drawImage(img, 0, 0, width, height);
+  // pica Lanczos3로 리사이즈
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
 
-      canvas.toBlob(
-        (blob) => {
-          URL.revokeObjectURL(objectUrl); // 메모리 해제
-          
-          if (!blob) {
-            reject(new Error('이미지 변환에 실패했습니다.'));
-            return;
-          }
+  try {
+    await picaInstance.resize(img, canvas, {
+      quality: 3,       // 3 = Lanczos3 (최고 품질)
+      alpha: isPng,     // PNG일 때만 알파 채널 보존
+      unsharpAmount: 80, // 다운스케일 후 약한 샤프닝으로 디테일 보강
+      unsharpRadius: 0.6,
+      unsharpThreshold: 2,
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 
-          const extension = isPng ? '.png' : isWebP ? '.webp' : '.jpg';
-          const fileName = file.name.replace(/\.[^.]+$/, '') + extension;
-          const resizedFile = new File([blob], fileName, {
-            type: outputType,
-            lastModified: Date.now(),
-          });
-          resolve(resizedFile);
-        },
-        outputType,
-        outputQuality
-      );
-    };
+  const blob = await picaInstance.toBlob(canvas, outputType, outputQuality);
+  if (!blob) throw new Error('이미지 변환에 실패했습니다.');
 
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl); // 메모리 해제
-      reject(new Error('이미지를 불러올 수 없습니다.'));
-    };
-
-    img.src = objectUrl;
+  const extension = isPng ? '.png' : isWebP ? '.webp' : '.jpg';
+  const fileName = file.name.replace(/\.[^.]+$/, '') + extension;
+  return new File([blob], fileName, {
+    type: outputType,
+    lastModified: Date.now(),
   });
 }
 
