@@ -33,7 +33,7 @@ const OpinionCard = ({ opinion }) => {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-gray-400">{opinion.date}</span>
           </div>
-          <h4 className="text-sm font-bold text-gray-900 line-clamp-1 mb-1 hover:underline">
+          <h4 className="text-[15px] font-bold text-gray-900 line-clamp-1 mb-1 hover:underline">
             {opinion.title}
           </h4>
           <p className="text-xs text-gray-500 line-clamp-1 mb-1">
@@ -55,11 +55,8 @@ const Opinion = ({ opinions, fillHeight = false }) => {
   return (
     <div className={`bg-white sm:border sm:border-gray-200 overflow-hidden ${fillHeight ? 'lg:h-[400px] flex flex-col' : ''}`}>
       {/* 타이틀 헤더 */}
-      <div className="bg-navy px-4 py-3">
-        <h2 className="text-sm font-bold text-white tracking-wide flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
-          </svg>
+      <div className="border-t-2 border-navy px-4 py-3">
+        <h2 className="text-base font-extrabold text-navy tracking-tight">
           오피니언
         </h2>
       </div>

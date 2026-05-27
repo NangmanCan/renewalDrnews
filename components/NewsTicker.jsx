@@ -30,10 +30,10 @@ const NewsTicker = ({ articles = [] }) => {
       aria-live="polite"
     >
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center h-8 md:h-10 bg-slate-800 overflow-hidden">
+        <div className="flex items-center h-9 md:h-10 bg-white border-y border-gray-200 overflow-hidden">
           {/* 라벨 */}
-          <div className="flex-shrink-0 px-2 md:px-3 h-full flex items-center bg-sky-600">
-            <span className="text-white text-[10px] md:text-xs font-bold italic whitespace-nowrap">
+          <div className="flex-shrink-0 px-3 md:px-3.5 h-full flex items-center bg-brand-600">
+            <span className="text-white text-[11px] md:text-xs font-bold italic whitespace-nowrap tracking-wide">
               DR.Focus
             </span>
           </div>
@@ -55,14 +55,14 @@ const NewsTicker = ({ articles = [] }) => {
                 <Link
                   key={`${article.id}-${index}`}
                   href={`/article/${article.id}`}
-                  className="inline-flex items-center gap-2 text-gray-200 hover:text-white transition-colors"
+                  className="inline-flex items-center gap-2 text-navy hover:text-brand-600 transition-colors"
                 >
                   {article.subcategory && (
-                    <span className="text-sky-400 text-[10px] md:text-xs font-medium">
+                    <span className="text-brand-600 text-[10px] md:text-xs font-bold">
                       [{article.subcategory}]
                     </span>
                   )}
-                  <span className="text-xs md:text-sm">
+                  <span className="text-xs md:text-sm font-medium">
                     {article.title}
                   </span>
                 </Link>

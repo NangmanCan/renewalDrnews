@@ -1,8 +1,11 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+import IssuePickBar from '@/components/IssuePickBar';
 import HeadlineSlider from '@/components/HeadlineSlider';
 import SubHeadline from '@/components/SubHeadline';
+import HeroSecondary from '@/components/HeroSecondary';
+import CategoryCards from '@/components/CategoryCards';
 import CeoReport from '@/components/CeoReport';
 import NewsList, { NewsListItem } from '@/components/NewsListItem';
 import PopularNews from '@/components/PopularNews';
@@ -17,6 +20,7 @@ import { getArticles, getHeadlineArticles, getSubHeadlineArticles, getPopularArt
 import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions, getOpinions } from '@/lib/opinions';
 import { getBanners, getStripBanners, getBannersByType } from '@/lib/banners';
+import { getDoctorPicks } from '@/lib/doctorPicks';
 
 // ISR: 60초 캐시 후 자동 갱신 (CMS 변경 1분 내 반영)
 export const revalidate = 60;
@@ -27,7 +31,7 @@ export default async function Home({ searchParams }) {
   const category = params?.category;
 
   // Supabase에서 데이터 가져오기 (모든 쿼리 병렬 실행)
-  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, gnbBanners] = await Promise.all([
+  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, gnbBanners, doctorPicks] = await Promise.all([
     getArticles(),
     getHeadlineArticles(2),
     getSubHeadlineArticles(1),
@@ -36,7 +40,8 @@ export default async function Home({ searchParams }) {
     getLatestOpinions(3),
     getBanners(),
     getStripBanners(),
-    getBannersByType('gnb')
+    getBannersByType('gnb'),
+    getDoctorPicks(3),
   ]);
 
   // GNB 배너 (첫 번째 활성화된 것만)
@@ -45,8 +50,13 @@ export default async function Home({ searchParams }) {
   // 닥터포커스 기사 (placement='focus' 또는 기존 category='닥터포커스')
   const focusArticlesList = allArticles.filter(a => a.placement === 'focus' || a.category === '닥터포커스');
 
-  // 미배치(placement: 'none') 및 닥터포커스 제외
-  const visibleArticles = allArticles.filter(a => a.placement !== 'none' && a.placement !== 'focus' && a.category !== '닥터포커스');
+  // 미배치(placement: 'none') / 닥터포커스 / 카테고리카드(우측 픽) 슬롯은 일반 목록에서 제외
+  const visibleArticles = allArticles.filter(a =>
+    a.placement !== 'none' &&
+    a.placement !== 'focus' &&
+    a.placement !== 'category_card' &&
+    a.category !== '닥터포커스'
+  );
 
   let regularArticles = visibleArticles.filter((a) => !a.isHeadline && !a.is_headline);
 
@@ -76,6 +86,68 @@ export default async function Home({ searchParams }) {
     }
   }
 
+  // DOCTOR'S PICK: 어드민에서 큐레이션한 픽 (없으면 주요 카테고리 최신 기사로 자동 채움)
+  let issuePicks;
+  if (doctorPicks && doctorPicks.length > 0) {
+    issuePicks = doctorPicks.map((p) => ({
+      id: p.id,
+      label: p.label,
+      title: p.title || p.label,
+      href: p.link,
+    }));
+  } else {
+    const fallbackCategories = ['정책', '학술', '제약·바이오'];
+    issuePicks = fallbackCategories
+      .map((label) => {
+        const article = visibleArticles.find((a) => a.category === label);
+        if (!article) return null;
+        return {
+          id: article.id,
+          label,
+          title: article.title,
+          href: `/article/${article.id}`,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  // HERO 우측: 카테고리 카드 4개
+  //  - 수동 큐레이션(placement='category_card')이 있으면 그게 우선
+  //  - 비어있으면 자동: visibleArticles(최신순)에서 서로 다른 카테고리 최신 1건씩 4개
+  const curatedCategoryCards = allArticles
+    .filter((a) => a.placement === 'category_card')
+    .slice(0, 4);
+  let heroCategoryCards;
+  if (curatedCategoryCards.length > 0) {
+    heroCategoryCards = curatedCategoryCards.map((article) => ({
+      category: article.category || '기사',
+      article,
+    }));
+  } else {
+    const seen = new Set();
+    const autoCards = [];
+    for (const article of visibleArticles) {
+      if (!article.category) continue;
+      if (seen.has(article.category)) continue;
+      seen.add(article.category);
+      autoCards.push({ category: article.category, article });
+      if (autoCards.length >= 4) break;
+    }
+    heroCategoryCards = autoCards;
+  }
+
+  // HERO 좌측: 보조 헤드라인(SubHeadline 1건) + 미니 헤드라인 2건
+  const heroLeftMini = listArticles
+    .filter((a) => a.id !== subHeadlineArticle?.id)
+    .slice(0, 2);
+
+  // HERO 좌측에 들어간 보조헤드/미니 헤드라인은 아래 NewsList에서 중복 제외
+  const heroLeftIds = new Set([
+    subHeadlineArticle?.id,
+    ...heroLeftMini.map((a) => a.id),
+  ].filter(Boolean));
+  const newsListArticles = listArticles.filter((a) => !heroLeftIds.has(a.id));
+
   // 활성화된 배너 필터링
   const headlineBanners = allBanners
     .filter((b) => b.type === 'headline' && b.isActive)
@@ -92,11 +164,9 @@ export default async function Home({ searchParams }) {
   return (
     <>
       <Header gnbBanner={gnbBanner} />
-      
-      {/* 알림 티커 - 모바일만 Header 바로 아래 */}
-      <div className="lg:hidden">
-        {focusArticlesList.length > 0 && <NewsTicker articles={focusArticlesList} />}
-      </div>
+
+      {/* DOCTOR'S PICK 띠 (PC + 모바일 모두 Header 바로 아래) */}
+      {!category && <IssuePickBar picks={issuePicks} />}
       
       <main className="max-w-7xl mx-auto px-0 lg:px-4 lg:py-8 py-0">
         {/* 카테고리 타이틀 */}
@@ -104,68 +174,77 @@ export default async function Home({ searchParams }) {
           <h1 className="text-2xl font-bold text-navy mb-8 px-4 lg:px-0">{category} 뉴스</h1>
         )}
 
-        {/* PC 레이아웃 */}
+        {/* PC 레이аут */}
         <div className="hidden lg:block">
           {!category && (
-              <div className="flex gap-6">
-                {/* 좌측: 메인 콘텐츠 */}
-                <div className="flex-1 min-w-0 space-y-6">
-                  {/* 헤드라인 슬라이더 */}
-                  {headlineArticles.length > 0 && (
-                    <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
-                  )}
+              <div className="space-y-6">
+                {/* HERO 3컬럼 그리드 — 좌/중/우 모두 동일 높이로 정렬 */}
+                <div className="grid grid-cols-[16rem_minmax(0,1fr)_18rem] gap-6 items-stretch min-h-[420px]">
+                  {/* 좌: 보조 헤드라인 + 미니 헤드 */}
+                  <HeroSecondary feature={subHeadlineArticle} mini={heroLeftMini} />
 
-                  {/* 서브 헤드라인 */}
-                  {subHeadlineArticle && (
-                    <SubHeadline article={subHeadlineArticle} />
-                  )}
-
-                  {/* 닥터포커스 + 띠배너 (PC, 간격 없이 붙임) */}
-                  {(focusArticlesList.length > 0 || stripBanners.length > 0) && (
-                    <div className="space-y-0">
-                      {focusArticlesList.length > 0 && (
-                        <NewsTicker articles={focusArticlesList} />
-                      )}
-                      {stripBanners.length > 0 && (
-                        <StripBanner banners={stripBanners} />
-                      )}
-                    </div>
-                  )}
-
-                  {/* CEO 리포트 */}
-                  {latestCeoReport && (
-                    <CeoReport report={latestCeoReport} />
-                  )}
-
-                  {/* 제약·바이오 속보 + 최신뉴스 */}
-                  <div className="flex gap-6">
-                    <div className="w-72 flex-shrink-0">
-                      <BioPharmNews articles={bioPharmArticles} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <NewsList articles={listArticles.slice(0, 15)} />
-                      {listArticles.length > 15 && (
-                        <div className="border border-t-0 border-gray-200 py-4 text-center bg-white">
-                          <Link
-                            href="/news"
-                            className="text-sm font-bold text-gray-600 hover:text-navy transition-colors"
-                          >
-                            더보기 +
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                  {/* 중: 메인 헤드라인 슬라이더 */}
+                  <div className="relative min-w-0 h-full">
+                    {headlineArticles.length > 0 && (
+                      <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
+                    )}
                   </div>
+
+                  {/* 우: 4 카테고리 카드 + 남는 공간에 광고 배너 */}
+                  <CategoryCards items={heroCategoryCards} adBanner={sidebarBanners[0] || null} />
                 </div>
 
-                {/* 우측 사이드바 */}
-                <aside className="w-72 flex-shrink-0 flex flex-col gap-4">
-                  <PopularNews articles={popularArticles} matchHeadline />
-                  <Opinion opinions={latestOpinions} fillHeight />
-                  {sidebarBanners.length > 0 && (
-                    <SidebarAd banners={sidebarBanners} sticky={false} />
-                  )}
-                </aside>
+                {/* HERO 아래: 기존 2컬럼 (메인 + 사이드) */}
+                <div className="flex gap-6">
+                  {/* 좌측 메인 */}
+                  <div className="flex-1 min-w-0 space-y-6">
+                    {/* 닥터포커스 + 띠배너 */}
+                    {(focusArticlesList.length > 0 || stripBanners.length > 0) && (
+                      <div className="space-y-0">
+                        {focusArticlesList.length > 0 && (
+                          <NewsTicker articles={focusArticlesList} />
+                        )}
+                        {stripBanners.length > 0 && (
+                          <StripBanner banners={stripBanners} />
+                        )}
+                      </div>
+                    )}
+
+                    {/* CEO 리포트 */}
+                    {latestCeoReport && (
+                      <CeoReport report={latestCeoReport} />
+                    )}
+
+                    {/* 제약·바이오 속보 + 최신뉴스 */}
+                    <div className="flex gap-6">
+                      <div className="w-72 flex-shrink-0">
+                        <BioPharmNews articles={bioPharmArticles} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <NewsList articles={newsListArticles.slice(0, 15)} />
+                        {newsListArticles.length > 15 && (
+                          <div className="border border-t-0 border-gray-200 py-4 text-center bg-white">
+                            <Link
+                              href="/news"
+                              className="text-sm font-bold text-gray-600 hover:text-brand-600 transition-colors"
+                            >
+                              더보기 +
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 우측 사이드바 */}
+                  <aside className="w-72 flex-shrink-0 flex flex-col gap-4">
+                    <PopularNews articles={popularArticles} matchHeadline />
+                    <Opinion opinions={latestOpinions} fillHeight />
+                    {sidebarBanners.length > 0 && (
+                      <SidebarAd banners={sidebarBanners} sticky={false} />
+                    )}
+                  </aside>
+                </div>
               </div>
           )}
 
@@ -192,6 +271,11 @@ export default async function Home({ searchParams }) {
               {/* 헤드라인 슬라이더 - 풀와이드 */}
               {headlineArticles.length > 0 && (
                 <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
+              )}
+
+              {/* 흐르는 닥터포커스 (헤드라인 슬라이더 바로 아래) */}
+              {focusArticlesList.length > 0 && (
+                <NewsTicker articles={focusArticlesList} />
               )}
 
               {/* 최신 뉴스: 헤드라인 바로 밑 - 상단 2열 썸네일 + 텍스트 목록 (10개 제한) */}

@@ -79,6 +79,8 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
                     src={banner.image}
                     alt={banner.title}
                     fill
+                    quality={95}
+                    sizes="(max-width: 1024px) 100vw, 288px"
                     className="object-contain"
                     unoptimized={banner.image?.endsWith('.gif')}
                   />

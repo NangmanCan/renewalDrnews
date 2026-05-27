@@ -67,6 +67,8 @@ const StripBanner = ({ banners = [] }) => {
                 height={90}
                 className="w-full h-auto"
                 priority
+                quality={95}
+                sizes="(max-width: 1280px) 100vw, 1280px"
                 unoptimized={current.image?.endsWith('.gif')}
               />
             )}

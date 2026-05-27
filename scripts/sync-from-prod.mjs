@@ -13,46 +13,61 @@ const localSupabase = createClient(
   'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
 );
 
+// 로컬 스키마에 없는 컬럼 (마이그레이션 누락분) — sync 시 제거
+const STRIP_COLUMNS = {
+  banners: ['clicks', 'impressions'],
+};
+
 async function syncTable(tableName) {
   console.log(`\n📦 ${tableName} 동기화 중...`);
-  
+
   // 운영에서 데이터 가져오기
   const { data: prodData, error: fetchError } = await prodSupabase
     .from(tableName)
     .select('*');
-  
+
   if (fetchError) {
     console.error(`  ❌ 조회 실패: ${fetchError.message}`);
     return;
   }
-  
+
   if (!prodData || prodData.length === 0) {
     console.log(`  ⚠️ 데이터 없음`);
     return;
   }
-  
+
   console.log(`  📊 ${prodData.length}건 조회`);
-  
+
+  // 로컬 스키마에 없는 컬럼 제거
+  const stripCols = STRIP_COLUMNS[tableName] || [];
+  const cleanedData = stripCols.length
+    ? prodData.map((row) => {
+        const r = { ...row };
+        stripCols.forEach((c) => delete r[c]);
+        return r;
+      })
+    : prodData;
+
   // 로컬 데이터 삭제
   const { error: deleteError } = await localSupabase
     .from(tableName)
     .delete()
     .gte('id', 0);
-  
+
   if (deleteError) {
     console.error(`  ❌ 삭제 실패: ${deleteError.message}`);
   }
-  
+
   // 로컬에 삽입
   const { error: insertError } = await localSupabase
     .from(tableName)
-    .insert(prodData);
-  
+    .insert(cleanedData);
+
   if (insertError) {
     console.error(`  ❌ 삽입 실패: ${insertError.message}`);
     return;
   }
-  
+
   console.log(`  ✅ ${prodData.length}건 동기화 완료`);
 }
 
