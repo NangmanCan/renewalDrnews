@@ -13,6 +13,19 @@ module.exports = {
           800: '#0f172a',
           900: '#0a1628',
         },
+        brand: {
+          // 딥 틸 그린 — 의료 + 신문의 신뢰감 (Tailwind teal 계열 기반, 600을 가장 많이 쓰는 메인 액센트로 사용)
+          DEFAULT: '#0f766e',
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0f766e', // 메인 액센트 (기존 orange-600 자리)
+          700: '#115e59',
+          800: '#134e4a',
+        },
         'medical-green': {
           500: '#10b981',
           600: '#059669',
@@ -35,8 +48,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        serif: ['"Noto Serif KR"', 'Georgia', 'serif'],
-        headline: ['"Noto Serif KR"', 'Georgia', 'serif'],
+        // 명조/세리프 폰트는 사용하지 않음 — Pretendard로 통일
+        serif: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        headline: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
         sans: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
       spacing: {

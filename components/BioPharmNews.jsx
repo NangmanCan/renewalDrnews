@@ -13,10 +13,7 @@ const BioPharmNews = ({ articles }) => {
 
   return (
     <div className="bg-white sm:border sm:border-gray-200">
-      <h3 className="text-sm font-bold text-gray-900 px-4 py-3 border-b-2 border-navy flex items-center gap-2">
-        <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-        </svg>
+      <h3 className="text-base font-extrabold text-navy px-4 py-3 border-t-2 border-navy tracking-tight">
         제약·바이오
       </h3>
       <div className="p-4 space-y-1">

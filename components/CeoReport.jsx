@@ -14,12 +14,9 @@ const CeoReport = ({ report }) => {
 
   return (
     <div className="bg-white sm:border sm:border-gray-200 overflow-hidden">
-      {/* 타이틀 헤더 */}
-      <div className="bg-navy px-5 py-3">
-        <h2 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-          <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
+      {/* 타이틀 헤더 (상단 실선 + 검정 텍스트) */}
+      <div className="border-t-2 border-navy px-5 py-3">
+        <h2 className="text-base font-extrabold text-navy tracking-tight">
           CEO 리포트
         </h2>
       </div>
@@ -29,7 +26,7 @@ const CeoReport = ({ report }) => {
         <div className="p-5">
           {/* 상단: 카테고리 + 날짜 */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-1">
+            <span className="text-xs font-medium text-brand-700 bg-brand-50 px-2 py-1">
               {report.category}
             </span>
             <span className="text-xs text-gray-400">
@@ -46,7 +43,7 @@ const CeoReport = ({ report }) => {
           </p>
 
           {/* 본문 미리보기 - 인용문 스타일 */}
-          <div className="relative pl-4 border-l-4 border-amber-400 bg-gray-50 py-3 pr-4 mb-4">
+          <div className="relative pl-4 border-l-4 border-brand-400 bg-gray-50 py-3 pr-4 mb-4">
             <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
               {stripHtml(report.content)}
             </p>

@@ -47,13 +47,13 @@ export default async function CeoReportPage({ params }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </li>
-              <li className="text-amber-400">CEO 리포트</li>
+              <li className="text-brand-400">CEO 리포트</li>
             </ol>
           </nav>
 
           {/* 메타 정보 */}
           <div className="flex items-center gap-3 mb-6">
-            <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-brand-500/20 text-brand-400 rounded-full text-sm font-medium">
               {report.category}
             </span>
             <span className="text-gray-400 text-sm">
@@ -71,7 +71,7 @@ export default async function CeoReportPage({ params }) {
 
           {/* 저자 정보 */}
           <div className="flex items-center gap-4">
-            <div className="relative w-14 h-14 rounded-full overflow-hidden ring-3 ring-amber-400/30">
+            <div className="relative w-14 h-14 rounded-full overflow-hidden ring-3 ring-brand-400/30">
               {report.authorImage ? (
                 <Image
                   src={report.authorImage}
@@ -125,7 +125,7 @@ export default async function CeoReportPage({ params }) {
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-400">{report.date}</p>
-              <p className="text-sm text-amber-600 font-medium">제{report.weekNumber}주차 리포트</p>
+              <p className="text-sm text-brand-600 font-medium">제{report.weekNumber}주차 리포트</p>
             </div>
           </div>
         </div>
@@ -173,7 +173,7 @@ export default async function CeoReportPage({ params }) {
                   href={`/ceo-report/${r.id}`}
                   className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <span className="text-xs text-amber-600 font-medium">{r.category}</span>
+                  <span className="text-xs text-brand-600 font-medium">{r.category}</span>
                   <h3 className="font-semibold text-gray-800 mt-1 line-clamp-2">{r.title}</h3>
                   <p className="text-xs text-gray-400 mt-2">{r.date}</p>
                 </Link>

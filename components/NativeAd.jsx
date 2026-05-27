@@ -60,6 +60,8 @@ const NativeAd = ({ banner, banners }) => {
             src={selectedBanner.image}
             alt={selectedBanner.title || 'AD'}
             fill
+            quality={95}
+            sizes="(max-width: 1024px) 100vw, 288px"
             className="object-contain"
             unoptimized={selectedBanner.image?.endsWith('.gif')}
           />

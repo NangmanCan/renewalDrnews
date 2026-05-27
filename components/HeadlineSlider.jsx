@@ -85,7 +85,7 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
   if (slides.length === 0) return null;
 
   return (
-    <div ref={containerRef} className="relative w-full h-[300px] md:h-[380px] overflow-hidden group">
+    <div ref={containerRef} className="relative w-full h-[300px] md:h-full md:min-h-[380px] overflow-hidden group">
       {/* 슬라이드 이미지 */}
       <div className="relative w-full h-full bg-gray-300">
         {current.type === 'article' ? (
@@ -96,6 +96,8 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
                 alt={`${current.category} 헤드라인 뉴스: ${current.title}`}
                 fill
                 priority
+                quality={95}
+                sizes="(max-width: 1024px) 100vw, 700px"
                 className="object-cover"
               />
             )}
@@ -114,7 +116,10 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
                 alt={`광고: ${current.title}`}
                 fill
                 priority
+                quality={95}
+                sizes="(max-width: 1024px) 100vw, 700px"
                 className="object-cover"
+                unoptimized={current.image?.endsWith('.gif')}
               />
             )}
           </a>
@@ -127,7 +132,7 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
       {/* 콘텐츠 */}
       <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
         {current.type === 'ad' && (
-          <span className="inline-block px-2 py-0.5 bg-yellow-500 text-black text-xs font-semibold mb-3">
+          <span className="inline-block px-2 py-0.5 bg-brand-600 text-white text-xs font-semibold mb-3">
             광고
           </span>
         )}

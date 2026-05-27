@@ -64,6 +64,8 @@ const BottomBanner = ({ banners = [] }) => {
               src={current.image}
               alt={current.title}
               fill
+              quality={95}
+              sizes="(max-width: 768px) 80px, 96px"
               className="object-cover"
               unoptimized={current.image?.endsWith('.gif')}
             />
@@ -72,7 +74,7 @@ const BottomBanner = ({ banners = [] }) => {
 
         {/* 내용 */}
         <div className="flex-1 min-w-0">
-          <span className="inline-block px-2 py-0.5 bg-yellow-500 text-black text-xs font-semibold rounded mb-2">
+          <span className="inline-block px-2 py-0.5 bg-brand-600 text-white text-xs font-semibold rounded mb-2">
             AD
           </span>
           <h3 className="text-white font-bold text-lg md:text-xl mb-1 truncate">
@@ -88,7 +90,7 @@ const BottomBanner = ({ banners = [] }) => {
               <div
                 key={idx}
                 className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  idx === currentIndex ? 'bg-sky-400' : 'bg-gray-500'
+                  idx === currentIndex ? 'bg-brand-500' : 'bg-gray-500'
                 }`}
               />
             ))}
