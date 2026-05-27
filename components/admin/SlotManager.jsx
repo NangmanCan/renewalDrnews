@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -113,14 +113,27 @@ function PlacedItem({ item, slotId, source, onRemove }) {
   );
 }
 
-function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, source, onRemove, accent = 'gray', children }) {
+function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, source, onRemove, accent = 'gray', children, itemsPerPage = null }) {
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotId}` });
+  const [page, setPage] = useState(0);
+
   const isFull = max !== null && items.length >= max;
   const canPlaceSelected =
     selectedItem &&
     selectedItem.source === source &&
     !items.some((it) => it.id === selectedItem.item.id) &&
     !isFull;
+
+  const totalPages = itemsPerPage ? Math.max(1, Math.ceil(items.length / itemsPerPage)) : 1;
+  const currentPage = Math.min(page, totalPages - 1);
+  const visibleItems = itemsPerPage
+    ? items.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
+    : items;
+
+  // 아이템 삭제 등으로 마지막 페이지가 줄어들면 페이지 보정
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
+  }, [page, totalPages]);
 
   const accentClass = {
     red: 'border-red-300',
@@ -129,6 +142,8 @@ function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, so
     brand: 'border-brand-300',
     violet: 'border-violet-300',
   }[accent] || 'border-gray-300';
+
+  const stopPropClick = (e) => e.stopPropagation();
 
   return (
     <div
@@ -151,7 +166,7 @@ function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, so
             {canPlaceSelected ? '클릭해서 여기 배치' : '비어있음'}
           </div>
         ) : (
-          items.map((it) => (
+          visibleItems.map((it) => (
             <PlacedItem
               key={it.id}
               item={it}
@@ -162,6 +177,35 @@ function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, so
           ))
         )}
       </div>
+
+      {/* 페이지네이션 (itemsPerPage 옵션이 있고 페이지가 2개 이상일 때만) */}
+      {itemsPerPage && totalPages > 1 && (
+        <div
+          onClick={stopPropClick}
+          className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between gap-2"
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setPage(Math.max(0, currentPage - 1)); }}
+            disabled={currentPage === 0}
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ← 이전
+          </button>
+          <span className="text-sm text-gray-600 font-medium">
+            {currentPage + 1} / {totalPages} 페이지 · 총 {items.length}건
+          </span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setPage(Math.min(totalPages - 1, currentPage + 1)); }}
+            disabled={currentPage >= totalPages - 1}
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            다음 →
+          </button>
+        </div>
+      )}
+
       {isFull && <div className="absolute top-2 right-2 text-xs text-red-600 font-bold bg-white px-1.5 rounded">FULL</div>}
     </div>
   );
@@ -221,6 +265,7 @@ function PCMiniature({ slots, selectedItem, onClickAdd, onRemove }) {
           onClickAdd={(it) => onClickAdd('news', it)}
           onRemove={(id) => onRemove('news', id)}
           accent="gray"
+          itemsPerPage={15}
         />
         <DroppableSlot
           slotId="opinion"
@@ -273,6 +318,7 @@ function MobileMiniature({ slots, selectedItem, onClickAdd, onRemove }) {
         onClickAdd={(it) => onClickAdd('news', it)}
         onRemove={(id) => onRemove('news', id)}
         accent="gray"
+        itemsPerPage={15}
       />
       <DroppableSlot
         slotId="subheadline"
