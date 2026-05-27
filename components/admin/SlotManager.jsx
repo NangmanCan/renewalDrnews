@@ -292,7 +292,7 @@ function MobileMiniature({ slots, selectedItem, onClickAdd, onRemove }) {
   );
 }
 
-export default function SlotManager({ articles = [], opinions = [], slots, setSlots, onSave, saving }) {
+export default function SlotManager({ articles = [], opinions = [], slots: rawSlots, setSlots: rawSetSlots, onSave, saving }) {
   const [device, setDevice] = useState('pc'); // 'pc' | 'mobile'
   const [selectedItem, setSelectedItem] = useState(null); // { item, source }
   const [activeDrag, setActiveDrag] = useState(null);
@@ -300,15 +300,39 @@ export default function SlotManager({ articles = [], opinions = [], slots, setSl
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [poolTab, setPoolTab] = useState('articles'); // 'articles' | 'opinions'
 
+  // 슬롯 키 누락 방어 — 모든 슬롯 키를 항상 배열로 보장
+  const slots = useMemo(() => ({
+    headline: rawSlots?.headline || [],
+    subheadline: rawSlots?.subheadline || [],
+    news: rawSlots?.news || [],
+    focus: rawSlots?.focus || [],
+    opinion: rawSlots?.opinion || [],
+  }), [rawSlots]);
+
+  const setSlots = (next) => {
+    // rawSetSlots에는 정규화된 객체 그대로 전달
+    if (typeof next === 'function') {
+      rawSetSlots((prev) => next({
+        headline: prev?.headline || [],
+        subheadline: prev?.subheadline || [],
+        news: prev?.news || [],
+        focus: prev?.focus || [],
+        opinion: prev?.opinion || [],
+      }));
+    } else {
+      rawSetSlots(next);
+    }
+  };
+
   const allArticleSlotIds = useMemo(() => {
     return new Set(
       ['headline', 'subheadline', 'news', 'focus']
-        .flatMap((p) => (slots[p] || []).map((a) => a.id))
+        .flatMap((p) => slots[p].map((a) => a.id))
     );
   }, [slots]);
 
   const allOpinionSlotIds = useMemo(() => {
-    return new Set((slots.opinion || []).map((o) => o.id));
+    return new Set(slots.opinion.map((o) => o.id));
   }, [slots]);
 
   const categories = useMemo(() => {

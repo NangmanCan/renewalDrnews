@@ -1405,14 +1405,14 @@ function SlotManager({ articles, opinions, slots, setSlots, onRefresh }) {
     try {
       const updates = [];
 
-      // --- 기사 슬롯 저장 (headline, subheadline, news) ---
+      // --- 기사 슬롯 저장 (headline, subheadline, news, focus) ---
       const articleSlotIds = new Set(
-        ['headline', 'subheadline', 'news']
+        ['headline', 'subheadline', 'news', 'focus']
           .flatMap(p => (slots[p] || []).map(a => a.id))
       );
 
       // 1. 기사 슬롯에 배치된 기사들: placement가 변경된 경우만 업데이트
-      for (const placement of ['headline', 'subheadline', 'news']) {
+      for (const placement of ['headline', 'subheadline', 'news', 'focus']) {
         for (const article of (slots[placement] || [])) {
           if (article.placement !== placement) {
             updates.push(
@@ -1985,6 +1985,7 @@ export default function AdminPage() {
     headline: staticArticles.filter(a => a.isHeadline),
     subheadline: staticArticles.filter(a => !a.isHeadline).slice(0, 1),
     news: staticArticles.filter(a => !a.isHeadline).slice(1),
+    focus: [],
     opinion: [],
   });
 
@@ -2012,6 +2013,7 @@ export default function AdminPage() {
         headline: (articlesData || []).filter(a => a.placement === 'headline'),
         subheadline: (articlesData || []).filter(a => a.placement === 'subheadline'),
         news: (articlesData || []).filter(a => a.placement === 'news' || (!a.placement && !a.is_headline && !a.isHeadline)),
+        focus: (articlesData || []).filter(a => a.placement === 'focus'),
         opinion: (opinionsData || []).filter(o => o.isFeatured !== false),
       };
       setSlots(newSlots);
