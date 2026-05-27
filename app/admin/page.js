@@ -14,6 +14,9 @@ import TipTapEditor from '@/components/TipTapEditor';
 import NewsSourceManager from '@/components/admin/NewsSourceManager';
 import DoctorPickManager from '@/components/admin/DoctorPickManager';
 import SlotManagerUI from '@/components/admin/SlotManager';
+import ImageCropModal from '@/components/admin/ImageCropModal';
+import AdSlotManagerUI from '@/components/admin/AdSlotManager';
+import AdCreationManagerUI from '@/components/admin/AdCreationManager';
 
 // pica 인스턴스(WebWorker 풀)를 매번 새로 만들면 워커가 누적되므로 모듈 레벨에서 1개만 유지
 const picaInstance = typeof window !== 'undefined' ? Pica() : null;
@@ -80,6 +83,7 @@ const PLACEMENT_OPTIONS = [
   { id: 'subheadline', label: '서브헤드라인', color: 'blue', max: 1 },
   { id: 'news', label: '최신뉴스 목록', color: 'gray', max: null },
   { id: 'focus', label: '닥터포커스', color: 'sky', max: null },
+  { id: 'category_card', label: '카테고리 카드(PC 우측)', color: 'brand', max: 4 },
   { id: 'opinion', label: '오피니언 기고란', color: 'violet', max: 3 },
 ];
 
@@ -244,12 +248,13 @@ async function resizeImage(file, maxWidth, maxHeight) {
   });
 }
 
-function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles' }) {
+function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles', label = '대표 이미지' }) {
   const fileInputRef = useRef(null);
   const [preview, setPreview] = useState(currentImage || '');
   const [isGif, setIsGif] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+  const [cropTarget, setCropTarget] = useState(null); // { file, size }
 
   // guide에서 규격 파싱 (예: "1200x300" → {width: 1200, height: 300})
   const parseGuide = (guideStr) => {
@@ -262,6 +267,28 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
     return null;
   };
 
+  // 실제 업로드 (crop 후 호출되거나, GIF/가이드 없을 때 직접 호출)
+  const doUpload = async (fileToUpload) => {
+    setUploadError(null);
+    setUploading(true);
+    const localPreview = URL.createObjectURL(fileToUpload);
+    setPreview(localPreview);
+    try {
+      const { url, error } = await uploadImage(fileToUpload, folder);
+      if (error) throw error;
+      setPreview(url);
+      onImageChange(url);
+      URL.revokeObjectURL(localPreview);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setUploadError(err.message || '업로드에 실패했습니다.');
+      setPreview(currentImage || '');
+      URL.revokeObjectURL(localPreview);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -270,49 +297,44 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
     const MAX_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       setUploadError('파일 크기는 10MB 이하여야 합니다.');
+      e.target.value = '';
       return;
     }
 
     const gif = file.type === 'image/gif';
     setIsGif(gif);
     setUploadError(null);
-    setUploading(true);
 
-    // 로컬 미리보기 (빠른 UX)
-    const localPreview = URL.createObjectURL(file);
-    setPreview(localPreview);
+    const size = parseGuide(guide);
 
-    try {
-      // GIF가 아니면 리사이징
+    // GIF이거나 가이드가 없으면 크롭 모달 없이 바로 업로드 (리사이즈만)
+    if (gif || !size) {
       let fileToUpload = file;
-      if (!gif) {
-        const size = parseGuide(guide);
-        if (size) {
+      if (!gif && size) {
+        try {
           fileToUpload = await resizeImage(file, size.width, size.height);
+        } catch (err) {
+          setUploadError(err.message || '리사이즈 실패');
+          return;
         }
       }
-
-      // Supabase Storage에 업로드
-      const { url, error } = await uploadImage(fileToUpload, folder);
-
-      if (error) {
-        throw error;
-      }
-
-      // 성공: Storage URL로 교체
-      setPreview(url);
-      onImageChange(url);
-      
-      // 로컬 미리보기 URL 해제
-      URL.revokeObjectURL(localPreview);
-    } catch (err) {
-      console.error('Upload failed:', err);
-      setUploadError(err.message || '업로드에 실패했습니다.');
-      setPreview('');
-      URL.revokeObjectURL(localPreview);
-    } finally {
-      setUploading(false);
+      await doUpload(fileToUpload);
+      e.target.value = '';
+      return;
     }
+
+    // 가이드 있고 GIF 아니면 크롭 모달 띄움
+    setCropTarget({ file, size });
+    e.target.value = '';
+  };
+
+  const handleCropComplete = async (croppedFile) => {
+    setCropTarget(null);
+    await doUpload(croppedFile);
+  };
+
+  const handleCropCancel = () => {
+    setCropTarget(null);
   };
 
   const handleUrlInput = (url) => {
@@ -324,7 +346,7 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <label className="block text-sm font-medium text-gray-700">대표 이미지</label>
+        <label className="block text-sm font-medium text-gray-700">{label}</label>
         {guide && (
           <span className="text-xs text-gray-400">권장: {guide.label}</span>
         )}
@@ -337,10 +359,15 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
         </div>
       )}
 
-      {/* 미리보기 */}
-      {preview && (
-        <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
-          <Image src={preview} alt="미리보기" fill className="object-cover" unoptimized={isGif || preview.endsWith('.gif')} />
+      {/* 미리보기 — 권장 사이즈 비율 그대로, 실제 폭(px)까지 (화면 폭에 맞춰 축소) */}
+      {preview && (() => {
+        const ps = parseGuide(guide);
+        const previewStyle = ps
+          ? { aspectRatio: `${ps.width} / ${ps.height}`, maxWidth: `${ps.width}px`, width: '100%' }
+          : { aspectRatio: '16 / 9', maxWidth: '640px', width: '100%' };
+        return (
+        <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={previewStyle}>
+          <Image src={preview} alt="미리보기" fill className="object-contain" unoptimized={isGif || preview.endsWith('.gif')} />
           {uploading && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <div className="flex items-center gap-2 text-white">
@@ -364,7 +391,8 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
             </button>
           )}
         </div>
-      )}
+        );
+      })()}
 
       {/* 업로드 옵션 */}
       <div className="flex gap-2">
@@ -409,6 +437,16 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
         disabled={uploading}
         className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent disabled:opacity-50"
       />
+
+      {/* 크롭 모달 */}
+      {cropTarget && (
+        <ImageCropModal
+          file={cropTarget.file}
+          guide={cropTarget.size}
+          onComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }
@@ -1405,14 +1443,14 @@ function SlotManager({ articles, opinions, slots, setSlots, onRefresh }) {
     try {
       const updates = [];
 
-      // --- 기사 슬롯 저장 (headline, subheadline, news, focus) ---
+      // --- 기사 슬롯 저장 (headline, subheadline, news, focus, category_card) ---
       const articleSlotIds = new Set(
-        ['headline', 'subheadline', 'news', 'focus']
+        ['headline', 'subheadline', 'news', 'focus', 'category_card']
           .flatMap(p => (slots[p] || []).map(a => a.id))
       );
 
       // 1. 기사 슬롯에 배치된 기사들: placement가 변경된 경우만 업데이트
-      for (const placement of ['headline', 'subheadline', 'news', 'focus']) {
+      for (const placement of ['headline', 'subheadline', 'news', 'focus', 'category_card']) {
         for (const article of (slots[placement] || [])) {
           if (article.placement !== placement) {
             updates.push(
@@ -1481,7 +1519,7 @@ function SlotManager({ articles, opinions, slots, setSlots, onRefresh }) {
 
 
 // 광고 에디터 컴포넌트
-function AdEditor({ ad, adType, onSave, onCancel }) {
+function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
   // 표시 폭 × 2 (retina 대응). pica Lanczos3로 다운스케일되어 업로드됨.
   const typeInfo = {
     headline: {
@@ -1516,6 +1554,11 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
     positions: ad?.positions || {},
   });
 
+  // 폼 변경 시 외부에 알림 (미리보기용)
+  useEffect(() => {
+    onFormChange?.(form);
+  }, [form, onFormChange]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.title || !form.image) {
@@ -1526,21 +1569,7 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">
-            {ad ? '광고 수정' : '새 광고 등록'}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">{info.description}</p>
-        </div>
-        {onCancel && (
-          <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">
-            취소
-          </button>
-        )}
-      </div>
-
+    <div>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* 제목 */}
         <div>
@@ -1567,19 +1596,14 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
         </div>
 
         {/* 이미지 */}
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <label className="block text-sm font-medium text-gray-700">광고 이미지</label>
-            <span className="text-xs text-gray-400">권장: {info.imageGuide}</span>
-          </div>
-          <ImageUploader
-            currentImage={form.image}
-            onImageChange={(url) => setForm({ ...form, image: url })}
-            guide={info.imageGuide}
-            allowGif={adType !== 'headline'}
-            folder="banners"
-          />
-        </div>
+        <ImageUploader
+          currentImage={form.image}
+          onImageChange={(url) => setForm({ ...form, image: url })}
+          guide={info.imageGuide}
+          allowGif={adType !== 'headline'}
+          folder="banners"
+          label="광고 이미지"
+        />
 
         {/* 링크 */}
         <div>
@@ -1613,199 +1637,64 @@ function AdEditor({ ad, adType, onSave, onCancel }) {
   );
 }
 
-// 광고 관리
+// 광고 관리 — 서브탭(광고 배치 / 광고 소재 만들기)
 function AdManager({ banners, setBanners, onRefresh }) {
-  const [selectedType, setSelectedType] = useState('headline');
-  const [activeTab, setActiveTab] = useState('list');
-  const [editingAd, setEditingAd] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [subTab, setSubTab] = useState('placement'); // 'placement' | 'creation'
 
-  const typeLabels = {
-    headline: '헤드라인 광고',
-    sidebar: '사이드바 광고',
-    gnb: 'GNB 상단배너',
-    strip: '띠배너 광고',
-  };
-
-  const filteredBanners = banners
-    .filter((b) => b.type === selectedType)
-    .sort((a, b) => a.order - b.order);
-
-  const [toggling, setToggling] = useState(null);
-
-  const toggleActive = async (id) => {
-    const banner = banners.find(b => b.id === id);
-    if (!banner) return;
-
-    setToggling(id);
-    try {
-      await api.update('banners', id, { ...banner, isActive: !banner.isActive });
-      if (onRefresh) await onRefresh();
-    } catch (error) {
-      console.error('Error toggling active:', error);
-      alert(`광고 상태 변경 실패: ${error.message}\n\nCloudflare에 SUPABASE_SERVICE_ROLE_KEY가 설정되어 있는지 확인하세요.`);
-    } finally {
-      setToggling(null);
-    }
-  };
-
-  const handleSave = async (form) => {
-    setSaving(true);
-    try {
-      const maxOrder = filteredBanners.reduce((max, b) => Math.max(max, b.order || 0), 0);
-
-      const bannerData = {
-        title: form.title,
-        description: form.description,
-        image: form.image,
-        link: form.link || '#',
-        type: selectedType,
-        isActive: editingAd?.isActive ?? true,
-        order: editingAd?.order ?? maxOrder + 1,
-        positions: selectedType === 'sidebar' ? form.positions : undefined,
-      };
-
-      if (editingAd) {
-        await api.update('banners', editingAd.id, bannerData);
-      } else {
-        await api.create('banners', bannerData);
-      }
-
-      // 먼저 데이터를 새로고침하고, 그 후에 UI 상태 변경
-      if (onRefresh) await onRefresh();
-      setEditingAd(null);
-      setActiveTab('list');
-      alert(editingAd ? '수정되었습니다.' : '등록되었습니다.');
-    } catch (error) {
-      console.error('Error saving banner:', error);
-      alert('저장 중 오류가 발생했습니다.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-    try {
-      await api.remove('banners', id);
-      if (onRefresh) await onRefresh();
-      alert('삭제되었습니다.');
-    } catch (error) {
-      console.error('Error deleting banner:', error);
-      alert('삭제 중 오류가 발생했습니다.');
-    }
-  };
+  // 통합 update 핸들러 — id=null이면 create
+  const updateOrCreate = (id, data) =>
+    id ? api.update('banners', id, data) : api.create('banners', data);
 
   return (
-    <div>
-      {/* 타입 선택 탭 */}
-      <div className="flex gap-2 mb-4">
-        {Object.entries(typeLabels).map(([type, label]) => (
-          <button
-            key={type}
-            onClick={() => {
-              setSelectedType(type);
-              setActiveTab('list');
-              setEditingAd(null);
-            }}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              selectedType === type ? 'bg-navy text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* 서브 탭: 목록/등록 */}
-      <div className="flex gap-4 mb-6">
+    <div className="space-y-5">
+      {/* 서브탭 */}
+      <div className="flex gap-2 border-b border-gray-200">
         <button
-          onClick={() => { setActiveTab('list'); setEditingAd(null); }}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'list' ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          onClick={() => setSubTab('placement')}
+          className={`px-5 py-2.5 text-base font-bold border-b-2 -mb-px transition-colors ${
+            subTab === 'placement'
+              ? 'border-brand-600 text-brand-600'
+              : 'border-transparent text-gray-500 hover:text-navy'
           }`}
         >
-          광고 목록
+          📐 광고 배치
         </button>
         <button
-          onClick={() => { setActiveTab('create'); setEditingAd(null); }}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'create' ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          onClick={() => setSubTab('creation')}
+          className={`px-5 py-2.5 text-base font-bold border-b-2 -mb-px transition-colors ${
+            subTab === 'creation'
+              ? 'border-brand-600 text-brand-600'
+              : 'border-transparent text-gray-500 hover:text-navy'
           }`}
         >
-          새 광고 등록
+          ✍️ 광고 소재 만들기
         </button>
       </div>
 
-      {/* 광고 목록 */}
-      {activeTab === 'list' && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">{typeLabels[selectedType]} 목록</h2>
-
-          <div className="space-y-4">
-            {filteredBanners.map((banner) => (
-              <div
-                key={banner.id}
-                className={`p-4 border rounded-lg ${
-                  banner.isActive ? 'border-green-300 bg-green-50' : 'border-gray-200'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-24 h-14 relative rounded overflow-hidden flex-shrink-0">
-                    <Image src={banner.image} alt={banner.title} fill className="object-cover" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{banner.title}</p>
-                    <p className="text-sm text-gray-500">{banner.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => { setEditingAd(banner); setActiveTab('create'); }}
-                      className="px-3 py-1.5 text-sm bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg"
-                    >
-                      수정
-                    </button>
-                    <button
-                      onClick={() => handleDelete(banner.id)}
-                      className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg"
-                    >
-                      삭제
-                    </button>
-                    <button
-                      onClick={() => toggleActive(banner.id)}
-                      disabled={toggling === banner.id}
-                      className={`px-4 py-2 rounded-full font-medium min-w-[60px] ${
-                        banner.isActive ? 'bg-green-500 text-white' : 'bg-gray-300'
-                      } ${toggling === banner.id ? 'opacity-50' : ''}`}
-                    >
-                      {toggling === banner.id ? '...' : (banner.isActive ? 'ON' : 'OFF')}
-                    </button>
-                  </div>
-                </div>
-
-                {/* 사이드바 광고 노출 안내 */}
-                {selectedType === 'sidebar' && banner.isActive && (
-                  <p className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
-                    PC 사이드바 + 모바일 뉴스 목록에 자동 롤링 노출
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {filteredBanners.length === 0 && (
-            <p className="text-center text-gray-500 py-8">등록된 배너가 없습니다.</p>
-          )}
-        </div>
+      {subTab === 'placement' && (
+        <AdSlotManagerUI
+          banners={banners}
+          onUpdate={(id, data) => api.update('banners', id, data)}
+          onRefresh={onRefresh}
+        />
       )}
 
-      {/* 광고 등록/수정 폼 */}
-      {activeTab === 'create' && (
-        <AdEditor
-          ad={editingAd}
-          adType={selectedType}
-          onSave={handleSave}
-          onCancel={() => { setEditingAd(null); setActiveTab('list'); }}
+      {subTab === 'creation' && (
+        <AdCreationManagerUI
+          banners={banners}
+          onUpdate={updateOrCreate}
+          onDelete={(id) => api.remove('banners', id)}
+          onRefresh={onRefresh}
+          renderEditor={({ ad, type, onSave, onCancel, onFormChange }) => (
+            <AdEditor
+              key={ad?.id || `new-${type}`}
+              ad={ad}
+              adType={type}
+              onSave={onSave}
+              onCancel={onCancel}
+              onFormChange={onFormChange}
+            />
+          )}
         />
       )}
     </div>
@@ -1986,6 +1875,7 @@ export default function AdminPage() {
     subheadline: staticArticles.filter(a => !a.isHeadline).slice(0, 1),
     news: staticArticles.filter(a => !a.isHeadline).slice(1),
     focus: [],
+    category_card: [],
     opinion: [],
   });
 
@@ -2014,6 +1904,7 @@ export default function AdminPage() {
         subheadline: (articlesData || []).filter(a => a.placement === 'subheadline'),
         news: (articlesData || []).filter(a => a.placement === 'news' || (!a.placement && !a.is_headline && !a.isHeadline)),
         focus: (articlesData || []).filter(a => a.placement === 'focus'),
+        category_card: (articlesData || []).filter(a => a.placement === 'category_card'),
         opinion: (opinionsData || []).filter(o => o.isFeatured !== false),
       };
       setSlots(newSlots);

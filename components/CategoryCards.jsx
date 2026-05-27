@@ -9,7 +9,7 @@ function CategoryCard({ category, article }) {
         className="flex-1 min-h-0 flex items-center px-3 border-b border-gray-100 last:border-b-0"
       >
         <div>
-          <div className="text-[11px] font-bold text-brand-600 mb-1 tracking-wide">{category}</div>
+          <div className="text-[13px] font-bold text-brand-600 mb-1 tracking-wide">{category}</div>
           <div className="text-sm text-gray-400">기사 없음</div>
         </div>
       </Link>
@@ -22,18 +22,18 @@ function CategoryCard({ category, article }) {
       className="group flex-1 min-h-0 flex items-center gap-3 px-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
     >
       <div className="flex-1 min-w-0">
-        <div className="text-[11px] font-bold text-brand-600 mb-1 tracking-wide">{category}</div>
-        <h3 className="text-[13px] font-bold text-navy leading-snug line-clamp-2 group-hover:text-brand-600 transition-colors">
+        <div className="text-[13px] font-bold text-brand-600 mb-1 tracking-wide">{category}</div>
+        <h3 className="text-[15px] font-bold text-navy leading-snug line-clamp-2 group-hover:text-brand-600 transition-colors">
           {article.title}
         </h3>
       </div>
       {article.image && (
-        <div className="flex-shrink-0 w-16 h-14 relative bg-gray-100 overflow-hidden">
+        <div className="flex-shrink-0 w-20 h-16 relative bg-gray-100 overflow-hidden">
           <Image
             src={article.image}
             alt={article.title}
             fill
-            sizes="64px"
+            sizes="80px"
             className="object-cover"
           />
         </div>
@@ -70,8 +70,12 @@ export default function CategoryCards({ items = [], adBanner = null }) {
   return (
     <div className="h-full bg-white border border-gray-200 flex flex-col">
       <div className="flex-1 flex flex-col min-h-0">
-        {items.map(({ category, article }) => (
-          <CategoryCard key={category} category={category} article={article} />
+        {items.map(({ category, article }, idx) => (
+          <CategoryCard
+            key={article?.id ?? `${category}-${idx}`}
+            category={category}
+            article={article}
+          />
         ))}
       </div>
       {adBanner && <AdSlot banner={adBanner} />}

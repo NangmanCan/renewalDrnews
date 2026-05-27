@@ -50,8 +50,13 @@ export default async function Home({ searchParams }) {
   // 닥터포커스 기사 (placement='focus' 또는 기존 category='닥터포커스')
   const focusArticlesList = allArticles.filter(a => a.placement === 'focus' || a.category === '닥터포커스');
 
-  // 미배치(placement: 'none') 및 닥터포커스 제외
-  const visibleArticles = allArticles.filter(a => a.placement !== 'none' && a.placement !== 'focus' && a.category !== '닥터포커스');
+  // 미배치(placement: 'none') / 닥터포커스 / 카테고리카드(우측 픽) 슬롯은 일반 목록에서 제외
+  const visibleArticles = allArticles.filter(a =>
+    a.placement !== 'none' &&
+    a.placement !== 'focus' &&
+    a.placement !== 'category_card' &&
+    a.category !== '닥터포커스'
+  );
 
   let regularArticles = visibleArticles.filter((a) => !a.isHeadline && !a.is_headline);
 
@@ -106,12 +111,30 @@ export default async function Home({ searchParams }) {
       .filter(Boolean);
   }
 
-  // HERO 우측: 카테고리 카드 4개 (ISSUE PICK과 겹치지 않게 다른 카테고리로 구성)
-  const heroCategoryLabels = ['병원', 'AI', '해외뉴스', '산업'];
-  const heroCategoryCards = heroCategoryLabels.map((category) => ({
-    category,
-    article: visibleArticles.find((a) => a.category === category) || null,
-  }));
+  // HERO 우측: 카테고리 카드 4개
+  //  - 수동 큐레이션(placement='category_card')이 있으면 그게 우선
+  //  - 비어있으면 자동: visibleArticles(최신순)에서 서로 다른 카테고리 최신 1건씩 4개
+  const curatedCategoryCards = allArticles
+    .filter((a) => a.placement === 'category_card')
+    .slice(0, 4);
+  let heroCategoryCards;
+  if (curatedCategoryCards.length > 0) {
+    heroCategoryCards = curatedCategoryCards.map((article) => ({
+      category: article.category || '기사',
+      article,
+    }));
+  } else {
+    const seen = new Set();
+    const autoCards = [];
+    for (const article of visibleArticles) {
+      if (!article.category) continue;
+      if (seen.has(article.category)) continue;
+      seen.add(article.category);
+      autoCards.push({ category: article.category, article });
+      if (autoCards.length >= 4) break;
+    }
+    heroCategoryCards = autoCards;
+  }
 
   // HERO 좌측: 보조 헤드라인(SubHeadline 1건) + 미니 헤드라인 2건
   const heroLeftMini = listArticles

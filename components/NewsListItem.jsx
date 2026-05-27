@@ -28,11 +28,11 @@ const NewsListItem = ({ article, compact = false }) => {
         href={href}
         className="block py-3.5 border-b border-gray-200 hover:bg-gray-50 transition-colors group min-h-[44px]"
       >
-        <h4 className="text-[16px] font-bold text-gray-800 leading-[1.5] tracking-[-0.01em] line-clamp-2 mb-0.5">
+        <h4 className="text-[18px] font-bold text-gray-800 leading-[1.5] tracking-[-0.01em] line-clamp-2 mb-1">
           {article.title}
         </h4>
         {summary && (
-          <p className="text-[13px] text-gray-500 leading-[1.5] line-clamp-1">
+          <p className="text-[14px] text-gray-500 leading-[1.5] line-clamp-1">
             {summary}
           </p>
         )}

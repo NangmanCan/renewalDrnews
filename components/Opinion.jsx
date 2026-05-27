@@ -33,7 +33,7 @@ const OpinionCard = ({ opinion }) => {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs text-gray-400">{opinion.date}</span>
           </div>
-          <h4 className="text-sm font-bold text-gray-900 line-clamp-1 mb-1 hover:underline">
+          <h4 className="text-[15px] font-bold text-gray-900 line-clamp-1 mb-1 hover:underline">
             {opinion.title}
           </h4>
           <p className="text-xs text-gray-500 line-clamp-1 mb-1">

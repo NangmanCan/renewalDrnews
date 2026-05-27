@@ -29,7 +29,7 @@ const BioPharmNews = ({ articles }) => {
               </span>
               <span className="text-xs text-gray-400">{article.category}</span>
             </div>
-            <h4 className="text-[15px] font-bold text-gray-800 line-clamp-2 leading-[1.5] hover:underline">
+            <h4 className="text-[16px] font-bold text-gray-800 line-clamp-2 leading-[1.5] hover:underline">
               {article.title}
             </h4>
             <p className="text-[13px] text-gray-500 mt-1.5 leading-[1.5] line-clamp-2">

@@ -25,7 +25,7 @@ const PopularNews = ({ articles, matchHeadline = false }) => {
             </span>
 
             {/* 기사 제목 */}
-            <h4 className="text-sm font-medium text-gray-800 group-hover:underline transition-colors line-clamp-1 flex-1">
+            <h4 className="text-[15px] font-medium text-gray-800 group-hover:underline transition-colors line-clamp-1 flex-1">
               {article.title}
             </h4>
           </Link>

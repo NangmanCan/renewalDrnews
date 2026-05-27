@@ -13,11 +13,12 @@ import {
 } from '@dnd-kit/core';
 
 const SLOTS = [
-  { id: 'headline',    label: '헤드라인 슬라이더', max: 2,    source: 'articles' },
-  { id: 'subheadline', label: '서브헤드라인',     max: 1,    source: 'articles' },
-  { id: 'news',        label: '최신뉴스 목록',    max: null, source: 'articles' },
-  { id: 'focus',       label: '닥터포커스(흐름)', max: null, source: 'articles' },
-  { id: 'opinion',     label: '오피니언 기고란',  max: 3,    source: 'opinions' },
+  { id: 'headline',      label: '헤드라인 슬라이더', max: 2,    source: 'articles' },
+  { id: 'subheadline',   label: '서브헤드라인',     max: 1,    source: 'articles' },
+  { id: 'news',          label: '최신뉴스 목록',    max: null, source: 'articles' },
+  { id: 'focus',         label: '닥터포커스(흐름)', max: null, source: 'articles' },
+  { id: 'category_card', label: '카테고리 카드(PC 우측)', max: 4, source: 'articles' },
+  { id: 'opinion',       label: '오피니언 기고란',  max: 3,    source: 'opinions' },
 ];
 
 function SlotSpec(id) {
@@ -113,7 +114,7 @@ function PlacedItem({ item, slotId, source, onRemove }) {
   );
 }
 
-function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, source, onRemove, accent = 'gray', children, itemsPerPage = null }) {
+function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, source, onRemove, accent = 'gray', children, itemsPerPage = null, helpText = null }) {
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotId}` });
   const [page, setPage] = useState(0);
 
@@ -153,9 +154,23 @@ function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, so
         isOver ? 'bg-brand-50 border-brand-500 border-solid' : ''
       } ${canPlaceSelected ? 'cursor-pointer hover:bg-brand-50 hover:border-brand-400' : ''}`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-base font-bold text-gray-800">{label}</span>
-        <span className="text-sm text-gray-500">
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-base font-bold text-gray-800 truncate">{label}</span>
+          {helpText && (
+            <span
+              onClick={(e) => e.stopPropagation()}
+              className="relative group/help inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-300 text-gray-700 text-[11px] font-bold cursor-help flex-shrink-0"
+              aria-label="안내"
+            >
+              ?
+              <span className="invisible opacity-0 group-hover/help:visible group-hover/help:opacity-100 transition-opacity absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 w-72 p-3 bg-navy text-white text-sm rounded shadow-xl leading-snug whitespace-normal text-left font-normal">
+                {helpText}
+              </span>
+            </span>
+          )}
+        </div>
+        <span className="text-sm text-gray-500 flex-shrink-0">
           {items.length}{max !== null ? ` / ${max}` : ''}
         </span>
       </div>
@@ -237,9 +252,18 @@ function PCMiniature({ slots, selectedItem, onClickAdd, onRemove }) {
           onRemove={(id) => onRemove('headline', id)}
           accent="red"
         />
-        <div className="rounded-md border-2 border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-500 flex items-center justify-center text-center leading-snug">
-          카테고리 카드 4개<br />(자동 — 슬롯 X)
-        </div>
+        <DroppableSlot
+          slotId="category_card"
+          label="카테고리 카드 4개"
+          max={4}
+          items={slots.category_card}
+          selectedItem={selectedItem}
+          source="articles"
+          onClickAdd={(it) => onClickAdd('category_card', it)}
+          onRemove={(id) => onRemove('category_card', id)}
+          accent="brand"
+          helpText="기본은 자동 모드 — 서로 다른 카테고리의 최신 기사 4건이 자동으로 노출됩니다. 여기에 기사를 배치하면 그게 우선이 되고, 비워두면 다시 자동 모드로 돌아갑니다."
+        />
       </div>
 
       <DroppableSlot
@@ -352,8 +376,16 @@ export default function SlotManager({ articles = [], opinions = [], slots: rawSl
   const [activeDrag, setActiveDrag] = useState(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  // 데이트 피커 기본값: 오늘-7일 ~ 오늘 (로컬 날짜 기준)
+  const [dateFrom, setDateFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  const [dateTo, setDateTo] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const [poolTab, setPoolTab] = useState('articles');
 
   const slots = useMemo(() => ({
@@ -361,6 +393,7 @@ export default function SlotManager({ articles = [], opinions = [], slots: rawSl
     subheadline: rawSlots?.subheadline || [],
     news: rawSlots?.news || [],
     focus: rawSlots?.focus || [],
+    category_card: rawSlots?.category_card || [],
     opinion: rawSlots?.opinion || [],
   }), [rawSlots]);
 
@@ -371,6 +404,7 @@ export default function SlotManager({ articles = [], opinions = [], slots: rawSl
         subheadline: prev?.subheadline || [],
         news: prev?.news || [],
         focus: prev?.focus || [],
+        category_card: prev?.category_card || [],
         opinion: prev?.opinion || [],
       }));
     } else {
@@ -380,7 +414,7 @@ export default function SlotManager({ articles = [], opinions = [], slots: rawSl
 
   const allArticleSlotIds = useMemo(() => {
     return new Set(
-      ['headline', 'subheadline', 'news', 'focus']
+      ['headline', 'subheadline', 'news', 'focus', 'category_card']
         .flatMap((p) => slots[p].map((a) => a.id))
     );
   }, [slots]);
@@ -435,7 +469,7 @@ export default function SlotManager({ articles = [], opinions = [], slots: rawSl
     }
     const next = { ...slots };
     if (spec.source === 'articles') {
-      ['headline', 'subheadline', 'news', 'focus'].forEach((p) => {
+      ['headline', 'subheadline', 'news', 'focus', 'category_card'].forEach((p) => {
         if (p !== slotId) next[p] = (next[p] || []).filter((it) => it.id !== item.id);
       });
     }
@@ -488,14 +522,11 @@ export default function SlotManager({ articles = [], opinions = [], slots: rawSl
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="space-y-5 text-base">
-        {/* 헤더: 탭 + 저장 */}
+        {/* 헤더: 안내 + 탭 + 저장 (페이지 상단 h1과 중복되지 않게 h2 제거) */}
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-navy">슬롯 관리</h2>
-            <p className="text-base text-gray-600 mt-1.5">
-              왼쪽 풀에서 기사를 <strong>드래그</strong>해 슬롯에 놓거나, <strong>클릭으로 선택</strong>한 뒤 슬롯을 클릭하면 배치됩니다.
-            </p>
-          </div>
+          <p className="text-base text-gray-600 leading-snug">
+            왼쪽 풀에서 기사를 <strong>드래그</strong>해 슬롯에 놓거나, <strong>클릭으로 선택</strong>한 뒤 슬롯을 클릭하면 배치됩니다.
+          </p>
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="inline-flex border border-gray-300 rounded overflow-hidden">
               <button

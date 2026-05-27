@@ -21,11 +21,11 @@ export default function HeroSecondary({ feature, mini = [] }) {
           )}
           <div className="mt-3">
             {feature.category && (
-              <div className="text-xs font-bold text-brand-600 mb-1 tracking-wide">
+              <div className="text-[13px] font-bold text-brand-600 mb-1.5 tracking-wide">
                 {feature.category}
               </div>
             )}
-            <h2 className="text-[16px] font-extrabold text-navy leading-tight line-clamp-2 group-hover:text-brand-600 transition-colors">
+            <h2 className="text-[19px] font-extrabold text-navy leading-tight line-clamp-3 group-hover:text-brand-600 transition-colors">
               {feature.title}
             </h2>
           </div>
@@ -34,12 +34,12 @@ export default function HeroSecondary({ feature, mini = [] }) {
 
       {/* 미니 헤드라인 (불릿 텍스트) — 남는 공간 채우기 */}
       {mini.length > 0 && (
-        <ul className="border-t border-gray-200 pt-3 mt-3 space-y-2 flex-1">
+        <ul className="border-t border-gray-200 pt-3 mt-3 space-y-2.5 flex-1">
           {mini.map((a) => (
             <li key={a.id}>
               <Link
                 href={`/article/${a.id}`}
-                className="group flex items-start gap-2 text-[13px] text-navy hover:text-brand-600 transition-colors"
+                className="group flex items-start gap-2 text-[15px] text-navy hover:text-brand-600 transition-colors"
               >
                 <span className="text-brand-600 mt-0.5 flex-shrink-0">·</span>
                 <span className="font-semibold leading-snug line-clamp-2">{a.title}</span>
