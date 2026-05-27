@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import Pica from 'pica';
 
@@ -71,6 +72,11 @@ export default function ImageCropModal({ file, guide, onComplete, onCancel }) {
   const [zoom, setZoom] = useState(1);
   const [pixelCrop, setPixelCrop] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 파일 → object URL
   useEffect(() => {
@@ -110,8 +116,13 @@ export default function ImageCropModal({ file, guide, onComplete, onCancel }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4">
+  if (!mounted) return null;
+
+  const modalContent = (
+    <div
+      className="fixed inset-0 bg-black/70 flex items-center justify-center p-4"
+      style={{ zIndex: 2147483000 }}
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full overflow-hidden flex flex-col">
         <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
@@ -182,4 +193,6 @@ export default function ImageCropModal({ file, guide, onComplete, onCancel }) {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
