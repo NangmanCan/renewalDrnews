@@ -25,6 +25,27 @@ function fetchPage(url) {
   }
 }
 
+// HTML 엔티티 디코드 (제목·본문 공용)
+function decodeEntities(s) {
+  return (s || '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&lsquo;/g, "'")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&ldquo;/g, '"')
+    .replace(/&rdquo;/g, '"')
+    .replace(/&copy;/g, '©')
+    .replace(/&middot;/g, '·')
+    .replace(/&hellip;/g, '…')
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
 // 메인 페이지에서 기사 링크 추출
 function extractArticleLinks(html) {
   const regex = /href=["']?\/?sub2\.htm\?cate1_no=(\d+)&cate2_no=(\d+)&news_no=(\d+)["']?/g;
@@ -55,14 +76,14 @@ function parseArticle(html, meta) {
   const dateStr = dateMatch[1];
   const timeStr = dateMatch[2];
   
-  // 2월 마지막주 + 3월 기사 필터링 (2026-02-24 이후)
-  if (dateStr < '2026-02-24') {
+  // 날짜 필터: 2026-05-26 이후 (구 drnews 기사 공백 메움)
+  if (dateStr < '2026-05-26') {
     return null;
   }
   
   // 제목 추출: <td class="t2">제목</td>
   const titleMatch = html.match(/<td[^>]*class=["']?t2["']?[^>]*>([^<]+)<\/td>/i);
-  const title = titleMatch ? titleMatch[1].trim() : null;
+  const title = titleMatch ? decodeEntities(titleMatch[1]).trim() : null;
   if (!title) return null;
   
   // 기자명 추출
@@ -86,17 +107,13 @@ function parseArticle(html, meta) {
   }
   contentHtml = contentHtml.substring(0, endIdx);
   
-  // HTML → 텍스트 변환
-  let content = contentHtml
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+  // HTML → 텍스트 변환 (태그 제거 후 엔티티 디코드)
+  let content = decodeEntities(
+    contentHtml
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<[^>]+>/g, '')
+  )
     .replace(/\n\s*\n\s*\n/g, '\n\n')
     .trim();
   

@@ -6,6 +6,8 @@ const REGIONS = [
   { id: 'all', label: '전체' },
   { id: '국내', label: '국내' },
   { id: '해외', label: '해외' },
+  { id: '저널', label: '권위 연구지' },
+  { id: '제약', label: '제약·바이오' },
 ];
 
 export default function NewsSourceManager() {
@@ -111,7 +113,13 @@ export default function NewsSourceManager() {
   const isStale = lastCrawledAt && (Date.now() - new Date(lastCrawledAt).getTime()) > 24 * 60 * 60 * 1000;
 
   const regionColor = (r) => {
-    return r === '국내' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
+    const map = {
+      '국내': 'bg-blue-100 text-blue-700',
+      '해외': 'bg-green-100 text-green-700',
+      '저널': 'bg-purple-100 text-purple-700',
+      '제약': 'bg-amber-100 text-amber-700',
+    };
+    return map[r] || 'bg-gray-100 text-gray-700';
   };
 
   return (
