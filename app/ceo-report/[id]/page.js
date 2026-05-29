@@ -57,7 +57,7 @@ export default async function CeoReportPage({ params }) {
               {report.category}
             </span>
             <span className="text-gray-400 text-sm">
-              {report.date} · 제{report.weekNumber}주차
+              {report.date}
             </span>
           </div>
 
@@ -125,7 +125,6 @@ export default async function CeoReportPage({ params }) {
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-400">{report.date}</p>
-              <p className="text-sm text-brand-600 font-medium">제{report.weekNumber}주차 리포트</p>
             </div>
           </div>
         </div>
