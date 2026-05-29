@@ -71,9 +71,9 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
             onClick={() => trackBanner(banner.id, 'click')}
             className="block bg-white overflow-hidden border border-gray-200 hover:border-gray-300 transition-colors"
           >
-            {/* 가로로 긴 이미지 */}
-            <div className="relative">
-              <div className="relative w-full h-24 bg-gray-100">
+            {/* 가로로 긴 이미지 — 카드 안에서 여백 두고 비율 유지 */}
+            <div className="relative w-full h-28 bg-white px-4 py-3">
+              <div className="relative w-full h-full">
                 {banner.image && (
                   <Image
                     src={banner.image}
@@ -85,10 +85,10 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
                     unoptimized={banner.image?.endsWith('.gif')}
                   />
                 )}
-                <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-1.5 py-0.5">
-                  AD
-                </span>
               </div>
+              <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                AD
+              </span>
             </div>
 
             {/* 텍스트 콘텐츠 */}

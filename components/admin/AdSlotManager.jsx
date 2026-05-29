@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   DndContext,
@@ -15,11 +15,13 @@ import {
 
 // 광고 슬롯 정의 — 메인 페이지 그리드 위치와 매핑
 const AD_SLOTS = [
-  { id: 'gnb',      label: 'GNB 상단배너',       guide: '480×128',   accent: 'gray',   max: 1 },
-  { id: 'strip',    label: '띠배너',              guide: '2400×180',  accent: 'brand',  max: null },
-  { id: 'headline', label: '헤드라인 슬라이더 광고', guide: '1600×800',  accent: 'red',    max: null },
-  { id: 'sidebar',  label: '사이드바 광고',        guide: '576×192',  accent: 'violet', max: null },
+  { id: 'strip',    label: '띠배너',              guide: '2400×180',  accent: 'brand',  max: 4, rolling: true },
+  { id: 'headline', label: '헤드라인 슬라이더 광고', guide: '1600×800',  accent: 'red',    max: 4, rolling: true },
+  { id: 'sidebar',  label: '사이드바 광고',        guide: '576×192',  accent: 'violet', max: 4, rolling: false },
+  { id: 'hero_ad',  label: 'HERO 카드 하단 광고',  guide: '576×144',  accent: 'gray',   max: 4, rolling: true },
 ];
+
+const DEFAULT_SLOT_SETTING = { rolling: true, interval: 5 };
 
 const POOL_ID = 'pool-inactive';
 
@@ -30,13 +32,14 @@ const accentBorder = {
   violet: 'border-violet-300',
 };
 
-function AdCard({ ad, isSelected, onClick, draggable = true, compact = false }) {
+function AdCard({ ad, isSelected, onClick, draggable = true, compact = false, order, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
   const dragId = `ad-${ad.id}`;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: dragId,
     data: { ad },
     disabled: !draggable,
   });
+  const reorderable = onMoveUp || onMoveDown;
 
   return (
     <div
@@ -55,6 +58,9 @@ function AdCard({ ad, isSelected, onClick, draggable = true, compact = false }) 
       title={ad.title}
     >
       <div className="flex items-center gap-2">
+        {typeof order === 'number' && (
+          <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-gray-100 text-[11px] font-bold text-gray-600">{order}</span>
+        )}
         {ad.image && (
           <div className={`relative flex-shrink-0 bg-gray-100 overflow-hidden ${compact ? 'w-12 h-8' : 'w-16 h-10'}`}>
             <Image
@@ -73,12 +79,32 @@ function AdCard({ ad, isSelected, onClick, draggable = true, compact = false }) 
             <div className="text-[11px] text-gray-400 line-clamp-1">{ad.link}</div>
           )}
         </div>
+        {reorderable && (
+          <div className="flex flex-col flex-shrink-0">
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}
+              disabled={!canMoveUp}
+              className="px-1 leading-none text-gray-400 hover:text-brand-600 disabled:opacity-20 disabled:hover:text-gray-400"
+              aria-label="순서 위로"
+            >▲</button>
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}
+              disabled={!canMoveDown}
+              className="px-1 leading-none text-gray-400 hover:text-brand-600 disabled:opacity-20 disabled:hover:text-gray-400"
+              aria-label="순서 아래로"
+            >▼</button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function DroppableAdSlot({ slotId, label, guide, accent, max, ads, selectedAd, onClickAdd }) {
+function DroppableAdSlot({ slotId, label, guide, accent, max, ads, selectedAd, onClickAdd, configurable = false, setting = DEFAULT_SLOT_SETTING, onSettingChange, onReorder }) {
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotId}` });
   const isFull = max !== null && ads.length >= max;
   const canPlaceSelected = selectedAd && !ads.some((a) => a.id === selectedAd.id) && !isFull;
@@ -101,14 +127,56 @@ function DroppableAdSlot({ slotId, label, guide, accent, max, ads, selectedAd, o
         </span>
       </div>
 
+      {/* 노출 방식 설정 */}
+      {configurable ? (
+        <div className="flex items-center gap-3 mb-2 text-sm" onClick={(e) => e.stopPropagation()}>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!setting.rolling}
+              onChange={(e) => onSettingChange?.({ rolling: e.target.checked })}
+              className="w-4 h-4 accent-brand-600"
+            />
+            <span className="font-medium text-gray-700">자동 롤링</span>
+          </label>
+          {setting.rolling ? (
+            <label className="flex items-center gap-1 text-gray-600">
+              간격
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={setting.interval}
+                onChange={(e) => onSettingChange?.({ interval: Number(e.target.value) })}
+                className="w-14 px-1.5 py-0.5 border border-gray-300 rounded text-center"
+              />
+              초
+            </label>
+          ) : (
+            <span className="text-gray-400">순서 1번만 고정 노출</span>
+          )}
+        </div>
+      ) : (
+        <div className="mb-2 text-sm text-gray-400">동시 노출 (활성 광고 전체 표시)</div>
+      )}
+
       <div className="space-y-1">
         {ads.length === 0 ? (
           <div className="text-sm text-gray-400 py-3 text-center">
             {canPlaceSelected ? '클릭해서 여기 배치' : '활성 광고 없음'}
           </div>
         ) : (
-          ads.map((ad) => (
-            <AdCard key={ad.id} ad={ad} compact />
+          ads.map((ad, idx) => (
+            <AdCard
+              key={ad.id}
+              ad={ad}
+              compact
+              order={idx + 1}
+              onMoveUp={onReorder ? () => onReorder(idx, idx - 1) : undefined}
+              onMoveDown={onReorder ? () => onReorder(idx, idx + 1) : undefined}
+              canMoveUp={idx > 0}
+              canMoveDown={idx < ads.length - 1}
+            />
           ))
         )}
       </div>
@@ -118,32 +186,44 @@ function DroppableAdSlot({ slotId, label, guide, accent, max, ads, selectedAd, o
   );
 }
 
-function PCAdMiniature({ slotsAds, selectedAd, onClickAddToSlot }) {
+function PCAdMiniature({ slotsAds, selectedAd, onClickAddToSlot, slotSettings, onSettingChange, onReorderSlot }) {
   const make = (slotId) => (ad) => onClickAddToSlot(slotId, ad);
+  const cfg = (slotId) => ({
+    configurable: AD_SLOTS.find((s) => s.id === slotId)?.rolling ?? false,
+    setting: slotSettings?.[slotId] || DEFAULT_SLOT_SETTING,
+    onSettingChange: (patch) => onSettingChange(slotId, patch),
+    onReorder: (from, to) => onReorderSlot(slotId, from, to),
+  });
   return (
     <div className="space-y-3">
-      <DroppableAdSlot slotId="gnb" label="GNB 상단배너 (헤더 우측)" guide="480×128" accent="gray" max={1}
-        ads={slotsAds.gnb} selectedAd={selectedAd} onClickAdd={make('gnb')} />
-      <DroppableAdSlot slotId="strip" label="띠배너 (DOCTOR'S PICK 아래)" guide="2400×180" accent="brand" max={null}
-        ads={slotsAds.strip} selectedAd={selectedAd} onClickAdd={make('strip')} />
-      <DroppableAdSlot slotId="headline" label="헤드라인 슬라이더 광고 (HERO 중앙)" guide="1600×800" accent="red" max={null}
-        ads={slotsAds.headline} selectedAd={selectedAd} onClickAdd={make('headline')} />
-      <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (PC 우측 컬럼)" guide="576×192" accent="violet" max={null}
-        ads={slotsAds.sidebar} selectedAd={selectedAd} onClickAdd={make('sidebar')} />
+      <DroppableAdSlot slotId="strip" label="띠배너 (DOCTOR'S PICK 아래)" guide="2400×180" accent="brand" max={4}
+        ads={slotsAds.strip} selectedAd={selectedAd} onClickAdd={make('strip')} {...cfg('strip')} />
+      <DroppableAdSlot slotId="headline" label="헤드라인 슬라이더 광고 (HERO 중앙)" guide="1600×800" accent="red" max={4}
+        ads={slotsAds.headline} selectedAd={selectedAd} onClickAdd={make('headline')} {...cfg('headline')} />
+      <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (PC 우측 컬럼)" guide="576×192" accent="violet" max={4}
+        ads={slotsAds.sidebar} selectedAd={selectedAd} onClickAdd={make('sidebar')} {...cfg('sidebar')} />
+      <DroppableAdSlot slotId="hero_ad" label="HERO 카드 하단 광고 (우측 카테고리 카드 아래)" guide="576×144" accent="gray" max={4}
+        ads={slotsAds.hero_ad} selectedAd={selectedAd} onClickAdd={make('hero_ad')} {...cfg('hero_ad')} />
     </div>
   );
 }
 
-function MobileAdMiniature({ slotsAds, selectedAd, onClickAddToSlot }) {
+function MobileAdMiniature({ slotsAds, selectedAd, onClickAddToSlot, slotSettings, onSettingChange, onReorderSlot }) {
   const make = (slotId) => (ad) => onClickAddToSlot(slotId, ad);
+  const cfg = (slotId) => ({
+    configurable: AD_SLOTS.find((s) => s.id === slotId)?.rolling ?? false,
+    setting: slotSettings?.[slotId] || DEFAULT_SLOT_SETTING,
+    onSettingChange: (patch) => onSettingChange(slotId, patch),
+    onReorder: (from, to) => onReorderSlot(slotId, from, to),
+  });
   return (
     <div className="max-w-sm mx-auto space-y-3">
-      <DroppableAdSlot slotId="strip" label="띠배너 (모바일 상단)" guide="2400×180" accent="brand" max={null}
-        ads={slotsAds.strip} selectedAd={selectedAd} onClickAdd={make('strip')} />
-      <DroppableAdSlot slotId="headline" label="헤드라인 슬라이더 광고" guide="1600×800" accent="red" max={null}
-        ads={slotsAds.headline} selectedAd={selectedAd} onClickAdd={make('headline')} />
-      <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (모바일 인라인)" guide="576×192" accent="violet" max={null}
-        ads={slotsAds.sidebar} selectedAd={selectedAd} onClickAdd={make('sidebar')} />
+      <DroppableAdSlot slotId="strip" label="띠배너 (모바일 상단)" guide="2400×180" accent="brand" max={4}
+        ads={slotsAds.strip} selectedAd={selectedAd} onClickAdd={make('strip')} {...cfg('strip')} />
+      <DroppableAdSlot slotId="headline" label="헤드라인 슬라이더 광고" guide="1600×800" accent="red" max={4}
+        ads={slotsAds.headline} selectedAd={selectedAd} onClickAdd={make('headline')} {...cfg('headline')} />
+      <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (모바일 인라인)" guide="576×192" accent="violet" max={4}
+        ads={slotsAds.sidebar} selectedAd={selectedAd} onClickAdd={make('sidebar')} {...cfg('sidebar')} />
       {/* GNB는 모바일에선 안 보임 */}
     </div>
   );
@@ -156,12 +236,22 @@ export default function AdSlotManager({ banners = [], onUpdate, onRefresh }) {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [saving, setSaving] = useState(false);
+  const [slotSettings, setSlotSettings] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/settings/ad-slots')
+      .then((r) => r.json())
+      .then((data) => { if (active) setSlotSettings(data); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   const slotsAds = useMemo(() => ({
-    gnb:      banners.filter((b) => b.type === 'gnb' && b.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)),
     strip:    banners.filter((b) => b.type === 'strip' && b.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)),
     headline: banners.filter((b) => b.type === 'headline' && b.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)),
     sidebar:  banners.filter((b) => b.type === 'sidebar' && b.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)),
+    hero_ad:  banners.filter((b) => b.type === 'hero_ad' && b.isActive).sort((a, b) => (a.order || 0) - (b.order || 0)),
   }), [banners]);
 
   // 비활성 광고만 풀에 노출
@@ -212,6 +302,48 @@ export default function AdSlotManager({ banners = [], onUpdate, onRefresh }) {
       alert('비활성화 실패: ' + e.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  // 슬롯 내 광고 순서 변경 (sort_order 재부여)
+  async function reorderSlot(slotId, fromIndex, toIndex) {
+    const arr = [...(slotsAds[slotId] || [])];
+    if (toIndex < 0 || toIndex >= arr.length || fromIndex === toIndex) return;
+    const [moved] = arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, moved);
+    setSaving(true);
+    try {
+      for (let i = 0; i < arr.length; i++) {
+        const desired = i + 1;
+        if ((arr[i].order || 0) !== desired) {
+          await onUpdate(arr[i].id, { ...arr[i], order: desired });
+        }
+      }
+      await onRefresh?.();
+    } catch (e) {
+      console.error(e);
+      alert('순서 변경 실패: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // 슬롯 노출 설정(롤링/간격) 변경 — 즉시 저장
+  async function updateSlotSetting(slotId, patch) {
+    const base = slotSettings || {};
+    const next = {
+      ...base,
+      [slotId]: { ...DEFAULT_SLOT_SETTING, ...(base[slotId] || {}), ...patch },
+    };
+    setSlotSettings(next);
+    try {
+      await fetch('/api/settings/ad-slots', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      });
+    } catch (e) {
+      console.error('슬롯 설정 저장 실패', e);
     }
   }
 
@@ -327,6 +459,9 @@ export default function AdSlotManager({ banners = [], onUpdate, onRefresh }) {
               slotsAds={slotsAds}
               selectedAd={selectedAd}
               onClickAddToSlot={(slotId, ad) => activateAndMove(ad, slotId)}
+              slotSettings={slotSettings}
+              onSettingChange={updateSlotSetting}
+              onReorderSlot={reorderSlot}
             />
           </section>
         </div>

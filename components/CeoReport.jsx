@@ -15,8 +15,8 @@ const CeoReport = ({ report }) => {
   return (
     <div className="bg-white sm:border sm:border-gray-200 overflow-hidden">
       {/* 타이틀 헤더 (상단 실선 + 검정 텍스트) */}
-      <div className="border-t-2 border-navy px-5 py-3">
-        <h2 className="text-base font-extrabold text-navy tracking-tight">
+      <div className="border-t-2 border-navy px-5 py-4">
+        <h2 className="text-2xl font-extrabold text-navy tracking-tight">
           CEO 리포트
         </h2>
       </div>

@@ -39,7 +39,7 @@ export default function IssuePickBar({ picks = [] }) {
     <>
       {/* PC: 가로 띠 — 하단 굵은 brand 라인을 max-w-7xl 안쪽에 그림 */}
       <div className="hidden lg:block bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-stretch gap-6 border-b-4 border-brand-600">
+        <div className="max-w-7xl mx-auto px-4 py-3.5 flex items-stretch gap-6 border-b-4 border-brand-600">
           {/* 로고 이미지 내부 좌측 흰 여백(~20px)만큼 padding-left로 좌측 정렬 보정 */}
           <div className="flex-shrink-0 w-40 pl-5 flex flex-col justify-center">
             <div className="text-[15px] font-extrabold text-brand-600 tracking-wider">DOCTOR&apos;S PICK</div>

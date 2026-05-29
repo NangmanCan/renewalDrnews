@@ -6,15 +6,15 @@ import Image from 'next/image';
 const TYPE_LABELS = {
   headline: '헤드라인 슬라이더',
   sidebar: '사이드바',
-  gnb: 'GNB 상단',
   strip: '띠배너',
+  hero_ad: 'HERO 카드 하단',
 };
 
 const TYPE_GUIDES = {
   headline: '1600×800',
   sidebar: '576×192',
-  gnb: '480×128',
   strip: '2400×180',
+  hero_ad: '576×144',
 };
 
 const NEW_BLANK = { mode: 'new', ad: null, type: 'headline' };
@@ -50,12 +50,10 @@ function AdPreview({ type, image }) {
       </div>
 
       <div className="bg-gray-100 rounded-md p-3 space-y-2.5">
-        {/* Header + GNB */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-white border border-gray-300 rounded px-3 py-2.5 text-sm font-semibold text-gray-600">
-            🌐 Dr.News
-          </div>
-          <ImageOrPlaceholder active={isType('gnb')} label="GNB" className="w-28 h-12 flex-shrink-0" />
+        {/* Header (로고 + GNB 메뉴) */}
+        <div className="bg-white border border-gray-300 rounded px-3 py-2.5 text-sm font-semibold text-gray-600 flex items-center justify-between">
+          <span>🌐 Dr.News</span>
+          <span className="text-xs text-gray-400">정책 · 학술 · 병원 …</span>
         </div>
 
         {/* Brand line */}
@@ -69,14 +67,17 @@ function AdPreview({ type, image }) {
         {/* Strip 띠배너 */}
         <ImageOrPlaceholder active={isType('strip')} label="띠배너" className="w-full h-12" />
 
-        {/* HERO 3컬럼 */}
+        {/* HERO 3컬럼 — 우측 컬럼은 카테고리 카드 + 하단 광고(hero_ad) */}
         <div className="grid grid-cols-[1fr_2fr_1fr] gap-2">
-          <div className="bg-white border border-gray-200 rounded h-36 text-sm font-medium text-gray-500 flex items-center justify-center text-center leading-snug">
+          <div className="bg-white border border-gray-200 rounded h-44 text-sm font-medium text-gray-500 flex items-center justify-center text-center leading-snug">
             보조<br />헤드
           </div>
-          <ImageOrPlaceholder active={isType('headline')} label="헤드라인 슬라이더" className="h-36" />
-          <div className="bg-white border border-gray-200 rounded h-36 text-sm font-medium text-gray-500 flex items-center justify-center text-center leading-snug">
-            카테고리<br />카드
+          <ImageOrPlaceholder active={isType('headline')} label="헤드라인 슬라이더" className="h-44" />
+          <div className="flex flex-col gap-2 h-44">
+            <div className="flex-1 bg-white border border-gray-200 rounded text-sm font-medium text-gray-500 flex items-center justify-center text-center leading-snug">
+              카테고리<br />카드
+            </div>
+            <ImageOrPlaceholder active={isType('hero_ad')} label="카드 하단 광고" className="h-12" />
           </div>
         </div>
 
@@ -91,8 +92,8 @@ function AdPreview({ type, image }) {
         {/* 안내 */}
         <div className="text-sm text-gray-600 text-center pt-2 leading-relaxed">
           {type === 'headline' && '※ 헤드라인 광고는 슬라이더 안에서 일반 헤드라인 기사와 번갈아 노출됩니다'}
-          {type === 'sidebar' && '※ 사이드바는 PC 우측 컬럼·카테고리카드 하단·모바일 뉴스 사이 등에 노출'}
-          {type === 'gnb' && '※ GNB 배너는 헤더 우측에 항상 고정 노출'}
+          {type === 'sidebar' && '※ 사이드바는 PC 우측 컬럼·모바일 뉴스 사이 등에 노출'}
+          {type === 'hero_ad' && '※ HERO 우측 카테고리 카드 4개 바로 아래에 노출'}
           {type === 'strip' && '※ 띠배너는 DOCTOR\'S PICK 직하 전체폭에 노출'}
         </div>
       </div>
@@ -203,8 +204,8 @@ export default function AdCreationManager({
             >
               <option value="headline">{TYPE_LABELS.headline} ({TYPE_GUIDES.headline})</option>
               <option value="sidebar">{TYPE_LABELS.sidebar} ({TYPE_GUIDES.sidebar})</option>
-              <option value="gnb">{TYPE_LABELS.gnb}배너 ({TYPE_GUIDES.gnb})</option>
               <option value="strip">{TYPE_LABELS.strip} ({TYPE_GUIDES.strip})</option>
+              <option value="hero_ad">{TYPE_LABELS.hero_ad} ({TYPE_GUIDES.hero_ad})</option>
             </select>
           </div>
         )}
@@ -232,8 +233,8 @@ export default function AdCreationManager({
             <option value="all">전체</option>
             <option value="headline">{TYPE_LABELS.headline}</option>
             <option value="sidebar">{TYPE_LABELS.sidebar}</option>
-            <option value="gnb">{TYPE_LABELS.gnb}</option>
             <option value="strip">{TYPE_LABELS.strip}</option>
+            <option value="hero_ad">{TYPE_LABELS.hero_ad}</option>
           </select>
         </div>
 
