@@ -12,7 +12,7 @@ const TYPE_LABELS = {
 
 const TYPE_GUIDES = {
   headline: '1600×800',
-  sidebar: '1200×300',
+  sidebar: '576×192',
   gnb: '480×128',
   strip: '2400×180',
 };

@@ -1529,8 +1529,8 @@ function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
     },
     sidebar: {
       label: '사이드바 광고',
-      imageGuide: '1200x300',
-      description: 'PC 사이드바 및 모바일 뉴스 사이에 노출 (4:1 비율, retina 대응)',
+      imageGuide: '576x192',
+      description: 'PC 사이드바·모바일 뉴스 사이에 노출 (3:1 비율, retina 대응)',
     },
     gnb: {
       label: 'GNB 상단배너',

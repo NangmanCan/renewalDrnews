@@ -18,7 +18,7 @@ const AD_SLOTS = [
   { id: 'gnb',      label: 'GNB 상단배너',       guide: '480×128',   accent: 'gray',   max: 1 },
   { id: 'strip',    label: '띠배너',              guide: '2400×180',  accent: 'brand',  max: null },
   { id: 'headline', label: '헤드라인 슬라이더 광고', guide: '1600×800',  accent: 'red',    max: null },
-  { id: 'sidebar',  label: '사이드바 광고',        guide: '1200×300',  accent: 'violet', max: null },
+  { id: 'sidebar',  label: '사이드바 광고',        guide: '576×192',  accent: 'violet', max: null },
 ];
 
 const POOL_ID = 'pool-inactive';
@@ -128,7 +128,7 @@ function PCAdMiniature({ slotsAds, selectedAd, onClickAddToSlot }) {
         ads={slotsAds.strip} selectedAd={selectedAd} onClickAdd={make('strip')} />
       <DroppableAdSlot slotId="headline" label="헤드라인 슬라이더 광고 (HERO 중앙)" guide="1600×800" accent="red" max={null}
         ads={slotsAds.headline} selectedAd={selectedAd} onClickAdd={make('headline')} />
-      <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (PC 우측 컬럼)" guide="1200×300" accent="violet" max={null}
+      <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (PC 우측 컬럼)" guide="576×192" accent="violet" max={null}
         ads={slotsAds.sidebar} selectedAd={selectedAd} onClickAdd={make('sidebar')} />
     </div>
   );
@@ -142,7 +142,7 @@ function MobileAdMiniature({ slotsAds, selectedAd, onClickAddToSlot }) {
         ads={slotsAds.strip} selectedAd={selectedAd} onClickAdd={make('strip')} />
       <DroppableAdSlot slotId="headline" label="헤드라인 슬라이더 광고" guide="1600×800" accent="red" max={null}
         ads={slotsAds.headline} selectedAd={selectedAd} onClickAdd={make('headline')} />
-      <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (모바일 인라인)" guide="1200×300" accent="violet" max={null}
+      <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (모바일 인라인)" guide="576×192" accent="violet" max={null}
         ads={slotsAds.sidebar} selectedAd={selectedAd} onClickAdd={make('sidebar')} />
       {/* GNB는 모바일에선 안 보임 */}
     </div>
