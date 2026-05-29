@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import HeroAdSlot from '@/components/HeroAdSlot';
 
 function CategoryCard({ category, article }) {
   if (!article) {
@@ -42,29 +43,7 @@ function CategoryCard({ category, article }) {
   );
 }
 
-function AdSlot({ banner }) {
-  if (!banner || !banner.image) return null;
-  return (
-    <a
-      href={banner.link || '#'}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex-shrink-0 block relative w-full h-[68px] border-t border-gray-200 overflow-hidden hover:opacity-90 transition-opacity"
-    >
-      <Image
-        src={banner.image}
-        alt={banner.title || '광고'}
-        fill
-        quality={95}
-        sizes="(max-width: 1024px) 100vw, 288px"
-        className="object-cover"
-        unoptimized={banner.image?.endsWith('.gif')}
-      />
-    </a>
-  );
-}
-
-export default function CategoryCards({ items = [], adBanner = null }) {
+export default function CategoryCards({ items = [], adBanners = [], rolling = true, interval = 5 }) {
   if (!items || items.length === 0) return null;
 
   return (
@@ -78,7 +57,7 @@ export default function CategoryCards({ items = [], adBanner = null }) {
           />
         ))}
       </div>
-      {adBanner && <AdSlot banner={adBanner} />}
+      <HeroAdSlot banners={adBanners} rolling={rolling} interval={interval} />
     </div>
   );
 }

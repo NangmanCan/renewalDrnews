@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const HeadlineSlider = ({ articles = [], banners = [] }) => {
+const HeadlineSlider = ({ articles = [], banners = [], rolling = true, interval = 5 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef(null);
   const trackedImpressionsRef = useRef(new Set());
@@ -47,14 +47,15 @@ const HeadlineSlider = ({ articles = [], banners = [] }) => {
     });
   });
 
-  // 자동 슬라이드
+  // 자동 슬라이드 (rolling ON + 슬라이드 2개 이상). OFF면 수동 화살표만.
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (!rolling || slides.length <= 1) return;
+    const ms = Math.max(1, interval) * 1000;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, ms);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [rolling, interval, slides.length]);
 
   const goTo = (index) => setCurrentIndex(index);
   const goPrev = () => setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);

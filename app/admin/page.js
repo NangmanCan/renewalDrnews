@@ -1532,15 +1532,15 @@ function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
       imageGuide: '576x192',
       description: 'PC 사이드바·모바일 뉴스 사이에 노출 (3:1 비율, retina 대응)',
     },
-    gnb: {
-      label: 'GNB 상단배너',
-      imageGuide: '480x128',
-      description: '상단 로고 옆에 표시되는 소형 배너 (retina 대응)',
-    },
     strip: {
       label: '띠배너 광고',
       imageGuide: '2400x180',
       description: 'Header 아래 전체폭 띠배너 (PC 90px / Mobile 60px 표시, retina 대응)',
+    },
+    hero_ad: {
+      label: 'HERO 카드 하단 광고',
+      imageGuide: '576x144',
+      description: '메인 우측 카테고리 카드 4개 바로 아래 노출 (4:1 비율, retina 대응)',
     },
   };
 

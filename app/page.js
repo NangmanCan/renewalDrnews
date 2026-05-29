@@ -21,6 +21,7 @@ import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions, getOpinions } from '@/lib/opinions';
 import { getBanners, getStripBanners, getBannersByType } from '@/lib/banners';
 import { getDoctorPicks } from '@/lib/doctorPicks';
+import { getAdSlotSettings } from '@/lib/adSlotSettings';
 
 // ISR: 60초 캐시 후 자동 갱신 (CMS 변경 1분 내 반영)
 export const revalidate = 60;
@@ -31,7 +32,7 @@ export default async function Home({ searchParams }) {
   const category = params?.category;
 
   // Supabase에서 데이터 가져오기 (모든 쿼리 병렬 실행)
-  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, gnbBanners, doctorPicks] = await Promise.all([
+  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, gnbBanners, doctorPicks, adSlotSettings] = await Promise.all([
     getArticles(),
     getHeadlineArticles(2),
     getSubHeadlineArticles(1),
@@ -42,6 +43,7 @@ export default async function Home({ searchParams }) {
     getStripBanners(),
     getBannersByType('gnb'),
     getDoctorPicks(3),
+    getAdSlotSettings(),
   ]);
 
   // GNB 배너 (첫 번째 활성화된 것만)
@@ -161,6 +163,11 @@ export default async function Home({ searchParams }) {
   // 사이드바 광고는 positions 구분 없이 통합 사용
   const sidebarBanners = allSidebarBanners;
 
+  // HERO 우측 카테고리 카드 하단 전용 광고 (sidebar와 별도 타입)
+  const heroAdBanners = allBanners
+    .filter((b) => b.type === 'hero_ad' && b.isActive)
+    .sort((a, b) => a.order - b.order);
+
   return (
     <>
       <Header gnbBanner={gnbBanner} />
@@ -186,12 +193,12 @@ export default async function Home({ searchParams }) {
                   {/* 중: 메인 헤드라인 슬라이더 */}
                   <div className="relative min-w-0 h-full">
                     {headlineArticles.length > 0 && (
-                      <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
+                      <HeadlineSlider articles={headlineArticles} banners={headlineBanners} rolling={adSlotSettings.headline.rolling} interval={adSlotSettings.headline.interval} />
                     )}
                   </div>
 
                   {/* 우: 4 카테고리 카드 + 남는 공간에 광고 배너 */}
-                  <CategoryCards items={heroCategoryCards} adBanner={sidebarBanners[0] || null} />
+                  <CategoryCards items={heroCategoryCards} adBanners={heroAdBanners} rolling={adSlotSettings.hero_ad.rolling} interval={adSlotSettings.hero_ad.interval} />
                 </div>
 
                 {/* HERO 아래: 기존 2컬럼 (메인 + 사이드) */}
@@ -205,7 +212,7 @@ export default async function Home({ searchParams }) {
                           <NewsTicker articles={focusArticlesList} />
                         )}
                         {stripBanners.length > 0 && (
-                          <StripBanner banners={stripBanners} />
+                          <StripBanner banners={stripBanners} rolling={adSlotSettings.strip.rolling} interval={adSlotSettings.strip.interval} />
                         )}
                       </div>
                     )}
@@ -270,7 +277,7 @@ export default async function Home({ searchParams }) {
             <>
               {/* 헤드라인 슬라이더 - 풀와이드 */}
               {headlineArticles.length > 0 && (
-                <HeadlineSlider articles={headlineArticles} banners={headlineBanners} />
+                <HeadlineSlider articles={headlineArticles} banners={headlineBanners} rolling={adSlotSettings.headline.rolling} interval={adSlotSettings.headline.interval} />
               )}
 
               {/* 흐르는 닥터포커스 (헤드라인 슬라이더 바로 아래) */}
@@ -308,7 +315,7 @@ export default async function Home({ searchParams }) {
 
               {/* 띠배너 광고 (모바일) */}
               {stripBanners.length > 0 && (
-                <StripBanner banners={stripBanners} />
+                <StripBanner banners={stripBanners} rolling={adSlotSettings.strip.rolling} interval={adSlotSettings.strip.interval} />
               )}
 
               {/* 서브 헤드라인 - 풀와이드 */}
