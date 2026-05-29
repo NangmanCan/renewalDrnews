@@ -66,9 +66,6 @@ export default async function CeoReportIndexPage() {
                   <div className="md:text-center">
                     <div className="text-sm font-bold text-navy">{report.author}</div>
                     <div className="text-xs text-gray-500 mt-0.5">{report.authorTitle}</div>
-                    {report.weekNumber && (
-                      <div className="text-xs text-brand-600 font-semibold mt-1">제{report.weekNumber}주차</div>
-                    )}
                   </div>
                 </div>
 

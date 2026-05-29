@@ -30,7 +30,7 @@ const CeoReport = ({ report }) => {
               {report.category}
             </span>
             <span className="text-xs text-gray-400">
-              {report.date} · 제{report.weekNumber}주차
+              {report.date}
             </span>
           </div>
 

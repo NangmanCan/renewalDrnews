@@ -1396,7 +1396,7 @@ function CeoReportManager({ reports, setReports, onRefresh }) {
                       <span className="text-xs px-2 py-0.5 bg-brand-100 text-brand-600 rounded">
                         {report.category}
                       </span>
-                      <span className="text-xs text-gray-400">{report.date} · 제{report.weekNumber}주차</span>
+                      <span className="text-xs text-gray-400">{report.date}</span>
                     </div>
                     <p className="font-medium text-gray-900">{report.title}</p>
                     <p className="text-sm text-gray-500 italic">"{report.subtitle}"</p>
