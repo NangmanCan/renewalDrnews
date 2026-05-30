@@ -8,6 +8,7 @@ const REGIONS = [
   { id: '해외', label: '해외' },
   { id: '저널', label: '권위 연구지' },
   { id: '제약', label: '제약·바이오' },
+  { id: '정부', label: '정부 소식' },
 ];
 
 export default function NewsSourceManager() {
@@ -118,6 +119,7 @@ export default function NewsSourceManager() {
       '해외': 'bg-green-100 text-green-700',
       '저널': 'bg-purple-100 text-purple-700',
       '제약': 'bg-amber-100 text-amber-700',
+      '정부': 'bg-rose-100 text-rose-700',
     };
     return map[r] || 'bg-gray-100 text-gray-700';
   };
