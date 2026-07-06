@@ -7,6 +7,14 @@ import { getArticles } from '@/lib/articles';
 export const revalidate = 60;
 export const runtime = 'edge';
 
+export const metadata = {
+  title: '최신 뉴스',
+  description: 'Dr.News 최신 의료 뉴스 - 정책, 학술, 병원, 산업 분야의 가장 신속한 의료계 소식을 날짜별로 확인하세요.',
+  alternates: {
+    canonical: 'https://drnews.co.kr/news',
+  },
+};
+
 function getDateString(date) {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(date);
 }

@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-
-const categories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '해외뉴스', '오피니언'];
+import { CATEGORIES } from '@/lib/categories';
 
 const Header = ({ gnbBanner }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -40,13 +39,13 @@ const Header = ({ gnbBanner }) => {
 
           {/* 우: PC 카테고리 GNB (헤더 하단 쪽으로 정렬) */}
           <nav className="hidden md:flex items-center flex-1 justify-end gap-1 self-end pb-3">
-            {categories.map((category) => (
+            {CATEGORIES.map((category) => (
               <Link
-                key={category}
-                href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
+                key={category.slug}
+                href={`/category/${category.slug}`}
                 className="px-3.5 py-2 text-[17px] font-semibold text-navy hover:text-brand-600 transition-colors whitespace-nowrap"
               >
-                {category}
+                {category.name}
               </Link>
             ))}
           </nav>
@@ -69,14 +68,14 @@ const Header = ({ gnbBanner }) => {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-200 bg-white">
           <nav className="flex flex-col">
-            {categories.map((category) => (
+            {CATEGORIES.map((category) => (
               <Link
-                key={category}
-                href={category === '오피니언' ? '/?category=오피니언' : `/?category=${encodeURIComponent(category)}`}
+                key={category.slug}
+                href={`/category/${category.slug}`}
                 onClick={() => setMobileMenuOpen(false)}
                 className="px-4 py-3 text-sm font-semibold text-navy border-b border-gray-100 active:bg-brand-50 hover:text-brand-600"
               >
-                {category}
+                {category.name}
               </Link>
             ))}
           </nav>

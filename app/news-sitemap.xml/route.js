@@ -28,7 +28,7 @@ ${recentArticles
         <news:name>Dr.News</news:name>
         <news:language>ko</news:language>
       </news:publication>
-      <news:publication_date>${new Date(article.date).toISOString()}</news:publication_date>
+      <news:publication_date>${new Date(article.publishedAt || article.date).toISOString()}</news:publication_date>
       <news:title>${escapeXml(article.title)}</news:title>
       <news:keywords>${escapeXml(article.tags?.join(', ') || article.category)}</news:keywords>
     </news:news>

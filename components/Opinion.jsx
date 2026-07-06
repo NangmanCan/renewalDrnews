@@ -71,7 +71,7 @@ const Opinion = ({ opinions, fillHeight = false }) => {
       {/* 더보기 */}
       <div className="px-4 py-3 border-t border-gray-100">
         <Link
-          href="/?category=오피니언"
+          href="/category/opinion"
           className="text-xs text-navy hover:underline font-medium flex items-center justify-center gap-1"
         >
           오피니언 더보기
