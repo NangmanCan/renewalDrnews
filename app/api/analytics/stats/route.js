@@ -60,7 +60,7 @@ export async function GET(request) {
         .limit(10),
       serviceClient
         .from('banners')
-        .select('id,title,impressions,clicks')
+        .select('id,title,type,advertiser,impressions,clicks')
         .order('impressions', { ascending: false })
         .limit(50),
     ]);
@@ -89,6 +89,8 @@ export async function GET(request) {
       return {
         id: banner.id,
         title: banner.title,
+        type: banner.type,
+        advertiser: banner.advertiser,
         impressions,
         clicks,
         ctr,

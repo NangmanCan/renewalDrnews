@@ -3,7 +3,6 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getCeoReports } from '@/lib/ceoReports';
-import { getBannersByType } from '@/lib/banners';
 
 // ISR: 60초 캐시 후 자동 갱신
 export const revalidate = 60;
@@ -31,15 +30,11 @@ function stripHtml(html) {
 }
 
 export default async function CeoReportIndexPage() {
-  const [reports, gnbBanners] = await Promise.all([
-    getCeoReports(100),
-    getBannersByType('gnb'),
-  ]);
-  const gnbBanner = gnbBanners[0] || null;
+  const reports = await getCeoReports(100);
 
   return (
     <>
-      <Header gnbBanner={gnbBanner} />
+      <Header />
 
       <main className="max-w-5xl mx-auto px-4 py-8 md:py-12">
         {/* 페이지 헤더 */}

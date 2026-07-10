@@ -19,7 +19,7 @@ import NewsTicker from '@/components/NewsTicker';
 import { getArticles, getHeadlineArticles, getSubHeadlineArticles, getPopularArticles, getArticlesByCategory } from '@/lib/articles';
 import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions, getOpinions } from '@/lib/opinions';
-import { getBanners, getStripBanners, getBannersByType } from '@/lib/banners';
+import { getBanners, getStripBanners } from '@/lib/banners';
 import { getDoctorPicks } from '@/lib/doctorPicks';
 import { getAdSlotSettings } from '@/lib/adSlotSettings';
 import { getSlugByName } from '@/lib/categories';
@@ -42,7 +42,7 @@ export default async function Home({ searchParams }) {
   }
 
   // Supabase에서 데이터 가져오기 (모든 쿼리 병렬 실행)
-  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, gnbBanners, doctorPicks, adSlotSettings] = await Promise.all([
+  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, doctorPicks, adSlotSettings] = await Promise.all([
     getArticles(),
     getHeadlineArticles(2),
     getSubHeadlineArticles(1),
@@ -51,13 +51,9 @@ export default async function Home({ searchParams }) {
     getLatestOpinions(3),
     getBanners(),
     getStripBanners(),
-    getBannersByType('gnb'),
     getDoctorPicks(3),
     getAdSlotSettings(),
   ]);
-
-  // GNB 배너 (첫 번째 활성화된 것만)
-  const gnbBanner = gnbBanners[0] || null;
 
   // 닥터포커스 기사 (placement='focus' 또는 기존 category='닥터포커스')
   const focusArticlesList = allArticles.filter(a => a.placement === 'focus' || a.category === '닥터포커스');
@@ -180,7 +176,7 @@ export default async function Home({ searchParams }) {
 
   return (
     <>
-      <Header gnbBanner={gnbBanner} />
+      <Header />
 
       {/* DOCTOR'S PICK 띠 (PC + 모바일 모두 Header 바로 아래) */}
       {!category && <IssuePickBar picks={issuePicks} />}

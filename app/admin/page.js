@@ -1551,7 +1551,10 @@ function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
     description: ad?.description || '',
     image: ad?.image || '',
     link: ad?.link || '',
-    positions: ad?.positions || {},
+    advertiser: ad?.advertiser || '',
+    startDate: ad?.startDate || '',
+    endDate: ad?.endDate || '',
+    memo: ad?.memo || '',
   });
 
   // 폼 변경 시 외부에 알림 (미리보기용)
@@ -1614,6 +1617,51 @@ function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
             onChange={(e) => setForm({ ...form, link: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
             placeholder="https://example.com"
+          />
+        </div>
+
+        {/* 광고주 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">광고주</label>
+          <input
+            type="text"
+            value={form.advertiser}
+            onChange={(e) => setForm({ ...form, advertiser: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+            placeholder="(주)메디컬파트너스"
+          />
+        </div>
+
+        {/* 게재 기간 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">게재 기간</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={form.startDate}
+              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+            />
+            <span className="text-gray-400">~</span>
+            <input
+              type="date"
+              value={form.endDate}
+              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">기간 미설정 시 상시 게재됩니다.</p>
+        </div>
+
+        {/* 계약 메모 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">계약 메모</label>
+          <textarea
+            value={form.memo}
+            onChange={(e) => setForm({ ...form, memo: e.target.value })}
+            rows={2}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+            placeholder="계약 조건·담당자 등 내부 메모"
           />
         </div>
 
@@ -1764,6 +1812,28 @@ function StatsManager() {
     loadStats();
   }, [loadStats]);
 
+  const BANNER_TYPE_LABELS = {
+    headline: '헤드라인 슬라이더',
+    sidebar: '사이드바',
+    strip: '띠배너',
+    hero_ad: 'HERO 카드 하단',
+  };
+
+  const resetBannerMetrics = async (banner) => {
+    if (!confirm(`"${banner.title || '배너'}"의 노출·클릭 수치를 0으로 초기화할까요? (계약 갱신 시 이전 수치 혼재 방지)`)) return;
+    try {
+      const res = await fetch(`/api/banners/${banner.id}/reset-metrics`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || '초기화 실패');
+      }
+      await loadStats();
+    } catch (err) {
+      console.error('Error resetting metrics:', err);
+      setError(err.message || '수치 초기화에 실패했습니다.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1831,24 +1901,39 @@ function StatsManager() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">배너 성과</h3>
+        <h3 className="text-lg font-bold text-gray-900 mb-1">배너 광고 성과 (전체 누적)</h3>
+        <p className="text-xs text-gray-400 mb-4">기간과 무관한 전체 누적 노출·클릭 수치입니다. 계약 갱신 시 리셋으로 이전 수치와 혼재를 방지하세요.</p>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-gray-500">
                 <th className="py-2 pr-4">배너명</th>
+                <th className="py-2 pr-4">슬롯</th>
+                <th className="py-2 pr-4">광고주</th>
                 <th className="py-2 pr-4 text-right">노출수</th>
                 <th className="py-2 pr-4 text-right">클릭수</th>
-                <th className="py-2 text-right">CTR</th>
+                <th className="py-2 pr-4 text-right">CTR</th>
+                <th className="py-2 text-right">관리</th>
               </tr>
             </thead>
             <tbody>
               {bannerStats.map((banner) => (
                 <tr key={banner.id} className="border-b border-gray-100">
                   <td className="py-3 pr-4 text-gray-800">{banner.title}</td>
+                  <td className="py-3 pr-4 text-gray-600">{BANNER_TYPE_LABELS[banner.type] || banner.type || '-'}</td>
+                  <td className="py-3 pr-4 text-gray-600">{banner.advertiser || '-'}</td>
                   <td className="py-3 pr-4 text-right text-gray-900">{banner.impressions.toLocaleString()}</td>
                   <td className="py-3 pr-4 text-right text-gray-900">{banner.clicks.toLocaleString()}</td>
-                  <td className="py-3 text-right font-medium text-sky-700">{(banner.ctr || 0).toFixed(2)}%</td>
+                  <td className="py-3 pr-4 text-right font-medium text-sky-700">{(banner.ctr || 0).toFixed(2)}%</td>
+                  <td className="py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => resetBannerMetrics(banner)}
+                      className="px-2.5 py-1 text-xs font-semibold text-red-600 border border-red-200 rounded hover:bg-red-50"
+                    >
+                      리셋
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

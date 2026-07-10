@@ -32,6 +32,40 @@ const accentBorder = {
   violet: 'border-violet-300',
 };
 
+// 오늘 날짜 (YYYY-MM-DD)
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// MM.DD 표기
+function fmtMD(dateStr) {
+  if (!dateStr) return '';
+  const [, m, d] = dateStr.split('-');
+  return `${m}.${d}`;
+}
+
+// 게재 기간 → 상태 배지 정보 (없으면 null)
+function scheduleBadge(ad) {
+  const today = todayStr();
+  const start = ad.startDate;
+  const end = ad.endDate;
+  if (start && start > today) {
+    return { label: '예약', className: 'bg-blue-100 text-blue-700' };
+  }
+  if (end && end < today) {
+    return { label: '만료', className: 'bg-red-100 text-red-700' };
+  }
+  if (end) {
+    // 종료 7일 이내면 D-n (문자열 날짜 → UTC 자정 기준 일수 차)
+    const diffDays = Math.round((new Date(end + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000);
+    if (diffDays >= 0 && diffDays <= 7) {
+      return { label: `D-${diffDays}`, className: 'bg-orange-100 text-orange-700' };
+    }
+  }
+  return null;
+}
+
 function AdCard({ ad, isSelected, onClick, draggable = true, compact = false, order, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
   const dragId = `ad-${ad.id}`;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -74,7 +108,23 @@ function AdCard({ ad, isSelected, onClick, draggable = true, compact = false, or
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-bold text-gray-800 line-clamp-1">{ad.title || '(제목 없음)'}</div>
+          <div className="flex items-center gap-1.5 min-w-0">
+            {(() => {
+              const badge = scheduleBadge(ad);
+              return badge ? (
+                <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold ${badge.className}`}>{badge.label}</span>
+              ) : null;
+            })()}
+            <span className="text-[13px] font-bold text-gray-800 line-clamp-1">{ad.title || '(제목 없음)'}</span>
+            {ad.advertiser && (
+              <span className="flex-shrink-0 text-[11px] text-gray-400">· {ad.advertiser}</span>
+            )}
+          </div>
+          {(ad.startDate || ad.endDate) && (
+            <div className="text-[10px] text-gray-400 line-clamp-1">
+              {fmtMD(ad.startDate) || '상시'}~{fmtMD(ad.endDate) || '상시'}
+            </div>
+          )}
           {!compact && ad.link && (
             <div className="text-[11px] text-gray-400 line-clamp-1">{ad.link}</div>
           )}
@@ -204,6 +254,9 @@ function PCAdMiniature({ slotsAds, selectedAd, onClickAddToSlot, slotSettings, o
         ads={slotsAds.sidebar} selectedAd={selectedAd} onClickAdd={make('sidebar')} {...cfg('sidebar')} />
       <DroppableAdSlot slotId="hero_ad" label="HERO 카드 하단 광고 (우측 카테고리 카드 아래)" guide="576×144" accent="gray" max={4}
         ads={slotsAds.hero_ad} selectedAd={selectedAd} onClickAdd={make('hero_ad')} {...cfg('hero_ad')} />
+      <p className="text-xs text-gray-500 px-1 leading-snug">
+        ※ 사이드바 광고는 모바일 네이티브 광고(기사 목록 사이)에도 재사용됩니다.
+      </p>
     </div>
   );
 }
@@ -224,7 +277,10 @@ function MobileAdMiniature({ slotsAds, selectedAd, onClickAddToSlot, slotSetting
         ads={slotsAds.headline} selectedAd={selectedAd} onClickAdd={make('headline')} {...cfg('headline')} />
       <DroppableAdSlot slotId="sidebar" label="사이드바 광고 (모바일 인라인)" guide="576×192" accent="violet" max={4}
         ads={slotsAds.sidebar} selectedAd={selectedAd} onClickAdd={make('sidebar')} {...cfg('sidebar')} />
-      {/* GNB는 모바일에선 안 보임 */}
+      <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded px-3 py-2 leading-snug">
+        ※ HERO 카드 하단 광고는 PC 전용입니다.<br />
+        ※ 모바일 네이티브 광고(기사 목록 사이)에도 사이드바 배너가 재사용됩니다.
+      </p>
     </div>
   );
 }
@@ -237,6 +293,12 @@ export default function AdSlotManager({ banners = [], onUpdate, onRefresh }) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [saving, setSaving] = useState(false);
   const [slotSettings, setSlotSettings] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     let active = true;
@@ -276,7 +338,7 @@ export default function AdSlotManager({ banners = [], onUpdate, onRefresh }) {
     // max 체크
     const currentInTarget = slotsAds[targetType] || [];
     if (spec.max !== null && currentInTarget.length >= spec.max && ad.type !== targetType) {
-      alert(`${spec.label}은 최대 ${spec.max}개까지 가능합니다.`);
+      showToast(`${spec.label}은 최대 ${spec.max}개까지 가능합니다.`, 'error');
       return;
     }
     setSaving(true);
@@ -285,7 +347,7 @@ export default function AdSlotManager({ banners = [], onUpdate, onRefresh }) {
       await onRefresh?.();
     } catch (e) {
       console.error(e);
-      alert('변경 실패: ' + e.message);
+      showToast('변경 실패: ' + e.message, 'error');
     } finally {
       setSaving(false);
       setSelectedAd(null);
@@ -299,30 +361,34 @@ export default function AdSlotManager({ banners = [], onUpdate, onRefresh }) {
       await onRefresh?.();
     } catch (e) {
       console.error(e);
-      alert('비활성화 실패: ' + e.message);
+      showToast('비활성화 실패: ' + e.message, 'error');
     } finally {
       setSaving(false);
     }
   }
 
-  // 슬롯 내 광고 순서 변경 (sort_order 재부여)
+  // 슬롯 내 광고 순서 변경 (sort_order 재부여) — bulk PATCH 한 번으로 처리
   async function reorderSlot(slotId, fromIndex, toIndex) {
     const arr = [...(slotsAds[slotId] || [])];
     if (toIndex < 0 || toIndex >= arr.length || fromIndex === toIndex) return;
     const [moved] = arr.splice(fromIndex, 1);
     arr.splice(toIndex, 0, moved);
+    const orders = arr.map((ad, i) => ({ id: ad.id, order: i + 1 }));
     setSaving(true);
     try {
-      for (let i = 0; i < arr.length; i++) {
-        const desired = i + 1;
-        if ((arr[i].order || 0) !== desired) {
-          await onUpdate(arr[i].id, { ...arr[i], order: desired });
-        }
+      const res = await fetch('/api/banners', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orders }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || '순서 변경 실패');
       }
       await onRefresh?.();
     } catch (e) {
       console.error(e);
-      alert('순서 변경 실패: ' + e.message);
+      showToast('순서 변경 실패: ' + e.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -385,6 +451,13 @@ export default function AdSlotManager({ banners = [], onUpdate, onRefresh }) {
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white transition-all ${
+          toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
+        }`}>
+          {toast.message}
+        </div>
+      )}
       <div className="space-y-5 text-base">
         {/* 상단 안내 + 컨트롤 */}
         <div className="flex items-center justify-between gap-4">
