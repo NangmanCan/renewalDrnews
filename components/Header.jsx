@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { CATEGORIES } from '@/lib/categories';
 
-const Header = ({ gnbBanner }) => {
+const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (

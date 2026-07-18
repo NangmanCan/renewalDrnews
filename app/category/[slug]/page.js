@@ -7,7 +7,7 @@ import NativeAd from '@/components/NativeAd';
 import SidebarAd from '@/components/SidebarAd';
 import { getArticlesByCategory, getPopularArticles } from '@/lib/articles';
 import { getOpinions } from '@/lib/opinions';
-import { getBanners, getBannersByType } from '@/lib/banners';
+import { getBanners } from '@/lib/banners';
 import { getCategoryBySlug } from '@/lib/categories';
 
 // ISR: 60초 캐시 후 자동 갱신
@@ -51,14 +51,11 @@ export default async function CategoryPage({ params }) {
   }
 
   // 오피니언은 오피니언 데이터를, 그 외는 기사 카테고리 데이터를 사용 (홈 분기 로직과 동일)
-  const [listArticles, popularArticles, allBanners, gnbBanners] = await Promise.all([
+  const [listArticles, popularArticles, allBanners] = await Promise.all([
     category.name === '오피니언' ? getOpinions() : getArticlesByCategory(category.name),
     getPopularArticles(8),
     getBanners(),
-    getBannersByType('gnb'),
   ]);
-
-  const gnbBanner = gnbBanners[0] || null;
 
   // 사이드바 광고 (통합 - positions 필터 없이 전체 사용)
   const sidebarBanners = allBanners
@@ -67,7 +64,7 @@ export default async function CategoryPage({ params }) {
 
   return (
     <>
-      <Header gnbBanner={gnbBanner} />
+      <Header />
 
       <main className="max-w-7xl mx-auto px-0 lg:px-4 lg:py-8 py-0">
         {/* 카테고리 타이틀 */}

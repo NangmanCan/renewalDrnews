@@ -31,10 +31,10 @@ export async function PUT(request, { params }) {
         type: body.type,
         is_active: body.isActive,
         sort_order: body.order,
-        position_sidebar_top: body.positions?.sidebarTop ?? false,
-        position_sidebar_bottom: body.positions?.sidebarBottom ?? false,
-        position_mobile_between: body.positions?.mobileBetween ?? false,
-        position_mobile_inline: body.positions?.mobileInline ?? false
+        advertiser: body.advertiser || null,
+        memo: body.memo || null,
+        start_date: body.startDate || null,
+        end_date: body.endDate || null
       })
       .eq('id', bannerId)
       .select();
@@ -49,12 +49,10 @@ export async function PUT(request, { params }) {
       ...updated,
       isActive: updated.is_active,
       order: updated.sort_order,
-      positions: {
-        sidebarTop: updated.position_sidebar_top,
-        sidebarBottom: updated.position_sidebar_bottom,
-        mobileBetween: updated.position_mobile_between,
-        mobileInline: updated.position_mobile_inline
-      }
+      advertiser: updated.advertiser,
+      memo: updated.memo,
+      startDate: updated.start_date,
+      endDate: updated.end_date
     });
   } catch (error) {
     console.error('Error updating banner:', error);

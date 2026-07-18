@@ -112,6 +112,12 @@ export default function AdCreationManager({
   const [filter, setFilter] = useState('all');
   const [busyId, setBusyId] = useState(null);
   const [formPreview, setFormPreview] = useState({ image: '', title: '' });
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const filtered = useMemo(() => {
     const list = filter === 'all' ? banners : banners.filter((b) => b.type === filter);
@@ -121,32 +127,45 @@ export default function AdCreationManager({
   const handleSave = async (form) => {
     const ad = editing.ad;
     const type = editing.type;
+
+    // 링크 검증: 값이 있으면 http(s)로 시작해야 함. 비어 있으면 저장 시 '#' fallback.
+    const linkVal = (form.link || '').trim();
+    if (linkVal && !/^https?:\/\//i.test(linkVal)) {
+      showToast('클릭 URL은 http:// 또는 https:// 로 시작해야 합니다.', 'error');
+      return;
+    }
+
     const sameType = banners.filter((b) => b.type === type);
     const maxOrder = sameType.reduce((m, b) => Math.max(m, b.order || 0), 0);
     const bannerData = {
       title: form.title,
       description: form.description,
       image: form.image,
-      link: form.link || '#',
+      link: linkVal || '#',
       type,
-      isActive: ad?.isActive ?? true,
+      // 신규 생성은 비활성 기본 — 배치 탭에서 슬롯에 올려 활성화. 수정 시엔 기존값 유지.
+      isActive: ad ? ad.isActive : false,
       order: ad?.order ?? (maxOrder + 1),
-      positions: type === 'sidebar' ? form.positions : undefined,
+      advertiser: form.advertiser || null,
+      memo: form.memo || null,
+      startDate: form.startDate || null,
+      endDate: form.endDate || null,
     };
     try {
       await onUpdate(ad ? ad.id : null, bannerData);
       await onRefresh?.();
       setEditing({ ...NEW_BLANK, type });
       setFormPreview({ image: '', title: '' });
-      alert(ad ? '수정되었습니다.' : '등록되었습니다.');
+      showToast(ad ? '수정되었습니다.' : '비활성 상태로 등록됨 — 광고 배치 탭에서 슬롯에 배치하세요.');
     } catch (e) {
       console.error('Error saving banner:', e);
-      alert('저장 실패: ' + e.message);
+      showToast('저장 실패: ' + e.message, 'error');
     }
   };
 
   const handleDelete = async (ad) => {
-    if (!confirm(`"${ad.title || '광고'}"를 삭제하시겠어요?`)) return;
+    const stateLabel = ad.isActive ? '활성·배치 중인 광고' : '비활성 광고';
+    if (!confirm(`"${ad.title || '광고'}"(${stateLabel})를 삭제하시겠어요?`)) return;
     setBusyId(ad.id);
     try {
       await onDelete(ad.id);
@@ -154,7 +173,7 @@ export default function AdCreationManager({
       if (editing.ad?.id === ad.id) setEditing(NEW_BLANK);
     } catch (e) {
       console.error(e);
-      alert('삭제 실패: ' + e.message);
+      showToast('삭제 실패: ' + e.message, 'error');
     } finally {
       setBusyId(null);
     }
@@ -167,7 +186,7 @@ export default function AdCreationManager({
       await onRefresh?.();
     } catch (e) {
       console.error(e);
-      alert('상태 변경 실패: ' + e.message);
+      showToast('상태 변경 실패: ' + e.message, 'error');
     } finally {
       setBusyId(null);
     }
@@ -177,6 +196,14 @@ export default function AdCreationManager({
   const headerClass = 'flex items-center justify-between mb-4 gap-3 min-h-[36px]';
 
   return (
+    <>
+    {toast && (
+      <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white transition-all ${
+        toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
+      }`}>
+        {toast.message}
+      </div>
+    )}
     <div className="grid grid-cols-[360px_minmax(0,1fr)_480px] gap-5 items-start">
       {/* 좌: 광고 등록/수정 폼 */}
       <div className={`${boxClass} sticky top-4`}>
@@ -319,5 +346,6 @@ export default function AdCreationManager({
         <AdPreview type={editing.type} image={formPreview.image || editing.ad?.image || ''} />
       </div>
     </div>
+    </>
   );
 }

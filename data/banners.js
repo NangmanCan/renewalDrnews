@@ -20,17 +20,6 @@ export const initialBanners = [
     isActive: false,
     order: 2,
   },
-  // GNB 상단 배너 광고
-  {
-    id: 3,
-    title: 'Dr.News 구독 이벤트',
-    description: '월 9,900원으로 프리미엄 콘텐츠 무제한',
-    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=160&h=50&fit=crop',
-    link: '#',
-    type: 'gnb',
-    isActive: true,
-    order: 1,
-  },
   // 사이드바 광고 - 상단 슬롯
   {
     id: 6,

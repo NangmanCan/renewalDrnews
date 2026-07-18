@@ -22,26 +22,13 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'type must be impression or click' }, { status: 400 });
     }
 
-    const { data: banner, error: bannerError } = await serviceClient
-      .from('banners')
-      .select('id,impressions,clicks')
-      .eq('id', bannerId)
-      .single();
+    // 원자적 증가 (동시성 카운트 유실 방지). 존재하지 않는 배너면 no-op이라 성공 응답.
+    const { error: rpcError } = await serviceClient.rpc('increment_banner_metric', {
+      p_banner_id: bannerId,
+      p_metric: trackType,
+    });
 
-    if (bannerError || !banner) {
-      return NextResponse.json({ error: '배너를 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    const updatePayload = trackType === 'impression'
-      ? { impressions: (banner.impressions || 0) + 1 }
-      : { clicks: (banner.clicks || 0) + 1 };
-
-    const { error: updateError } = await serviceClient
-      .from('banners')
-      .update(updatePayload)
-      .eq('id', bannerId);
-
-    if (updateError) throw updateError;
+    if (rpcError) throw rpcError;
 
     return NextResponse.json({ success: true });
   } catch (error) {
