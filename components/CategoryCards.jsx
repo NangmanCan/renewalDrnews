@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import HeroAdSlot from '@/components/HeroAdSlot';
+import { getSlugByName } from '@/lib/categories';
 
 function CategoryCard({ category, article }) {
   if (!article) {
+    const slug = getSlugByName(category);
     return (
       <Link
-        href={`/?category=${encodeURIComponent(category)}`}
+        href={slug ? `/category/${slug}` : `/?category=${encodeURIComponent(category)}`}
         className="flex-1 min-h-0 flex items-center px-3 border-b border-gray-100 last:border-b-0"
       >
         <div>

@@ -11,6 +11,7 @@ import ShareButtons from '@/components/ShareButtons';
 import { getArticleById, getRelatedArticles, getArticles, getPopularArticles } from '@/lib/articles';
 import { getBanners } from '@/lib/banners';
 import { generateArticleSEO } from '@/lib/seo';
+import { getSlugByName } from '@/lib/categories';
 
 // ISR: 60초 캐시 후 자동 갱신
 export const revalidate = 60;
@@ -104,8 +105,8 @@ export default async function ArticlePage({ params }) {
     '@type': 'NewsArticle',
     headline: article.title,
     image: article.image,
-    datePublished: article.date,
-    dateModified: article.modifiedDate || article.date,
+    datePublished: article.publishedAt || article.date,
+    dateModified: article.modifiedAt || article.publishedAt || article.date,
     author: {
       '@type': 'Person',
       name: article.author,
@@ -128,11 +129,45 @@ export default async function ArticlePage({ params }) {
     },
   };
 
+  // BreadcrumbList JSON-LD (홈 → 카테고리 → 기사)
+  const categorySlug = getSlugByName(article.category);
+  const breadcrumbItems = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: '홈',
+      item: 'https://drnews.co.kr',
+    },
+  ];
+  if (categorySlug) {
+    breadcrumbItems.push({
+      '@type': 'ListItem',
+      position: 2,
+      name: article.category,
+      item: `https://drnews.co.kr/category/${categorySlug}`,
+    });
+  }
+  breadcrumbItems.push({
+    '@type': 'ListItem',
+    position: breadcrumbItems.length + 1,
+    name: article.title,
+    item: `https://drnews.co.kr/article/${id}`,
+  });
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems,
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <Header />
       <ViewTracker articleId={id} />

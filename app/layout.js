@@ -45,8 +45,37 @@ export const metadata = {
       'max-snippet': -1,
     },
   },
+  alternates: {
+    types: {
+      'application/rss+xml': '/feed',
+    },
+  },
   verification: {
-    google: 'your-google-verification-code',
+    ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : {}),
+    ...(process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION ? { other: { 'naver-site-verification': process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION } } : {}),
+  },
+};
+
+// 사이트 전역 JSON-LD (Organization + WebSite)
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Dr.News',
+  url: 'https://drnews.co.kr',
+  logo: 'https://drnews.co.kr/logo.png',
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Dr.News',
+  url: 'https://drnews.co.kr',
+  inLanguage: 'ko-KR',
+  publisher: {
+    '@type': 'Organization',
+    name: 'Dr.News',
+    url: 'https://drnews.co.kr',
+    logo: 'https://drnews.co.kr/logo.png',
   },
 };
 
@@ -54,6 +83,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ko">
       <body className="min-h-screen bg-white">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <PageViewTracker />
         {children}
       </body>

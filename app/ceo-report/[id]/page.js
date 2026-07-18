@@ -6,6 +6,50 @@ import { getCeoReportById, getCeoReports } from '@/lib/ceoReports';
 export const revalidate = 60;
 export const runtime = 'edge';
 
+// 본문에서 HTML 태그 제거 (description 생성용)
+function stripHtml(html) {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const report = await getCeoReportById(id);
+
+  if (!report) {
+    return { title: '리포트를 찾을 수 없습니다' };
+  }
+
+  const canonicalUrl = `https://drnews.co.kr/ceo-report/${id}`;
+  const description = (report.subtitle || stripHtml(report.content)).slice(0, 160);
+  const image = report.authorImage || '/og-image.jpg';
+
+  return {
+    title: report.title,
+    description,
+    authors: report.author ? [{ name: report.author }] : undefined,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      type: 'article',
+      url: canonicalUrl,
+      title: report.title,
+      description,
+      locale: 'ko_KR',
+      siteName: 'Dr.News',
+      publishedTime: report.date,
+      authors: report.author ? [report.author] : undefined,
+      images: [
+        {
+          url: image,
+          alt: report.title,
+        },
+      ],
+    },
+  };
+}
+
 export default async function CeoReportPage({ params }) {
   const { id } = await params;
   const [report, allReports] = await Promise.all([
@@ -29,7 +73,41 @@ export default async function CeoReportPage({ params }) {
   // 다른 리포트 목록
   const otherReports = allReports.filter((r) => r.id !== report.id).slice(0, 3);
 
+  // JSON-LD 구조화 데이터 (Article)
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: report.title,
+    description: report.subtitle || stripHtml(report.content).slice(0, 160),
+    image: report.authorImage || 'https://drnews.co.kr/og-image.jpg',
+    datePublished: report.date,
+    dateModified: report.date,
+    author: {
+      '@type': 'Person',
+      name: report.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Dr.News',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://drnews.co.kr/logo.png',
+      },
+    },
+    articleSection: report.category,
+    url: `https://drnews.co.kr/ceo-report/${id}`,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://drnews.co.kr/ceo-report/${id}`,
+    },
+  };
+
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* 히어로 섹션 */}
       <section className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 text-white">
@@ -197,5 +275,6 @@ export default async function CeoReportPage({ params }) {
         </div>
       </section>
     </main>
+    </>
   );
 }

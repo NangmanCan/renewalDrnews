@@ -9,6 +9,22 @@ import { getBannersByType } from '@/lib/banners';
 export const revalidate = 60;
 export const runtime = 'edge';
 
+export const metadata = {
+  title: 'CEO 리포트',
+  description: '의료계 리더들의 경영 인사이트와 경험을 담은 Dr.News CEO 리포트 시리즈. 매주 깊이 있는 리포트를 만나보세요.',
+  alternates: {
+    canonical: 'https://drnews.co.kr/ceo-report',
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://drnews.co.kr/ceo-report',
+    title: 'CEO 리포트',
+    description: '의료계 리더들의 경영 인사이트와 경험을 담은 Dr.News CEO 리포트 시리즈.',
+    locale: 'ko_KR',
+    siteName: 'Dr.News',
+  },
+};
+
 function stripHtml(html) {
   if (!html) return '';
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();

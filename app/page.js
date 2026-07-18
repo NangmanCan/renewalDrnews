@@ -22,6 +22,8 @@ import { getLatestOpinions, getOpinions } from '@/lib/opinions';
 import { getBanners, getStripBanners, getBannersByType } from '@/lib/banners';
 import { getDoctorPicks } from '@/lib/doctorPicks';
 import { getAdSlotSettings } from '@/lib/adSlotSettings';
+import { getSlugByName } from '@/lib/categories';
+import { redirect } from 'next/navigation';
 
 // ISR: 60초 캐시 후 자동 갱신 (CMS 변경 1분 내 반영)
 export const revalidate = 60;
@@ -30,6 +32,14 @@ export const runtime = 'edge';
 export default async function Home({ searchParams }) {
   const params = await searchParams;
   const category = params?.category;
+
+  // 기존 /?category= 링크 호환: 실경로 /category/{slug}로 리다이렉트
+  if (category) {
+    const slug = getSlugByName(category);
+    if (slug) {
+      redirect(`/category/${slug}`);
+    }
+  }
 
   // Supabase에서 데이터 가져오기 (모든 쿼리 병렬 실행)
   const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, gnbBanners, doctorPicks, adSlotSettings] = await Promise.all([
