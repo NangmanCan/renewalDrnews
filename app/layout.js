@@ -56,8 +56,11 @@ export const metadata = {
     apple: '/apple-icon.png',
   },
   verification: {
+    // 구글은 DNS TXT로 인증 완료 — env는 추가 인증 필요 시 사용
     ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : {}),
-    ...(process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION ? { other: { 'naver-site-verification': process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION } } : {}),
+    other: {
+      'naver-site-verification': process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || '96481ae2e3cf414bd65e52afc7daed5d4ce76d70',
+    },
   },
 };
 
