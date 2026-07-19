@@ -8,7 +8,11 @@ const https = require('https');
 const fs = require('fs');
 
 const SUPABASE_URL = 'https://xychomcqxbtspqwpxkyx.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5Y2hvbWNxeGJ0c3Bxd3B4a3l4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDI5NDM3MywiZXhwIjoyMDg1ODcwMzczfQ.0gVLKno0ANmSryH2ex4draQc_kztFsN0ZcURMoowZr0';
+const SUPABASE_KEY = process.env.PROD_SUPABASE_SERVICE_KEY;
+if (!SUPABASE_KEY) {
+  console.error('PROD_SUPABASE_SERVICE_KEY 환경변수가 필요합니다.');
+  process.exit(1);
+}
 
 // HTTP GET
 function httpGet(url, headers = {}) {

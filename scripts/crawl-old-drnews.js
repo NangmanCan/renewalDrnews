@@ -76,8 +76,8 @@ function parseArticle(html, meta) {
   const dateStr = dateMatch[1];
   const timeStr = dateMatch[2];
   
-  // 날짜 필터: 2026-05-26 이후 (구 drnews 기사 공백 메움)
-  if (dateStr < '2026-05-26') {
+  // 날짜 필터: 2026-05-28 이후 (직전 이식분까지 DB 반영됨)
+  if (dateStr < '2026-05-28') {
     return null;
   }
   
