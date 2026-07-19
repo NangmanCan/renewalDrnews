@@ -118,7 +118,7 @@ const SidebarAd = ({ banners = [], sticky = true, showInquiry = true }) => {
               광고 문의
             </p>
             <p className="text-gray-500 text-xs mt-2">
-              ads@drnews.co.kr
+              kyh6384@hanmail.com
             </p>
           </div>
         </div>
