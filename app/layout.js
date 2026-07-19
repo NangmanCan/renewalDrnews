@@ -50,6 +50,11 @@ export const metadata = {
       'application/rss+xml': '/feed',
     },
   },
+  // 파비콘: public/ 정적 파일 (app/ 메타데이터 라우트는 Cloudflare Pages edge 제약으로 미사용)
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+  },
   verification: {
     ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : {}),
     ...(process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION ? { other: { 'naver-site-verification': process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION } } : {}),
