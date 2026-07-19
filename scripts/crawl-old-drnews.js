@@ -108,7 +108,7 @@ function parseArticle(html, meta) {
   contentHtml = contentHtml.substring(0, endIdx);
   
   // HTML → 텍스트 변환 (태그 제거 후 엔티티 디코드)
-  let content = decodeEntities(
+  const plainText = decodeEntities(
     contentHtml
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<\/p>/gi, '\n\n')
@@ -118,7 +118,16 @@ function parseArticle(html, meta) {
     .trim();
   
   // 너무 짧으면 스킵
-  if (content.length < 50) return null;
+  if (plainText.length < 50) return null;
+  
+  // 문단 구분 보존: <p> 래핑 HTML로 저장 (사이트가 HTML 렌더)
+  const escapeHtml = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const content = plainText
+    .split(/\n+/)
+    .map((para) => para.trim())
+    .filter(Boolean)
+    .map((para) => `<p>${escapeHtml(para)}</p>`)
+    .join('');
   
   // 이미지 추출
   const imageMatch = html.match(/<img[^>]*src=["']([^"']*(?:news_photo|upload)[^"']*)["']/i);

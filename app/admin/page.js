@@ -92,8 +92,7 @@ const IMAGE_GUIDES = {
   headline: { width: 1600, height: 800, label: '헤드라인 (1600x800, retina 대응)' },
   subheadline: { width: 1280, height: 720, label: '서브헤드라인 (1280x720, retina 대응)' },
   news: { width: 640, height: 400, label: '뉴스목록 (640x400, retina 대응)' },
-  opinion: { width: 200, height: 200, label: '프로필 (200x200, retina 대응)' },
-  ceo: { width: 200, height: 200, label: '프로필 (200x200, retina 대응)' },
+  opinion: { width: 200, height: 200, label: '대표이미지 (200x200, retina 대응)' },
 };
 
 const ARTICLE_IMAGE_PLACEHOLDER = 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop';
@@ -1287,15 +1286,6 @@ function CeoReportEditor({ report, onSave, onCancel }) {
           </div>
         </div>
 
-        {/* 프로필 이미지 */}
-        <ImageUploader
-          currentImage={form.authorImage}
-          onImageChange={(url) => setForm({ ...form, authorImage: url })}
-          guide={IMAGE_GUIDES.ceo}
-          allowGif
-          folder="ceo"
-        />
-
         {/* 본문 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">본문</label>
@@ -1333,7 +1323,7 @@ function CeoReportManager({ reports, setReports, onRefresh }) {
         category: form.category,
         author: form.author,
         authorTitle: form.authorTitle,
-        authorImage: form.authorImage || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop',
+        authorImage: form.authorImage || '',
         weekNumber: form.weekNumber,
       };
 
