@@ -1739,6 +1739,41 @@ function AdManager({ banners, setBanners, onRefresh }) {
   );
 }
 
+// 기간별 인기 기사 탭 라벨
+const PERIOD_TABS = [
+  { key: 'today', label: '오늘' },
+  { key: 'week', label: '이번 주' },
+  { key: 'month', label: '이번 달' },
+];
+
+// 최근 N일 날짜 배열 생성 (KST 기준 M/D 키 포함, 빈 날 0 채움용)
+function buildDailyChartData(dailySeries, days = 30) {
+  // dailySeries.day(YYYY-MM-DD, KST 일 단위) → 조회/방문 매핑
+  const map = {};
+  (dailySeries || []).forEach((row) => {
+    map[row.day] = { views: row.views || 0, visitors: row.visitors || 0 };
+  });
+
+  const result = [];
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const date = d.getDate();
+    const key = `${year}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    const hit = map[key] || { views: 0, visitors: 0 };
+    result.push({
+      key,
+      label: `${month}/${date}`,
+      views: hit.views,
+      visitors: hit.visitors,
+    });
+  }
+  return result;
+}
+
 function StatsManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -1747,8 +1782,13 @@ function StatsManager() {
     week: { uniqueVisitors: 0, totalViews: 0 },
     month: { uniqueVisitors: 0, totalViews: 0 },
   });
-  const [topArticles, setTopArticles] = useState([]);
+  const [topArticles, setTopArticles] = useState([]); // 역대 누적 TOP 10
   const [bannerStats, setBannerStats] = useState([]);
+  const [dailySeries, setDailySeries] = useState([]); // 최근 30일 추이
+  const [referrers, setReferrers] = useState([]); // 유입 경로 (선택된 기간)
+  // 기간별 인기 기사 TOP 10 — 기간 탭과 연동
+  const [articlePeriod, setArticlePeriod] = useState('week');
+  const [topArticlesPeriod, setTopArticlesPeriod] = useState([]);
 
   const fetchPeriodStats = useCallback(async (period) => {
     const res = await fetch(`/api/analytics/stats?period=${period}&t=${Date.now()}`, {
@@ -1763,11 +1803,12 @@ function StatsManager() {
     return res.json();
   }, []);
 
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async (period = articlePeriod) => {
     setLoading(true);
     setError('');
 
     try {
+      // 방문자 카드는 3개 기간 모두 필요. dailySeries는 어느 응답에나 동일(30일 고정)하므로 한 번만 사용.
       const [today, week, month] = await Promise.all([
         fetchPeriodStats('today'),
         fetchPeriodStats('week'),
@@ -1790,17 +1831,49 @@ function StatsManager() {
       });
       setTopArticles(month.topArticles || []);
       setBannerStats((month.bannerStats || []).slice(0, 20));
+      // dailySeries는 30일 고정이라 어느 응답이든 동일 → month 응답에서 한 번만 취함
+      setDailySeries(month.dailySeries || []);
+
+      // 선택된 기간에 해당하는 응답에서 기간별 인기 기사 / 유입 경로 반영
+      const selected = period === 'today' ? today : period === 'week' ? week : month;
+      setTopArticlesPeriod(selected.topArticlesPeriod || []);
+      setReferrers(selected.referrers || []);
     } catch (err) {
       console.error('Error loading stats:', err);
       setError(err.message || '통계를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [fetchPeriodStats]);
+  }, [fetchPeriodStats, articlePeriod]);
 
   useEffect(() => {
     loadStats();
-  }, [loadStats]);
+    // 최초 1회만 로드 (탭 전환은 별도 핸들러에서 처리)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 기간별 인기 기사 탭 전환 — 해당 period 응답으로 기사/유입 경로 갱신 (재조회, dailySeries 중복 방지)
+  const handlePeriodTab = useCallback(async (period) => {
+    if (period === articlePeriod) return;
+    setArticlePeriod(period);
+    try {
+      const data = await fetchPeriodStats(period);
+      setTopArticlesPeriod(data.topArticlesPeriod || []);
+      setReferrers(data.referrers || []);
+    } catch (err) {
+      console.error('Error loading period stats:', err);
+      setError(err.message || '기간별 통계를 불러오는 중 오류가 발생했습니다.');
+    }
+  }, [articlePeriod, fetchPeriodStats]);
+
+  // 최근 30일 차트용 데이터 (빈 날 0 채움)
+  const chartData = buildDailyChartData(dailySeries, 30);
+  const chartMaxViews = Math.max(1, ...chartData.map((d) => d.views));
+  const chartTotalViews = chartData.reduce((sum, d) => sum + d.views, 0);
+  const chartTotalVisitors = chartData.reduce((sum, d) => sum + d.visitors, 0);
+
+  // 유입 경로 비중 계산용 총합
+  const referrerTotal = referrers.reduce((sum, r) => sum + (r.count || 0), 0);
 
   const BANNER_TYPE_LABELS = {
     headline: '헤드라인 슬라이더',
@@ -1861,8 +1934,129 @@ function StatsManager() {
         ))}
       </div>
 
+      {/* 최근 30일 추이 — CSS 막대 차트 (라이브러리 미사용) */}
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">조회수 TOP 10 기사</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900">최근 30일 추이</h3>
+          <p className="text-xs text-gray-500">
+            총 조회 {chartTotalViews.toLocaleString()} · 순방문 {chartTotalVisitors.toLocaleString()}
+          </p>
+        </div>
+        <div className="flex items-end gap-[3px] h-40 border-b border-gray-200">
+          {chartData.map((d) => (
+            <div
+              key={d.key}
+              className="flex-1 flex items-end justify-center h-full"
+              title={`${d.label} · 조회 ${d.views.toLocaleString()} · 방문 ${d.visitors.toLocaleString()}`}
+            >
+              <div
+                className="w-full bg-sky-500 hover:bg-sky-600 rounded-t transition-colors"
+                style={{ height: `${(d.views / chartMaxViews) * 100}%`, minHeight: d.views > 0 ? '2px' : '0' }}
+              />
+            </div>
+          ))}
+        </div>
+        {/* 5일 간격 날짜 라벨 */}
+        <div className="flex gap-[3px] mt-2">
+          {chartData.map((d, idx) => (
+            <div key={d.key} className="flex-1 text-center text-[10px] text-gray-400">
+              {idx % 5 === 0 ? d.label : ''}
+            </div>
+          ))}
+        </div>
+        {!loading && chartTotalViews === 0 && (
+          <p className="py-4 text-center text-gray-500 text-sm">최근 30일 집계된 조회수가 없습니다.</p>
+        )}
+      </div>
+
+      {/* 기간별 인기 기사 TOP 10 — 기간 탭 연동 */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900">기간별 인기 기사 TOP 10</h3>
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+            {PERIOD_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => handlePeriodTab(tab.key)}
+                className={`px-3 py-1.5 text-sm font-medium ${
+                  articlePeriod === tab.key
+                    ? 'bg-sky-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 text-left text-gray-500">
+                <th className="py-2 pr-4">순위</th>
+                <th className="py-2 pr-4">제목</th>
+                <th className="py-2 text-right">기간 조회수</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topArticlesPeriod.map((article, idx) => (
+                <tr key={article.id} className="border-b border-gray-100">
+                  <td className="py-3 pr-4 font-semibold text-gray-700">{idx + 1}</td>
+                  <td className="py-3 pr-4 text-gray-800">
+                    <a
+                      href={`/article/${article.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-sky-600 hover:underline"
+                    >
+                      {article.title}
+                    </a>
+                  </td>
+                  <td className="py-3 text-right font-medium text-gray-900">
+                    {(article.views || 0).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!loading && topArticlesPeriod.length === 0 && (
+            <p className="py-6 text-center text-gray-500">해당 기간 집계된 기사 조회수가 없습니다.</p>
+          )}
+        </div>
+      </div>
+
+      {/* 유입 경로 — 검색 등록 효과 측정 */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-1">유입 경로</h3>
+        <p className="text-xs text-gray-400 mb-4">검색 등록 효과 측정 (선택한 기간 기준)</p>
+        <div className="space-y-3">
+          {referrers.map((r) => {
+            const ratio = referrerTotal > 0 ? (r.count / referrerTotal) * 100 : 0;
+            return (
+              <div key={r.source} className="flex items-center gap-3">
+                <span className="w-20 shrink-0 text-sm text-gray-700">{r.source}</span>
+                <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="bg-sky-500 h-full rounded-full"
+                    style={{ width: `${ratio}%` }}
+                  />
+                </div>
+                <span className="w-24 shrink-0 text-right text-sm text-gray-600">
+                  {r.count.toLocaleString()}건 ({ratio.toFixed(1)}%)
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        {!loading && referrers.length === 0 && (
+          <p className="py-6 text-center text-gray-500">해당 기간 집계된 유입 경로가 없습니다.</p>
+        )}
+      </div>
+
+      {/* 역대 조회수 TOP 10 (전체 누적) */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">역대 조회수 TOP 10 (전체 누적)</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>

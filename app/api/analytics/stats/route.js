@@ -34,6 +34,9 @@ export async function GET(request) {
       uniqueVisitors: 0,
       topArticles: [],
       bannerStats: [],
+      dailySeries: [],
+      topArticlesPeriod: [],
+      referrers: [],
     });
   }
 
@@ -48,11 +51,8 @@ export async function GET(request) {
         .from('page_views')
         .select('id', { count: 'exact', head: true })
         .gte('created_at', startIso),
-      serviceClient
-        .from('page_views')
-        .select('visitor_id')
-        .gte('created_at', startIso)
-        .not('visitor_id', 'is', null),
+      // 순 방문자 수: RPC로 COUNT(DISTINCT) — 기존 JS Set(1000행 리밋) 버그 수정
+      serviceClient.rpc('analytics_unique_visitors', { start_ts: startIso }),
       serviceClient
         .from('articles')
         .select('id,title,views')
@@ -70,11 +70,8 @@ export async function GET(request) {
     if (articlesResult.error) throw articlesResult.error;
     if (bannersResult.error) throw bannersResult.error;
 
-    const uniqueVisitorSet = new Set(
-      (visitorsResult.data || [])
-        .map((row) => row.visitor_id)
-        .filter(Boolean)
-    );
+    // RPC(analytics_unique_visitors)는 정수 스칼라를 반환
+    const uniqueVisitors = Number(visitorsResult.data) || 0;
 
     const topArticles = (articlesResult.data || []).map((article) => ({
       id: article.id,
@@ -97,12 +94,78 @@ export async function GET(request) {
       };
     });
 
+    // 최근 30일 추이 (기간 파라미터와 무관하게 항상 30일)
+    let dailySeries = [];
+    try {
+      const { data, error } = await serviceClient.rpc('analytics_daily_series', { days: 30 });
+      if (error) throw error;
+      dailySeries = (data || []).map((row) => ({
+        day: row.day,
+        views: Number(row.views) || 0,
+        visitors: Number(row.visitors) || 0,
+      }));
+    } catch (err) {
+      console.error('Error fetching daily series:', err);
+      dailySeries = [];
+    }
+
+    // 기간별 인기 기사 TOP 10 (page_views 원본 집계 + articles 제목 병합)
+    let topArticlesPeriod = [];
+    try {
+      const { data, error } = await serviceClient.rpc('analytics_top_articles', {
+        start_ts: startIso,
+        lim: 10,
+      });
+      if (error) throw error;
+      const rows = data || [];
+      const ids = rows.map((row) => row.article_id).filter((id) => id != null);
+      let titleMap = {};
+      if (ids.length > 0) {
+        const { data: titleRows, error: titleErr } = await serviceClient
+          .from('articles')
+          .select('id,title')
+          .in('id', ids);
+        if (titleErr) throw titleErr;
+        titleMap = (titleRows || []).reduce((acc, article) => {
+          acc[article.id] = article.title;
+          return acc;
+        }, {});
+      }
+      topArticlesPeriod = rows.map((row) => ({
+        id: row.article_id,
+        title: titleMap[row.article_id] || '(삭제된 기사)',
+        views: Number(row.view_count) || 0,
+      }));
+    } catch (err) {
+      console.error('Error fetching period top articles:', err);
+      topArticlesPeriod = [];
+    }
+
+    // 유입 경로 (검색 등록 효과 측정)
+    let referrers = [];
+    try {
+      const { data, error } = await serviceClient.rpc('analytics_referrer_stats', {
+        start_ts: startIso,
+      });
+      if (error) throw error;
+      referrers = (data || []).map((row) => ({
+        source: row.source,
+        count: Number(row.cnt) || 0,
+      }));
+    } catch (err) {
+      console.error('Error fetching referrer stats:', err);
+      referrers = [];
+    }
+
     return NextResponse.json({
       period: normalizedPeriod,
       totalViews: viewsResult.count || 0,
-      uniqueVisitors: uniqueVisitorSet.size,
+      uniqueVisitors,
       topArticles,
       bannerStats,
+      dailySeries,
+      topArticlesPeriod,
+      referrers,
     });
   } catch (error) {
     console.error('Error fetching analytics stats:', error);
