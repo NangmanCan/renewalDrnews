@@ -1744,7 +1744,23 @@ const PERIOD_TABS = [
   { key: 'today', label: '오늘' },
   { key: 'week', label: '이번 주' },
   { key: 'month', label: '이번 달' },
+  { key: 'custom', label: '직접 선택' },
 ];
+
+// YYYY-MM-DD (로컬/KST 브라우저 기준) 문자열 생성
+function toDateInputValue(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// YYYY-MM-DD → 'M/D' 라벨 (차트 제목용)
+function toShortLabel(dateStr) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (!m) return dateStr;
+  return `${Number(m[2])}/${Number(m[3])}`;
+}
 
 // 최근 N일 날짜 배열 생성 (KST 기준 M/D 키 포함, 빈 날 0 채움용)
 function buildDailyChartData(dailySeries, days = 30) {
@@ -1774,6 +1790,39 @@ function buildDailyChartData(dailySeries, days = 30) {
   return result;
 }
 
+// 커스텀 범위(start~end, YYYY-MM-DD 포함)용 차트 데이터 — 빈 날 0 채움
+function buildRangeChartData(dailySeries, start, end) {
+  const map = {};
+  (dailySeries || []).forEach((row) => {
+    map[row.day] = { views: row.views || 0, visitors: row.visitors || 0 };
+  });
+
+  const result = [];
+  const startDate = new Date(`${start}T00:00:00`);
+  const endDate = new Date(`${end}T00:00:00`);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return result;
+  }
+  // 과도한 반복 방지 (최대 366일)
+  const maxDays = 366;
+  let count = 0;
+  for (let d = new Date(startDate); d <= endDate && count < maxDays; d.setDate(d.getDate() + 1)) {
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const date = d.getDate();
+    const key = `${year}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    const hit = map[key] || { views: 0, visitors: 0 };
+    result.push({
+      key,
+      label: `${month}/${date}`,
+      views: hit.views,
+      visitors: hit.visitors,
+    });
+    count += 1;
+  }
+  return result;
+}
+
 function StatsManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -1786,10 +1835,20 @@ function StatsManager() {
   const [bannerStats, setBannerStats] = useState([]);
   const [dailySeries, setDailySeries] = useState([]); // 최근 30일 추이
   const [referrers, setReferrers] = useState([]); // 유입 경로 (선택된 기간)
-  // 기간별 인기 기사 TOP 10 — 기간 탭과 연동
+  // 기간별 인기 기사 TOP 10 — 기간 탭과 연동 (today|week|month|custom)
   const [articlePeriod, setArticlePeriod] = useState('week');
   const [topArticlesPeriod, setTopArticlesPeriod] = useState([]);
 
+  // 직접 선택(커스텀 범위) 관련 상태
+  // 기본값: 시작=30일 전, 종료=오늘 (KST 브라우저 기준)
+  const todayStr = toDateInputValue(new Date());
+  const defaultStartStr = toDateInputValue(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000));
+  const [customStart, setCustomStart] = useState(defaultStartStr); // date input(시작)
+  const [customEnd, setCustomEnd] = useState(todayStr); // date input(종료)
+  // 실제 적용(재조회)된 범위 — null이면 프리셋 모드
+  const [appliedRange, setAppliedRange] = useState(null); // { start, end }
+
+  // 프리셋 조회 (period 기반)
   const fetchPeriodStats = useCallback(async (period) => {
     const res = await fetch(`/api/analytics/stats?period=${period}&t=${Date.now()}`, {
       cache: 'no-store',
@@ -1797,6 +1856,23 @@ function StatsManager() {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     });
+    if (!res.ok) {
+      throw new Error('통계 데이터를 불러오지 못했습니다.');
+    }
+    return res.json();
+  }, []);
+
+  // 커스텀 범위 조회 (start/end 기반)
+  const fetchRangeStats = useCallback(async (start, end) => {
+    const res = await fetch(
+      `/api/analytics/stats?start=${start}&end=${end}&t=${Date.now()}`,
+      {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
+      }
+    );
     if (!res.ok) {
       throw new Error('통계 데이터를 불러오지 못했습니다.');
     }
@@ -1831,20 +1907,28 @@ function StatsManager() {
       });
       setTopArticles(month.topArticles || []);
       setBannerStats((month.bannerStats || []).slice(0, 20));
-      // dailySeries는 30일 고정이라 어느 응답이든 동일 → month 응답에서 한 번만 취함
-      setDailySeries(month.dailySeries || []);
 
-      // 선택된 기간에 해당하는 응답에서 기간별 인기 기사 / 유입 경로 반영
-      const selected = period === 'today' ? today : period === 'week' ? week : month;
-      setTopArticlesPeriod(selected.topArticlesPeriod || []);
-      setReferrers(selected.referrers || []);
+      // 커스텀 범위가 적용된 상태면 그 범위 데이터로 차트/기사/유입 경로 갱신 (방문자 카드는 위 프리셋 유지)
+      if (appliedRange) {
+        const rangeData = await fetchRangeStats(appliedRange.start, appliedRange.end);
+        setDailySeries(rangeData.dailySeries || []);
+        setTopArticlesPeriod(rangeData.topArticlesPeriod || []);
+        setReferrers(rangeData.referrers || []);
+      } else {
+        // dailySeries는 30일 고정이라 어느 프리셋 응답이든 동일 → month 응답에서 한 번만 취함
+        setDailySeries(month.dailySeries || []);
+        // 선택된 기간에 해당하는 응답에서 기간별 인기 기사 / 유입 경로 반영
+        const selected = period === 'today' ? today : period === 'week' ? week : month;
+        setTopArticlesPeriod(selected.topArticlesPeriod || []);
+        setReferrers(selected.referrers || []);
+      }
     } catch (err) {
       console.error('Error loading stats:', err);
       setError(err.message || '통계를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [fetchPeriodStats, articlePeriod]);
+  }, [fetchPeriodStats, fetchRangeStats, articlePeriod, appliedRange]);
 
   useEffect(() => {
     loadStats();
@@ -1852,12 +1936,21 @@ function StatsManager() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 기간별 인기 기사 탭 전환 — 해당 period 응답으로 기사/유입 경로 갱신 (재조회, dailySeries 중복 방지)
+  // 기간 탭 전환 (오늘/주/월/직접선택)
   const handlePeriodTab = useCallback(async (period) => {
     if (period === articlePeriod) return;
     setArticlePeriod(period);
+
+    // "직접 선택" 탭: date input만 노출, 조회는 "적용" 버튼에서. 기존 프리셋 데이터는 유지.
+    if (period === 'custom') {
+      return;
+    }
+
+    // 프리셋 탭으로 복귀: 커스텀 범위 해제 후 프리셋 데이터로 차트/기사/유입 경로 갱신
+    setAppliedRange(null);
     try {
       const data = await fetchPeriodStats(period);
+      setDailySeries(data.dailySeries || []); // 프리셋은 30일 고정 추이로 복원
       setTopArticlesPeriod(data.topArticlesPeriod || []);
       setReferrers(data.referrers || []);
     } catch (err) {
@@ -1866,8 +1959,37 @@ function StatsManager() {
     }
   }, [articlePeriod, fetchPeriodStats]);
 
-  // 최근 30일 차트용 데이터 (빈 날 0 채움)
-  const chartData = buildDailyChartData(dailySeries, 30);
+  // 직접 선택 범위 "적용" — start/end로 재조회하여 차트/기사/유입 경로 갱신
+  const handleApplyCustomRange = useCallback(async () => {
+    if (!customStart || !customEnd) {
+      setError('시작일과 종료일을 모두 선택해주세요.');
+      return;
+    }
+    if (customStart > customEnd) {
+      setError('시작일은 종료일보다 앞서야 합니다.');
+      return;
+    }
+    setError('');
+    try {
+      const data = await fetchRangeStats(customStart, customEnd);
+      setAppliedRange({ start: customStart, end: customEnd });
+      setDailySeries(data.dailySeries || []);
+      setTopArticlesPeriod(data.topArticlesPeriod || []);
+      setReferrers(data.referrers || []);
+    } catch (err) {
+      console.error('Error loading custom range stats:', err);
+      setError(err.message || '기간별 통계를 불러오는 중 오류가 발생했습니다.');
+    }
+  }, [customStart, customEnd, fetchRangeStats]);
+
+  // 차트 데이터 (빈 날 0 채움) — 커스텀 범위면 그 범위, 아니면 최근 30일
+  const chartData = appliedRange
+    ? buildRangeChartData(dailySeries, appliedRange.start, appliedRange.end)
+    : buildDailyChartData(dailySeries, 30);
+  // 차트 제목: 커스텀이면 "기간 추이 (M/D~M/D)", 아니면 "최근 30일 추이"
+  const chartTitle = appliedRange
+    ? `기간 추이 (${toShortLabel(appliedRange.start)}~${toShortLabel(appliedRange.end)})`
+    : '최근 30일 추이';
   const chartMaxViews = Math.max(1, ...chartData.map((d) => d.views));
   const chartTotalViews = chartData.reduce((sum, d) => sum + d.views, 0);
   const chartTotalVisitors = chartData.reduce((sum, d) => sum + d.visitors, 0);
@@ -1937,7 +2059,7 @@ function StatsManager() {
       {/* 최근 30일 추이 — CSS 막대 차트 (라이브러리 미사용) */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">최근 30일 추이</h3>
+          <h3 className="text-lg font-bold text-gray-900">{chartTitle}</h3>
           <p className="text-xs text-gray-500">
             총 조회 {chartTotalViews.toLocaleString()} · 순방문 {chartTotalVisitors.toLocaleString()}
           </p>
@@ -1965,11 +2087,13 @@ function StatsManager() {
           ))}
         </div>
         {!loading && chartTotalViews === 0 && (
-          <p className="py-4 text-center text-gray-500 text-sm">최근 30일 집계된 조회수가 없습니다.</p>
+          <p className="py-4 text-center text-gray-500 text-sm">
+            {appliedRange ? '해당 기간 집계된 조회수가 없습니다.' : '최근 30일 집계된 조회수가 없습니다.'}
+          </p>
         )}
       </div>
 
-      {/* 기간별 인기 기사 TOP 10 — 기간 탭 연동 */}
+      {/* 기간별 인기 기사 TOP 10 — 기간 탭 연동 (탭은 차트·기사·유입 경로를 함께 지배) */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900">기간별 인기 기사 TOP 10</h3>
@@ -1990,6 +2114,44 @@ function StatsManager() {
             ))}
           </div>
         </div>
+
+        {/* 직접 선택 탭: 시작/종료 date input + 적용 버튼 */}
+        {articlePeriod === 'custom' && (
+          <div className="flex flex-wrap items-end gap-3 mb-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
+            <div className="flex flex-col">
+              <label className="text-xs text-gray-500 mb-1">시작일</label>
+              <input
+                type="date"
+                value={customStart}
+                max={todayStr}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs text-gray-500 mb-1">종료일</label>
+              <input
+                type="date"
+                value={customEnd}
+                max={todayStr}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleApplyCustomRange}
+              className="px-4 py-1.5 bg-sky-600 text-white text-sm font-medium rounded-lg hover:bg-sky-700"
+            >
+              적용
+            </button>
+            {appliedRange && (
+              <span className="text-xs text-gray-500 pb-1.5">
+                적용됨: {appliedRange.start} ~ {appliedRange.end}
+              </span>
+            )}
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
