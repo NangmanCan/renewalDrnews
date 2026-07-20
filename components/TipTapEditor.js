@@ -16,9 +16,74 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { uploadImage } from '@/lib/storage';
+import InlinePhotoModal from '@/components/admin/InlinePhotoModal';
 
 // 폰트 크기 확장
-import { Extension } from '@tiptap/core';
+import { Extension, Node, mergeAttributes } from '@tiptap/core';
+
+// 본문 사진(figure/figcaption) 노드
+// 기사 상세는 dangerouslySetInnerHTML로 렌더되므로 저장 HTML이
+// <figure class="article-photo"><img><figcaption>…</figcaption></figure>
+// 형태로 정확히 라운드트립되도록 커스텀 노드로 등록한다.
+const ArticleFigure = Node.create({
+  name: 'articleFigure',
+  group: 'block',
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      src: { default: null },
+      alt: { default: '기사 이미지' },
+      caption: { default: '' },
+      source: { default: '' },
+      full: { default: false },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'figure.article-photo',
+        getAttrs: (el) => {
+          const img = el.querySelector('img');
+          const figcaption = el.querySelector('figcaption');
+          const captionText = figcaption ? figcaption.textContent || '' : '';
+          // "캡션 (사진=출처)" 형태에서 출처 분리
+          const match = captionText.match(/^(.*?)\s*\(사진=(.+)\)\s*$/);
+          return {
+            src: img?.getAttribute('src') || null,
+            alt: img?.getAttribute('alt') || '기사 이미지',
+            caption: match ? match[1].trim() : captionText.trim(),
+            source: match ? match[2].trim() : '',
+            full: el.classList.contains('article-photo-full'),
+          };
+        },
+      },
+    ];
+  },
+
+  renderHTML({ node }) {
+    const { src, alt, caption, source, full } = node.attrs;
+    const className = full ? 'article-photo article-photo-full' : 'article-photo';
+    const figureAttrs = mergeAttributes({ class: className });
+    const children = [['img', { src, alt }]];
+    if (caption || source) {
+      const sourceText = source ? ` (사진=${source})` : '';
+      children.push(['figcaption', {}, `${caption}${sourceText}`]);
+    }
+    return ['figure', figureAttrs, ...children];
+  },
+
+  addCommands() {
+    return {
+      insertArticleFigure:
+        (attrs) =>
+        ({ commands }) =>
+          commands.insertContent({ type: this.name, attrs }),
+    };
+  },
+});
 
 const FontSize = Extension.create({
   name: 'fontSize',
@@ -87,8 +152,9 @@ const ToolbarButton = ({ onClick, active, disabled, children, title, ariaLabel }
 // 툴바 구분선
 const ToolbarDivider = () => <div className="w-px h-6 bg-gray-300 mx-1" />;
 
-export default function TipTapEditor({ content, onChange, placeholder = '본문을 입력하세요...' }) {
+export default function TipTapEditor({ content, onChange, placeholder = '본문을 입력하세요...', enableInlinePhoto = false }) {
   const [uploading, setUploading] = useState(false);
+  const [inlinePhotoOpen, setInlinePhotoOpen] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [highlightPickerOpen, setHighlightPickerOpen] = useState(false);
   const [tableRowMenuOpen, setTableRowMenuOpen] = useState(false);
@@ -155,6 +221,7 @@ export default function TipTapEditor({ content, onChange, placeholder = '본문�
           class: 'border border-gray-300 p-2',
         },
       }),
+      ArticleFigure,
     ],
     content: content || '',
     onUpdate: ({ editor }) => {
@@ -312,6 +379,17 @@ export default function TipTapEditor({ content, onChange, placeholder = '본문�
       }
     }
   }, [editor]);
+
+  // 본문 사진(figure) 삽입 — 모달에서 업로드/워터마크 처리 후 호출됨
+  const handleInlinePhotoInsert = useCallback(
+    (html, attrs) => {
+      if (editor && attrs) {
+        editor.chain().focus().insertArticleFigure(attrs).run();
+      }
+      setInlinePhotoOpen(false);
+    },
+    [editor]
+  );
 
   // 링크 설정 (인라인 UI)
   const setLink = useCallback(() => {
@@ -637,6 +715,19 @@ export default function TipTapEditor({ content, onChange, placeholder = '본문�
           aria-label="이미지 파일 선택"
         />
 
+        {/* 본문 사진 추가 (캡션·출처·워터마크) — 기사 폼에서만 노출 */}
+        {enableInlinePhoto && (
+          <button
+            type="button"
+            onClick={() => setInlinePhotoOpen(true)}
+            title="본문 사진 추가 (캡션·출처·워터마크)"
+            aria-label="본문 사진 추가"
+            className="px-2 py-1.5 rounded hover:bg-gray-100 transition-colors text-gray-600 text-sm font-medium flex items-center gap-1"
+          >
+            📷 본문 사진 추가
+          </button>
+        )}
+
         {/* 링크 - 인라인 입력 UI */}
         <div className="relative" ref={linkInputRef}>
           <ToolbarButton
@@ -862,6 +953,14 @@ export default function TipTapEditor({ content, onChange, placeholder = '본문�
 
       {/* 에디터 영역 */}
       <EditorContent editor={editor} className="tiptap-editor" />
+
+      {/* 본문 사진 추가 모달 */}
+      {enableInlinePhoto && inlinePhotoOpen && (
+        <InlinePhotoModal
+          onInsert={handleInlinePhotoInsert}
+          onCancel={() => setInlinePhotoOpen(false)}
+        />
+      )}
     </div>
   );
 }

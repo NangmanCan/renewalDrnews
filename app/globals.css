@@ -343,3 +343,36 @@
     font-size: 1.125em;
   }
 }
+
+/* 본문 사진 (figure.article-photo) — 기사 상세 + 에디터 미리보기 공통 */
+figure.article-photo {
+  margin: 1.5rem auto;
+  max-width: 70%;
+  text-align: center;
+}
+
+figure.article-photo.article-photo-full {
+  max-width: 100%;
+}
+
+figure.article-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 0;
+}
+
+figure.article-photo figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #6b7280;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  figure.article-photo {
+    max-width: 100%;
+  }
+}

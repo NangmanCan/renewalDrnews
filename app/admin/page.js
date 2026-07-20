@@ -767,6 +767,7 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
             content={form.content}
             onChange={(html) => setForm({ ...form, content: html })}
             placeholder="기사 본문을 입력하세요..."
+            enableInlinePhoto
           />
         </div>
 
