@@ -434,3 +434,8 @@ figure.article-photo figcaption {
   display: block;
   clear: both;
 }
+/* 사진 컨트롤 바(BubbleMenu) 포지셔닝 요소에 z-index 부여
+   — 래퍼가 className을 안쪽 div에만 붙여 바깥 요소는 :has()로 타겟 */
+body > div:has(> .article-figure-menu) {
+  z-index: 100;
+}

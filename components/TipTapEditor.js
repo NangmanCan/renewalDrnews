@@ -1028,7 +1028,7 @@ export default function TipTapEditor({ content, onChange, placeholder = '본문�
         shouldShow={({ editor: ed }) => ed.isActive('articleFigure')}
         options={{ placement: 'top', offset: 8, strategy: 'fixed' }}
         appendTo={() => document.body}
-        className="z-[100] flex items-center gap-0.5 bg-white border border-gray-300 rounded-lg shadow-lg px-1 py-1"
+        className="article-figure-menu flex items-center gap-0.5 bg-white border border-gray-300 rounded-lg shadow-lg px-1 py-1"
       >
         <FigureMenuButton
           onClick={() => setFigureAlign('left')}
