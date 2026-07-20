@@ -31,7 +31,8 @@ export async function GET() {
       ...item,
       authorTitle: item.author_title,
       authorImage: item.author_image,
-      weekNumber: item.week_number
+      weekNumber: item.week_number,
+      backgroundImage: item.background_image ?? null
     })) || [];
 
     return NextResponse.json(formatted.length > 0 ? formatted : staticCeoReports, { headers: noCacheHeaders });
@@ -66,7 +67,8 @@ export async function POST(request) {
         author: body.author,
         author_title: body.authorTitle,
         author_image: body.authorImage,
-        week_number: body.weekNumber
+        week_number: body.weekNumber,
+        background_image: body.backgroundImage ?? null
       }])
       .select();
 
@@ -80,7 +82,8 @@ export async function POST(request) {
       ...created,
       authorTitle: created.author_title,
       authorImage: created.author_image,
-      weekNumber: created.week_number
+      weekNumber: created.week_number,
+      backgroundImage: created.background_image ?? null
     });
   } catch (error) {
     console.error('Error creating CEO report:', error);

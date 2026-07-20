@@ -31,7 +31,8 @@ export async function PUT(request, { params }) {
         author: body.author,
         author_title: body.authorTitle,
         author_image: body.authorImage,
-        week_number: body.weekNumber
+        week_number: body.weekNumber,
+        background_image: body.backgroundImage ?? null
       })
       .eq('id', reportId)
       .select();
@@ -46,7 +47,8 @@ export async function PUT(request, { params }) {
       ...updated,
       authorTitle: updated.author_title,
       authorImage: updated.author_image,
-      weekNumber: updated.week_number
+      weekNumber: updated.week_number,
+      backgroundImage: updated.background_image ?? null
     });
   } catch (error) {
     console.error('Error updating CEO report:', error);
