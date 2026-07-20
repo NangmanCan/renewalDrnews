@@ -38,6 +38,7 @@ const ArticleFigure = Node.create({
       caption: { default: '' },
       source: { default: '' },
       full: { default: false },
+      align: { default: 'center' }, // 'left' | 'center' | 'right'
     };
   },
 
@@ -57,6 +58,12 @@ const ArticleFigure = Node.create({
             caption: match ? match[1].trim() : captionText.trim(),
             source: match ? match[2].trim() : '',
             full: el.classList.contains('article-photo-full'),
+            // 클래스 없으면 center (기존 저장분 호환)
+            align: el.classList.contains('article-photo-left')
+              ? 'left'
+              : el.classList.contains('article-photo-right')
+              ? 'right'
+              : 'center',
           };
         },
       },
@@ -64,9 +71,17 @@ const ArticleFigure = Node.create({
   },
 
   renderHTML({ node }) {
-    const { src, alt, caption, source, full } = node.attrs;
-    const className = full ? 'article-photo article-photo-full' : 'article-photo';
-    const figureAttrs = mergeAttributes({ class: className });
+    const { src, alt, caption, source, full, align } = node.attrs;
+    // 전체폭이면 정렬 무시(중앙), 좌/우 정렬은 전체폭과 조합 불가
+    const classes = ['article-photo'];
+    if (full) {
+      classes.push('article-photo-full');
+    } else if (align === 'left') {
+      classes.push('article-photo-left');
+    } else if (align === 'right') {
+      classes.push('article-photo-right');
+    }
+    const figureAttrs = mergeAttributes({ class: classes.join(' ') });
     const children = [['img', { src, alt }]];
     if (caption || source) {
       const sourceText = source ? ` (사진=${source})` : '';

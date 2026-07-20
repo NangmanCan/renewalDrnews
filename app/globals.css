@@ -355,6 +355,26 @@ figure.article-photo.article-photo-full {
   max-width: 100%;
 }
 
+/* 좌/우 정렬: 텍스트가 반대편으로 감쌈 (float) */
+figure.article-photo.article-photo-left {
+  float: left;
+  max-width: 45%;
+  margin: 0.375rem 1.25rem 0.75rem 0;
+}
+
+figure.article-photo.article-photo-right {
+  float: right;
+  max-width: 45%;
+  margin: 0.375rem 0 0.75rem 1.25rem;
+}
+
+/* 본문 컨테이너 float 해제 (좌/우 정렬 사진 뒤 레이아웃 깨짐 방지) */
+.article-body::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
 figure.article-photo img {
   display: block;
   width: 100%;
@@ -374,5 +394,15 @@ figure.article-photo figcaption {
 @media (max-width: 768px) {
   figure.article-photo {
     max-width: 100%;
+  }
+}
+
+/* 모바일: 좌/우 정렬 float 해제 → 중앙 전체폭 (좁은 화면 감싸기 깨짐 방지) */
+@media (max-width: 640px) {
+  figure.article-photo.article-photo-left,
+  figure.article-photo.article-photo-right {
+    float: none;
+    max-width: 100%;
+    margin: 1.5rem auto;
   }
 }

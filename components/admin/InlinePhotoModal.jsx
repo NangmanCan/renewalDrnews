@@ -115,6 +115,7 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
   const [caption, setCaption] = useState('');
   const [source, setSource] = useState('');
   const [width, setWidth] = useState('medium'); // 'medium' | 'full'
+  const [align, setAlign] = useState('center'); // 'left' | 'center' | 'right'
   const [basePx, setBasePx] = useState(null); // 기준크기 프리셋(출력 폭 상한). null=원본(1600 상한)
   const [naturalWidth, setNaturalWidth] = useState(null); // 원본 로드 후 실제 폭
   const [watermark, setWatermark] = useState(false);
@@ -187,7 +188,16 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
       const trimmedCaption = caption.trim();
       const trimmedSource = source.trim();
       const alt = trimmedCaption || '기사 이미지';
-      const fullClass = width === 'full' ? ' article-photo-full' : '';
+      // 전체폭이면 정렬은 무의미(중앙 고정), 좌/우 정렬이면 전체폭 강제 해제
+      const isFull = width === 'full';
+      const effectiveAlign = isFull ? 'center' : align;
+      const fullClass = isFull ? ' article-photo-full' : '';
+      const alignClass =
+        effectiveAlign === 'left'
+          ? ' article-photo-left'
+          : effectiveAlign === 'right'
+          ? ' article-photo-right'
+          : '';
 
       let figcaption = '';
       if (trimmedCaption || trimmedSource) {
@@ -195,7 +205,7 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
         figcaption = `<figcaption>${escapeHtml(trimmedCaption)}${sourceText}</figcaption>`;
       }
 
-      const html = `<figure class="article-photo${fullClass}"><img src="${escapeHtml(
+      const html = `<figure class="article-photo${fullClass}${alignClass}"><img src="${escapeHtml(
         url
       )}" alt="${escapeHtml(alt)}">${figcaption}</figure>`;
 
@@ -204,7 +214,8 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
         alt,
         caption: trimmedCaption,
         source: trimmedSource,
-        full: width === 'full',
+        full: isFull,
+        align: effectiveAlign,
       });
     } catch (err) {
       console.error('Inline photo insert failed:', err);
@@ -212,7 +223,7 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
     } finally {
       setProcessing(false);
     }
-  }, [file, watermark, basePx, caption, source, width, onInsert]);
+  }, [file, watermark, basePx, caption, source, width, align, onInsert]);
 
   if (!mounted) return null;
 
@@ -361,12 +372,57 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
                   name="inline-photo-width"
                   value="full"
                   checked={width === 'full'}
-                  onChange={() => setWidth('full')}
+                  onChange={() => {
+                    setWidth('full');
+                    setAlign('center'); // 전체폭은 중앙 고정
+                  }}
                   className="accent-sky-600"
                 />
                 전체폭
               </label>
             </div>
+          </div>
+
+          {/* 정렬 (전체폭이면 비활성) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">정렬</label>
+            <div className="flex gap-4">
+              {[
+                { value: 'left', label: '왼쪽' },
+                { value: 'center', label: '중앙' },
+                { value: 'right', label: '오른쪽' },
+              ].map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`flex items-center gap-2 text-sm cursor-pointer ${
+                    width === 'full' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="inline-photo-align"
+                    value={opt.value}
+                    checked={width === 'full' ? opt.value === 'center' : align === opt.value}
+                    disabled={width === 'full'}
+                    onChange={() => {
+                      setAlign(opt.value);
+                      // 좌/우 정렬은 전체폭과 조합 불가 → 표시 폭 중간으로 강제
+                      if (opt.value !== 'center') setWidth('medium');
+                    }}
+                    className="accent-sky-600"
+                  />
+                  {opt.label}
+                  {opt.value === 'center' && (
+                    <span className="text-gray-400 font-normal">(기본)</span>
+                  )}
+                </label>
+              ))}
+            </div>
+            {width === 'full' && (
+              <p className="mt-1 text-xs text-gray-400">
+                전체폭에서는 정렬을 사용할 수 없습니다 (중앙 고정).
+              </p>
+            )}
           </div>
 
           {/* 워터마크 토글 */}
