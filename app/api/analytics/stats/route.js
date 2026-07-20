@@ -216,6 +216,7 @@ export async function GET(request) {
       referrers = (data || []).map((row) => ({
         source: row.source,
         count: Number(row.cnt) || 0,
+        visitors: Number(row.visitors) || 0,
       }));
     } catch (err) {
       console.error('Error fetching referrer stats:', err);
