@@ -9,8 +9,17 @@ import { buildWatermarkCanvas, drawWatermark } from '@/lib/watermark';
 const picaInstance = typeof window !== 'undefined' ? Pica() : null;
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_WIDTH = 1600; // 다운스케일 기준 폭
+const MAX_WIDTH = 1600; // 다운스케일 기준 폭 ("원본" 프리셋)
 const VALID_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+
+// 기준크기(출력 폭 상한) 프리셋. value=null 이면 기존 1600 상한 동작.
+const BASE_PX_PRESETS = [
+  { label: '원본(최대 1600px)', value: null },
+  { label: '1280px', value: 1280 },
+  { label: '960px', value: 960 },
+  { label: '600px', value: 600 },
+  { label: '250px', value: 250 },
+];
 
 // object URL로 이미지 로드
 function loadImage(src) {
@@ -35,12 +44,13 @@ function escapeHtml(str) {
 /**
  * 처리 파이프라인:
  *  1) (워터마크 ON) 원본 → 캔버스 → 로고 합성
- *  2) 최대 폭 1600px 초과 시 비율 유지 다운스케일 (pica Lanczos3)
+ *  2) 출력 폭 상한(maxWidth) 초과 시 비율 유지 다운스케일 (pica Lanczos3)
  *  3) png는 png 유지, 그 외 jpeg(q=0.9)
  * gif는 이 함수에 오지 않음(원본 그대로 업로드).
+ * maxWidth: 선택 프리셋 px(원본이 더 크면 이 폭으로 다운스케일, 작으면 업스케일 안 함).
  * @returns {Promise<File>}
  */
-async function processImage(file, { watermark }) {
+async function processImage(file, { watermark, maxWidth }) {
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const isPng = file.type === 'image/png' || ext === 'png';
   const outputType = isPng ? 'image/png' : 'image/jpeg';
@@ -67,11 +77,12 @@ async function processImage(file, { watermark }) {
       drawWatermark(srcCanvas, wmCanvas);
     }
 
-    // 2) 다운스케일 필요 여부
+    // 2) 다운스케일 필요 여부 (선택 프리셋 px, 기본 1600 상한)
+    const widthCap = maxWidth || MAX_WIDTH;
     let finalCanvas = srcCanvas;
-    if (srcCanvas.width > MAX_WIDTH) {
-      const targetW = MAX_WIDTH;
-      const targetH = Math.round((srcCanvas.height * MAX_WIDTH) / srcCanvas.width);
+    if (srcCanvas.width > widthCap) {
+      const targetW = widthCap;
+      const targetH = Math.round((srcCanvas.height * widthCap) / srcCanvas.width);
       finalCanvas = document.createElement('canvas');
       finalCanvas.width = targetW;
       finalCanvas.height = targetH;
@@ -104,6 +115,8 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
   const [caption, setCaption] = useState('');
   const [source, setSource] = useState('');
   const [width, setWidth] = useState('medium'); // 'medium' | 'full'
+  const [basePx, setBasePx] = useState(null); // 기준크기 프리셋(출력 폭 상한). null=원본(1600 상한)
+  const [naturalWidth, setNaturalWidth] = useState(null); // 원본 로드 후 실제 폭
   const [watermark, setWatermark] = useState(false);
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
@@ -150,6 +163,11 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
     const url = URL.createObjectURL(selected);
     setFile(selected);
     setPreviewUrl(url);
+    setNaturalWidth(null);
+    // 원본 실제 폭 로드 (출력 예상 표기용)
+    loadImage(url)
+      .then((img) => setNaturalWidth(img.naturalWidth))
+      .catch(() => setNaturalWidth(null));
   };
 
   const handleConfirm = useCallback(async () => {
@@ -159,7 +177,9 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
     try {
       const gif = file.type === 'image/gif';
       // gif는 워터마크·리사이즈 없이 원본 업로드
-      const fileToUpload = gif ? file : await processImage(file, { watermark });
+      const fileToUpload = gif
+        ? file
+        : await processImage(file, { watermark, maxWidth: basePx });
 
       const { url, error: uploadErr } = await uploadImage(fileToUpload, 'articles');
       if (uploadErr) throw uploadErr;
@@ -192,7 +212,7 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
     } finally {
       setProcessing(false);
     }
-  }, [file, watermark, caption, source, width, onInsert]);
+  }, [file, watermark, basePx, caption, source, width, onInsert]);
 
   if (!mounted) return null;
 
@@ -246,13 +266,20 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
 
           {/* 미리보기 */}
           {previewUrl && (
-            <div className="bg-gray-100 rounded-lg overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt="미리보기"
-                className="w-full max-h-64 object-contain"
-              />
+            <div className="space-y-1.5">
+              <div className="bg-gray-100 rounded-lg overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewUrl}
+                  alt="미리보기"
+                  className="w-full max-h-64 object-contain"
+                />
+              </div>
+              {!isGif && naturalWidth && (
+                <p className="text-xs text-gray-400">
+                  출력: 약 {Math.min(naturalWidth, basePx || MAX_WIDTH)}px 폭
+                </p>
+              )}
             </div>
           )}
 
@@ -282,6 +309,35 @@ export default function InlinePhotoModal({ onInsert, onCancel }) {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-transparent"
               placeholder="예: 보건복지부, 본지 촬영"
             />
+          </div>
+
+          {/* 기준크기 프리셋 (출력 폭 상한) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">기준크기</label>
+            <div className="flex flex-wrap gap-2">
+              {BASE_PX_PRESETS.map((preset) => {
+                const active = basePx === preset.value;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setBasePx(preset.value)}
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                      active
+                        ? 'bg-sky-600 border-sky-600 text-white font-semibold'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+            {isGif && (
+              <p className="mt-1 text-xs text-amber-600">
+                GIF는 크기 조정을 지원하지 않습니다. 원본 그대로 업로드됩니다.
+              </p>
+            )}
           </div>
 
           {/* 표시 폭 */}

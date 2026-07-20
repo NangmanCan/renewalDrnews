@@ -16,8 +16,9 @@ function loadImage(src) {
   });
 }
 
-// pixelCrop 영역만 잘라낸 후 가이드 크기로 pica Lanczos3 리사이즈
-async function getCroppedFile(imageSrc, pixelCrop, guide, sourceFile) {
+// pixelCrop 영역만 잘라낸 후 목표 크기로 pica Lanczos3 리사이즈.
+// outputWidth 지정 시 가이드 비율은 유지하되 출력 폭만 그 값으로 리사이즈(업스케일 안 함).
+async function getCroppedFile(imageSrc, pixelCrop, guide, sourceFile, outputWidth) {
   const img = await loadImage(imageSrc);
 
   // 1) 픽셀 단위로 crop 영역만 캔버스에 그리기
@@ -37,7 +38,16 @@ async function getCroppedFile(imageSrc, pixelCrop, guide, sourceFile) {
     cropCanvas.height
   );
 
-  // 2) 가이드 사이즈로 pica 리사이즈 (이미 같거나 작으면 스킵)
+  // 2) 목표 크기 결정: outputWidth가 있으면 가이드 비율로 폭 override (원본보다 크면 업스케일 안 함)
+  const aspectRatio = guide.width / guide.height;
+  let targetWidth = guide.width;
+  let targetHeight = guide.height;
+  if (outputWidth) {
+    targetWidth = Math.min(outputWidth, cropCanvas.width);
+    targetHeight = Math.round(targetWidth / aspectRatio);
+  }
+
+  // 3) 목표 사이즈로 pica 리사이즈 (이미 같거나 작으면 스킵)
   const ext = sourceFile.name.split('.').pop()?.toLowerCase() || 'jpg';
   const isPng = sourceFile.type === 'image/png' || ext === 'png';
   const isWebP = sourceFile.type === 'image/webp' || ext === 'webp';
@@ -45,10 +55,10 @@ async function getCroppedFile(imageSrc, pixelCrop, guide, sourceFile) {
   const outputQuality = isPng ? undefined : 0.92;
 
   let finalCanvas = cropCanvas;
-  if (cropCanvas.width > guide.width || cropCanvas.height > guide.height) {
+  if (cropCanvas.width > targetWidth || cropCanvas.height > targetHeight) {
     finalCanvas = document.createElement('canvas');
-    finalCanvas.width = guide.width;
-    finalCanvas.height = guide.height;
+    finalCanvas.width = targetWidth;
+    finalCanvas.height = targetHeight;
     await picaInstance.resize(cropCanvas, finalCanvas, {
       quality: 3,
       alpha: isPng,
@@ -66,7 +76,7 @@ async function getCroppedFile(imageSrc, pixelCrop, guide, sourceFile) {
   return new File([blob], fileName, { type: outputType, lastModified: Date.now() });
 }
 
-export default function ImageCropModal({ file, guide, onComplete, onCancel }) {
+export default function ImageCropModal({ file, guide, outputWidth, onComplete, onCancel }) {
   const [src, setSrc] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -106,7 +116,7 @@ export default function ImageCropModal({ file, guide, onComplete, onCancel }) {
     if (!src || !pixelCrop || !file) return;
     setProcessing(true);
     try {
-      const cropped = await getCroppedFile(src, pixelCrop, guide, file);
+      const cropped = await getCroppedFile(src, pixelCrop, guide, file, outputWidth);
       onComplete?.(cropped);
     } catch (err) {
       console.error(err);
