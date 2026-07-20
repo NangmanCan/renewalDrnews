@@ -15,6 +15,7 @@ import NewsSourceManager from '@/components/admin/NewsSourceManager';
 import DoctorPickManager from '@/components/admin/DoctorPickManager';
 import SlotManagerUI from '@/components/admin/SlotManager';
 import ImageCropModal from '@/components/admin/ImageCropModal';
+import { buildWatermarkCanvas, drawWatermark } from '@/lib/watermark';
 import AdSlotManagerUI from '@/components/admin/AdSlotManager';
 import AdCreationManagerUI from '@/components/admin/AdCreationManager';
 
@@ -247,13 +248,50 @@ async function resizeImage(file, maxWidth, maxHeight) {
   });
 }
 
-function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles', label = '대표 이미지' }) {
+// 업로드 직전 파일에 Dr.News 워터마크 합성 (우측 하단).
+// GIF는 애니메이션이 깨지므로 호출부에서 제외. 재인코딩은 원본 포맷 유지(png/webp/jpeg).
+async function applyWatermarkToFile(file) {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const isPng = file.type === 'image/png' || ext === 'png';
+  const isWebP = file.type === 'image/webp' || ext === 'webp';
+  const outputType = isPng ? 'image/png' : isWebP ? 'image/webp' : 'image/jpeg';
+  const outputQuality = isPng ? undefined : 0.92;
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const im = document.createElement('img');
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error('이미지를 불러올 수 없습니다.'));
+      im.src = objectUrl;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+
+    const wmCanvas = await buildWatermarkCanvas();
+    drawWatermark(canvas, wmCanvas);
+
+    const blob = await picaInstance.toBlob(canvas, outputType, outputQuality);
+    if (!blob) throw new Error('이미지 변환에 실패했습니다.');
+    const extension = isPng ? '.png' : isWebP ? '.webp' : '.jpg';
+    const fileName = file.name.replace(/\.[^.]+$/, '') + extension;
+    return new File([blob], fileName, { type: outputType, lastModified: Date.now() });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles', label = '대표 이미지', allowWatermark = true }) {
   const fileInputRef = useRef(null);
   const [preview, setPreview] = useState(currentImage || '');
   const [isGif, setIsGif] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [cropTarget, setCropTarget] = useState(null); // { file, size }
+  const [watermark, setWatermark] = useState(false);
 
   // guide에서 규격 파싱 (예: "1200x300" → {width: 1200, height: 300})
   const parseGuide = (guideStr) => {
@@ -270,10 +308,26 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
   const doUpload = async (fileToUpload) => {
     setUploadError(null);
     setUploading(true);
-    const localPreview = URL.createObjectURL(fileToUpload);
+    // 워터마크 옵션 ON이면 업로드 직전 합성 (GIF는 미지원 → 원본 유지)
+    let finalFile = fileToUpload;
+    if (allowWatermark && watermark) {
+      if (fileToUpload.type === 'image/gif') {
+        setUploadError('GIF는 워터마크를 지원하지 않습니다. 원본 그대로 업로드됩니다.');
+      } else {
+        try {
+          finalFile = await applyWatermarkToFile(fileToUpload);
+        } catch (err) {
+          console.error('Watermark failed:', err);
+          setUploadError(err.message || '워터마크 합성에 실패했습니다.');
+          setUploading(false);
+          return;
+        }
+      }
+    }
+    const localPreview = URL.createObjectURL(finalFile);
     setPreview(localPreview);
     try {
-      const { url, error } = await uploadImage(fileToUpload, folder);
+      const { url, error } = await uploadImage(finalFile, folder);
       if (error) throw error;
       setPreview(url);
       onImageChange(url);
@@ -426,6 +480,20 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
           className="hidden"
         />
       </div>
+
+      {/* 워터마크 옵션 (파일 업로드에만 적용, URL 입력에는 미적용) */}
+      {allowWatermark && (
+        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={watermark}
+            onChange={(e) => setWatermark(e.target.checked)}
+            disabled={uploading}
+            className="accent-sky-600 w-4 h-4"
+          />
+          워터마크 (우측 하단 Dr.News 로고 합성)
+        </label>
+      )}
 
       {/* URL 입력 */}
       <input
@@ -1597,6 +1665,7 @@ function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
           allowGif={adType !== 'headline'}
           folder="banners"
           label="광고 이미지"
+          allowWatermark={false}
         />
 
         {/* 링크 */}
