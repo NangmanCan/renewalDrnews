@@ -406,3 +406,16 @@ figure.article-photo figcaption {
     margin: 1.5rem auto;
   }
 }
+
+/* 에디터 내부 보정: 상세 페이지와 동일한 정렬/폭 미리보기 */
+/* .tiptap-editor .ProseMirror img 규칙(margin/radius)이 figure 이미지를 덮어쓰므로 재지정 */
+.tiptap-editor .ProseMirror figure.article-photo img {
+  margin: 0 auto;
+  border-radius: 0;
+}
+/* 좌/우 float 사진 뒤 레이아웃 깨짐 방지 (기사 상세 .article-body::after 대체) */
+.tiptap-editor .ProseMirror::after {
+  content: '';
+  display: block;
+  clear: both;
+}
