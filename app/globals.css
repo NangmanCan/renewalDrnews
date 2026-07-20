@@ -413,6 +413,21 @@ figure.article-photo figcaption {
   margin: 0 auto;
   border-radius: 0;
 }
+/* 에디터 안에서는 float 미사용 — 사진만 있는 문서에서 float 시 문서 높이가 붕괴해
+   BubbleMenu 기준점이 무너지는 문제 방지. 정렬 의도는 좌/우 배치로만 표시하고
+   실제 텍스트 감싸기(float)는 기사 상세에서만 적용된다. */
+.tiptap-editor .ProseMirror figure.article-photo.article-photo-left,
+.tiptap-editor .ProseMirror figure.article-photo.article-photo-right {
+  float: none;
+}
+.tiptap-editor .ProseMirror figure.article-photo.article-photo-left {
+  margin-left: 0;
+  margin-right: auto;
+}
+.tiptap-editor .ProseMirror figure.article-photo.article-photo-right {
+  margin-left: auto;
+  margin-right: 0;
+}
 /* 좌/우 float 사진 뒤 레이아웃 깨짐 방지 (기사 상세 .article-body::after 대체) */
 .tiptap-editor .ProseMirror::after {
   content: '';
