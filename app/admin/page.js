@@ -15,6 +15,7 @@ import NewsSourceManager from '@/components/admin/NewsSourceManager';
 import DoctorPickManager from '@/components/admin/DoctorPickManager';
 import SlotManagerUI from '@/components/admin/SlotManager';
 import ImageCropModal from '@/components/admin/ImageCropModal';
+import { buildWatermarkCanvas, drawWatermark } from '@/lib/watermark';
 import AdSlotManagerUI from '@/components/admin/AdSlotManager';
 import AdCreationManagerUI from '@/components/admin/AdCreationManager';
 
@@ -95,7 +96,12 @@ const IMAGE_GUIDES = {
   opinion: { width: 200, height: 200, label: '대표이미지 (200x200, retina 대응)' },
 };
 
-const ARTICLE_IMAGE_PLACEHOLDER = 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop';
+// 본문 HTML에서 첫 번째 이미지 src 추출 (대표 이미지 공란 시 대체용)
+function firstImageFromContent(html) {
+  if (!html) return null;
+  const m = html.match(/<img[^>]*src=["']([^"']+)["']/i);
+  return m ? m[1] : null;
+}
 
 // 사이드바 컴포넌트
 function AdminSidebar({ currentMenu, setCurrentMenu }) {
@@ -247,13 +253,51 @@ async function resizeImage(file, maxWidth, maxHeight) {
   });
 }
 
-function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles', label = '대표 이미지' }) {
+// 업로드 직전 파일에 Dr.News 워터마크 합성 (우측 하단).
+// GIF는 애니메이션이 깨지므로 호출부에서 제외. 재인코딩은 원본 포맷 유지(png/webp/jpeg).
+async function applyWatermarkToFile(file) {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const isPng = file.type === 'image/png' || ext === 'png';
+  const isWebP = file.type === 'image/webp' || ext === 'webp';
+  const outputType = isPng ? 'image/png' : isWebP ? 'image/webp' : 'image/jpeg';
+  const outputQuality = isPng ? undefined : 0.92;
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const im = document.createElement('img');
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error('이미지를 불러올 수 없습니다.'));
+      im.src = objectUrl;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+
+    const wmCanvas = await buildWatermarkCanvas();
+    drawWatermark(canvas, wmCanvas);
+
+    const blob = await picaInstance.toBlob(canvas, outputType, outputQuality);
+    if (!blob) throw new Error('이미지 변환에 실패했습니다.');
+    const extension = isPng ? '.png' : isWebP ? '.webp' : '.jpg';
+    const fileName = file.name.replace(/\.[^.]+$/, '') + extension;
+    return new File([blob], fileName, { type: outputType, lastModified: Date.now() });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles', label = '대표 이미지', allowWatermark = true }) {
   const fileInputRef = useRef(null);
   const [preview, setPreview] = useState(currentImage || '');
   const [isGif, setIsGif] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [cropTarget, setCropTarget] = useState(null); // { file, size }
+  const [watermark, setWatermark] = useState(false);
+  const [basePx, setBasePx] = useState(null); // 출력 폭 프리셋. null=권장(가이드 크기)
 
   // guide에서 규격 파싱 (예: "1200x300" → {width: 1200, height: 300})
   const parseGuide = (guideStr) => {
@@ -270,10 +314,26 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
   const doUpload = async (fileToUpload) => {
     setUploadError(null);
     setUploading(true);
-    const localPreview = URL.createObjectURL(fileToUpload);
+    // 워터마크 옵션 ON이면 업로드 직전 합성 (GIF는 미지원 → 원본 유지)
+    let finalFile = fileToUpload;
+    if (allowWatermark && watermark) {
+      if (fileToUpload.type === 'image/gif') {
+        setUploadError('GIF는 워터마크를 지원하지 않습니다. 원본 그대로 업로드됩니다.');
+      } else {
+        try {
+          finalFile = await applyWatermarkToFile(fileToUpload);
+        } catch (err) {
+          console.error('Watermark failed:', err);
+          setUploadError(err.message || '워터마크 합성에 실패했습니다.');
+          setUploading(false);
+          return;
+        }
+      }
+    }
+    const localPreview = URL.createObjectURL(finalFile);
     setPreview(localPreview);
     try {
-      const { url, error } = await uploadImage(fileToUpload, folder);
+      const { url, error } = await uploadImage(finalFile, folder);
       if (error) throw error;
       setPreview(url);
       onImageChange(url);
@@ -311,7 +371,10 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
       let fileToUpload = file;
       if (!gif && size) {
         try {
-          fileToUpload = await resizeImage(file, size.width, size.height);
+          // 프리셋 px 선택 시 가이드 비율 유지 + 폭만 프리셋으로, 아니면 가이드 크기
+          const w = basePx || size.width;
+          const h = Math.round((size.height * w) / size.width);
+          fileToUpload = await resizeImage(file, w, h);
         } catch (err) {
           setUploadError(err.message || '리사이즈 실패');
           return;
@@ -427,6 +490,62 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
         />
       </div>
 
+      {/* 기준크기 프리셋 (가이드 있을 때만 · 출력 폭 결정) */}
+      {(() => {
+        const gsize = parseGuide(guide);
+        if (!gsize) return null;
+        const presets = [
+          { label: '권장 (가이드 크기)', value: null },
+          { label: '1280px', value: 1280 },
+          { label: '960px', value: 960 },
+          { label: '600px', value: 600 },
+        ];
+        return (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">기준크기</label>
+            <div className="flex flex-wrap gap-2">
+              {presets.map((preset) => {
+                const active = basePx === preset.value;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setBasePx(preset.value)}
+                    disabled={uploading}
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors disabled:opacity-50 ${
+                      active
+                        ? 'bg-sky-600 border-sky-600 text-white font-semibold'
+                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-xs text-gray-400">
+              {basePx
+                ? `출력 폭: ${basePx}px (가이드 비율 유지 · 원본이 작으면 그대로)`
+                : `출력: 가이드 크기 ${gsize.width} × ${gsize.height}`}
+            </p>
+          </div>
+        );
+      })()}
+
+      {/* 워터마크 옵션 (파일 업로드에만 적용, URL 입력에는 미적용) */}
+      {allowWatermark && (
+        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={watermark}
+            onChange={(e) => setWatermark(e.target.checked)}
+            disabled={uploading}
+            className="accent-sky-600 w-4 h-4"
+          />
+          워터마크 (우측 하단 Dr.News 로고 합성)
+        </label>
+      )}
+
       {/* URL 입력 */}
       <input
         type="text"
@@ -442,6 +561,7 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
         <ImageCropModal
           file={cropTarget.file}
           guide={cropTarget.size}
+          outputWidth={basePx}
           onComplete={handleCropComplete}
           onCancel={handleCropCancel}
         />
@@ -463,7 +583,7 @@ function PreviewModal({ isOpen, onClose, form }) {
   if (!isOpen) return null;
 
   const formattedDate = new Date().toLocaleDateString('ko-KR');
-  const imageSrc = form.image || ARTICLE_IMAGE_PLACEHOLDER;
+  const imageSrc = form.image || firstImageFromContent(form.content);
   const htmlContent = /<[^>]+>/.test(form.content)
     ? form.content
     : form.content.replace(/\n/g, '<br />');
@@ -501,15 +621,17 @@ function PreviewModal({ isOpen, onClose, form }) {
               <time>{formattedDate}</time>
             </div>
 
-            <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-lg bg-gray-100">
-              <Image
-                src={imageSrc}
-                alt={form.title || '기사 미리보기 이미지'}
-                fill
-                className="object-cover"
-                unoptimized={imageSrc.endsWith('.gif')}
-              />
-            </div>
+            {imageSrc && (
+              <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden shadow-lg bg-gray-100">
+                <Image
+                  src={imageSrc}
+                  alt={form.title || '기사 미리보기 이미지'}
+                  fill
+                  className="object-cover"
+                  unoptimized={imageSrc.endsWith('.gif')}
+                />
+              </div>
+            )}
           </header>
 
           <div className="bg-gray-50 border-l-4 border-sky-600 p-4 mb-8 rounded-r-lg">
@@ -767,6 +889,7 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
             content={form.content}
             onChange={(html) => setForm({ ...form, content: html })}
             placeholder="기사 본문을 입력하세요..."
+            enableInlinePhoto
           />
         </div>
 
@@ -871,7 +994,7 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
           content: form.content,
           author: form.author.split('/')[0]?.trim() || form.author,
           authorTitle: form.author.split('/')[1]?.trim() || '',
-          authorImage: form.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+          authorImage: form.image || firstImageFromContent(form.content) || '',
           category: form.category,
         };
 
@@ -888,7 +1011,8 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
           content: form.content,
           category: form.category,
           author: form.author,
-          image: form.image || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&h=400&fit=crop',
+          // 대표 이미지 공란이면 본문 첫 이미지 사용, 둘 다 없으면 이미지 없이 저장
+          image: form.image || firstImageFromContent(form.content) || null,
           placement: form.placement,
           isHeadline: form.placement === 'headline',
         };
@@ -1596,6 +1720,7 @@ function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
           allowGif={adType !== 'headline'}
           folder="banners"
           label="광고 이미지"
+          allowWatermark={false}
         />
 
         {/* 링크 */}

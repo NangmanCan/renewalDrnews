@@ -343,3 +343,99 @@
     font-size: 1.125em;
   }
 }
+
+/* 본문 사진 (figure.article-photo) — 기사 상세 + 에디터 미리보기 공통 */
+figure.article-photo {
+  margin: 1.5rem auto;
+  max-width: 70%;
+  text-align: center;
+}
+
+figure.article-photo.article-photo-full {
+  max-width: 100%;
+}
+
+/* 좌/우 정렬: 텍스트가 반대편으로 감쌈 (float) */
+figure.article-photo.article-photo-left {
+  float: left;
+  max-width: 45%;
+  margin: 0.375rem 1.25rem 0.75rem 0;
+}
+
+figure.article-photo.article-photo-right {
+  float: right;
+  max-width: 45%;
+  margin: 0.375rem 0 0.75rem 1.25rem;
+}
+
+/* 본문 컨테이너 float 해제 (좌/우 정렬 사진 뒤 레이아웃 깨짐 방지) */
+.article-body::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+figure.article-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 0;
+}
+
+figure.article-photo figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #6b7280;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  figure.article-photo {
+    max-width: 100%;
+  }
+}
+
+/* 모바일: 좌/우 정렬 float 해제 → 중앙 전체폭 (좁은 화면 감싸기 깨짐 방지) */
+@media (max-width: 640px) {
+  figure.article-photo.article-photo-left,
+  figure.article-photo.article-photo-right {
+    float: none;
+    max-width: 100%;
+    margin: 1.5rem auto;
+  }
+}
+
+/* 에디터 내부 보정: 상세 페이지와 동일한 정렬/폭 미리보기 */
+/* .tiptap-editor .ProseMirror img 규칙(margin/radius)이 figure 이미지를 덮어쓰므로 재지정 */
+.tiptap-editor .ProseMirror figure.article-photo img {
+  margin: 0 auto;
+  border-radius: 0;
+}
+/* 에디터 안에서는 float 미사용 — 사진만 있는 문서에서 float 시 문서 높이가 붕괴해
+   BubbleMenu 기준점이 무너지는 문제 방지. 정렬 의도는 좌/우 배치로만 표시하고
+   실제 텍스트 감싸기(float)는 기사 상세에서만 적용된다. */
+.tiptap-editor .ProseMirror figure.article-photo.article-photo-left,
+.tiptap-editor .ProseMirror figure.article-photo.article-photo-right {
+  float: none;
+}
+.tiptap-editor .ProseMirror figure.article-photo.article-photo-left {
+  margin-left: 0;
+  margin-right: auto;
+}
+.tiptap-editor .ProseMirror figure.article-photo.article-photo-right {
+  margin-left: auto;
+  margin-right: 0;
+}
+/* 좌/우 float 사진 뒤 레이아웃 깨짐 방지 (기사 상세 .article-body::after 대체) */
+.tiptap-editor .ProseMirror::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+/* 사진 컨트롤 바(BubbleMenu) 포지셔닝 요소에 z-index 부여
+   — 래퍼가 className을 안쪽 div에만 붙여 바깥 요소는 :has()로 타겟 */
+body > div:has(> .article-figure-menu) {
+  z-index: 100;
+}

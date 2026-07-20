@@ -219,8 +219,8 @@ export default async function ArticlePage({ params }) {
           </div>
 
           {/* 기사 본문 */}
-          <div 
-            className="max-w-none mb-12 text-[18px] text-gray-800 leading-[1.9] [&_p]:mb-6"
+          <div
+            className="article-body max-w-none mb-12 text-[18px] text-gray-800 leading-[1.9] [&_p]:mb-6"
             dangerouslySetInnerHTML={{ __html: article.content }}
           />
 
