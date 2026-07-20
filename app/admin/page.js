@@ -1994,8 +1994,8 @@ function StatsManager() {
   const chartTotalViews = chartData.reduce((sum, d) => sum + d.views, 0);
   const chartTotalVisitors = chartData.reduce((sum, d) => sum + d.visitors, 0);
 
-  // 유입 경로 비중 계산용 총합
-  const referrerTotal = referrers.reduce((sum, r) => sum + (r.count || 0), 0);
+  // 유입 경로 비중 계산용 총합 — 방문자 기준 (중복 뷰 왜곡 방지, 구응답 호환 count fallback)
+  const referrerTotal = referrers.reduce((sum, r) => sum + (r.visitors ?? r.count ?? 0), 0);
 
   const BANNER_TYPE_LABELS = {
     headline: '헤드라인 슬라이더',
@@ -2191,10 +2191,11 @@ function StatsManager() {
       {/* 유입 경로 — 검색 등록 효과 측정 */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-1">유입 경로</h3>
-        <p className="text-xs text-gray-400 mb-4">검색 등록 효과 측정 (선택한 기간 기준)</p>
+        <p className="text-xs text-gray-400 mb-4">방문자 기준 · 새로고침 등 중복 조회는 뷰 수에만 반영 (선택한 기간 기준)</p>
         <div className="space-y-3">
           {referrers.map((r) => {
-            const ratio = referrerTotal > 0 ? (r.count / referrerTotal) * 100 : 0;
+            const visitorCount = r.visitors ?? r.count ?? 0;
+            const ratio = referrerTotal > 0 ? (visitorCount / referrerTotal) * 100 : 0;
             return (
               <div key={r.source} className="flex items-center gap-3">
                 <span className="w-20 shrink-0 text-sm text-gray-700">{r.source}</span>
@@ -2204,8 +2205,8 @@ function StatsManager() {
                     style={{ width: `${ratio}%` }}
                   />
                 </div>
-                <span className="w-24 shrink-0 text-right text-sm text-gray-600">
-                  {r.count.toLocaleString()}건 ({ratio.toFixed(1)}%)
+                <span className="w-36 shrink-0 text-right text-sm text-gray-600">
+                  {visitorCount.toLocaleString()}명 ({ratio.toFixed(1)}%) · {(r.count || 0).toLocaleString()}뷰
                 </span>
               </div>
             );
