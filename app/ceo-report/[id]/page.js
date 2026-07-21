@@ -172,9 +172,23 @@ export default async function CeoReportPage({ params }) {
       </section>
 
       {/* 본문 */}
+      <div
+        className={report.backgroundImage ? 'bg-cover bg-center bg-no-repeat' : ''}
+        style={
+          report.backgroundImage
+            ? {
+                backgroundImage: `linear-gradient(rgba(255,255,255,0.35), rgba(255,255,255,0.35)), url("${report.backgroundImage}")`,
+              }
+            : undefined
+        }
+      >
       <article className="max-w-3xl mx-auto px-4 py-12">
-        <div 
-          className="prose prose-lg prose-slate max-w-none [&>p]:text-gray-700 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg"
+        <div
+          className={
+            report.backgroundImage
+              ? 'bg-white/95 backdrop-blur-sm shadow-lg rounded-xl px-6 py-10 md:px-10 md:py-12 prose prose-lg prose-slate max-w-none [&>p]:text-gray-800 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg'
+              : 'prose prose-lg prose-slate max-w-none [&>p]:text-gray-700 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg'
+          }
           dangerouslySetInnerHTML={{ __html: report.content }}
         />
 
@@ -237,6 +251,7 @@ export default async function CeoReportPage({ params }) {
           )}
         </div>
       </article>
+      </div>
 
       {/* 다른 CEO 리포트 */}
       {otherReports.length > 0 && (

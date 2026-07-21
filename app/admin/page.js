@@ -1218,6 +1218,7 @@ function CeoReportEditor({ report, onSave, onCancel }) {
     authorImage: report?.authorImage || '',
     category: report?.category || '경영철학',
     weekNumber: report?.weekNumber || Math.ceil((new Date().getDate()) / 7),
+    backgroundImage: report?.backgroundImage || null,
   });
   const [autoSaveTime, setAutoSaveTime] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -1226,6 +1227,15 @@ function CeoReportEditor({ report, onSave, onCancel }) {
   const autoSaveKey = `ceo_report_autosave_${report?.id || 'new'}`;
 
   const categories = ['경영철학', '리더십', '의료혁신', '미래전망'];
+
+  // 엽서 프레임 프리셋 (public/frames/*)
+  const framePresets = [
+    { label: '한지', value: '/frames/ceo-hanji.jpg' },
+    { label: '수묵', value: '/frames/ceo-sumuk.jpg' },
+    { label: '봄', value: '/frames/ceo-spring.jpg' },
+    { label: '물빛', value: '/frames/ceo-water.jpg' },
+  ];
+  const isPreset = framePresets.some((f) => f.value === form.backgroundImage);
 
   // 임시저장 데이터 로드
   useEffect(() => {
@@ -1424,6 +1434,56 @@ function CeoReportEditor({ report, onSave, onCancel }) {
           />
         </div>
 
+        {/* 엽서 배경 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">엽서 배경</label>
+          <p className="text-xs text-gray-500 mb-2">상세 페이지 본문에 엽서 프레임 배경을 입힙니다.</p>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {/* 없음(기본) */}
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, backgroundImage: null })}
+              className={`flex-shrink-0 w-20 h-24 rounded-lg border flex flex-col items-center justify-center text-xs font-medium transition-all ${
+                !form.backgroundImage
+                  ? 'ring-2 ring-sky-500 border-sky-500 text-sky-700 bg-sky-50'
+                  : 'border-gray-300 text-gray-500 bg-gray-50 hover:border-gray-400'
+              }`}
+            >
+              없음
+              <span className="text-[10px] text-gray-400">(기본)</span>
+            </button>
+
+            {/* 프리셋 4종 */}
+            {framePresets.map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                onClick={() => setForm({ ...form, backgroundImage: preset.value })}
+                className={`flex-shrink-0 w-20 rounded-lg overflow-hidden border transition-all ${
+                  form.backgroundImage === preset.value
+                    ? 'ring-2 ring-sky-500 border-sky-500'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={preset.value} alt={preset.label} className="w-full h-24 object-cover" />
+                <span className="block py-1 text-xs font-medium text-gray-700 bg-white">{preset.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* 직접 업로드 */}
+          <div className="mt-3">
+            <ImageUploader
+              currentImage={isPreset ? '' : (form.backgroundImage || '')}
+              onImageChange={(url) => setForm({ ...form, backgroundImage: url || null })}
+              folder="ceo"
+              label="배경 직접 업로드"
+              allowWatermark={false}
+            />
+          </div>
+        </div>
+
         <button
           type="submit"
           className="w-full py-3 bg-slate-700 hover:bg-slate-800 text-white font-medium rounded-lg"
@@ -1453,6 +1513,7 @@ function CeoReportManager({ reports, setReports, onRefresh }) {
         authorTitle: form.authorTitle,
         authorImage: form.authorImage || '',
         weekNumber: form.weekNumber,
+        backgroundImage: form.backgroundImage ?? null,
       };
 
       if (editingReport) {
