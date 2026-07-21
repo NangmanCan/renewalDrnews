@@ -93,7 +93,7 @@ const IMAGE_GUIDES = {
   headline: { width: 1600, height: 800, label: '헤드라인 (1600x800, retina 대응)' },
   subheadline: { width: 1280, height: 720, label: '서브헤드라인 (1280x720, retina 대응)' },
   news: { width: 640, height: 400, label: '뉴스목록 (640x400, retina 대응)' },
-  opinion: { width: 200, height: 200, label: '대표이미지 (200x200, retina 대응)' },
+  opinion: { width: 200, height: 200, label: '기고자 프로필 (200x200, retina 대응)' },
 };
 
 // 본문 HTML에서 첫 번째 이미지 src 추출 (대표 이미지 공란 시 대체용)
@@ -289,7 +289,7 @@ async function applyWatermarkToFile(file) {
   }
 }
 
-function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles', label = '대표 이미지', allowWatermark = true }) {
+function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, folder = 'articles', label = '대표 이미지', allowWatermark = true, allowBasePx = true }) {
   const fileInputRef = useRef(null);
   const [preview, setPreview] = useState(currentImage || '');
   const [isGif, setIsGif] = useState(false);
@@ -492,6 +492,7 @@ function ImageUploader({ currentImage, onImageChange, guide, allowGif = false, f
 
       {/* 기준크기 프리셋 (가이드 있을 때만 · 출력 폭 결정) */}
       {(() => {
+        if (!allowBasePx) return null; // 프로필 등 크기 고정 용도
         const gsize = parseGuide(guide);
         if (!gsize) return null;
         const presets = [
@@ -861,13 +862,16 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
           </div>
         </div>
 
-        {/* 이미지 업로드 */}
+        {/* 이미지 업로드 — 오피니언은 기고자 프로필(200x200 고정, 워터마크·크기 프리셋 없음) */}
         <ImageUploader
           currentImage={form.image}
           onImageChange={(url) => setForm({ ...form, image: url })}
           guide={currentGuide}
           allowGif={form.placement !== 'headline'}
           folder={form.placement === 'opinion' ? 'opinions' : 'articles'}
+          label={form.placement === 'opinion' ? '기고자 프로필' : '대표 이미지'}
+          allowBasePx={form.placement !== 'opinion'}
+          allowWatermark={form.placement !== 'opinion'}
         />
 
         {/* 요약 */}
