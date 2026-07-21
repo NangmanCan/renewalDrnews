@@ -26,6 +26,8 @@ export default function PageViewTracker() {
 
   useEffect(() => {
     if (!pathname) return;
+    // 관리자 페이지는 페이지뷰 기록 제외 (운영 작업이 통계에 섞이는 것 방지)
+    if (pathname.startsWith('/admin')) return;
 
     try {
       const visitorId = getVisitorId();

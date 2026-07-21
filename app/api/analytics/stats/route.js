@@ -99,11 +99,8 @@ export async function GET(request) {
       : { start: null, end: null };
 
     const [viewsResult, visitorsResult, articlesResult, bannersResult] = await Promise.all([
-      serviceClient
-        .from('page_views')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', startIso)
-        .lt('created_at', endIso),
+      // 총 페이지뷰: RPC로 내부인(admin 경로 이력 visitor) 제외 집계
+      serviceClient.rpc('analytics_total_views', { start_ts: startIso, end_ts: endIso }),
       // 순 방문자 수: RPC로 COUNT(DISTINCT) — 기존 JS Set(1000행 리밋) 버그 수정
       serviceClient.rpc('analytics_unique_visitors', { start_ts: startIso, end_ts: endIso }),
       serviceClient
@@ -226,7 +223,7 @@ export async function GET(request) {
     return NextResponse.json({
       period: normalizedPeriod,
       range: rangeMeta,
-      totalViews: viewsResult.count || 0,
+      totalViews: Number(viewsResult.data) || 0,
       uniqueVisitors,
       topArticles,
       bannerStats,
