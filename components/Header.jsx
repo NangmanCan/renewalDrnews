@@ -12,7 +12,7 @@ const Header = () => {
     <header className="bg-white sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
         {/* GNB 하단 구분선 (max-w-7xl 안쪽만) */}
-        <div className="flex items-center justify-between h-[72px] md:h-[116px] gap-6 border-b-2 border-gray-300">
+        <div className="flex items-center justify-between h-[72px] lg:h-[116px] gap-6 border-b-2 border-gray-300">
           {/* 좌: 로고 */}
           <Link href="/" className="flex-shrink-0 hover:opacity-80 transition-opacity">
             {/* 모바일: 비율 2:1 */}
@@ -21,7 +21,7 @@ const Header = () => {
               alt="닥터뉴스 Dr.News"
               width={140}
               height={70}
-              className="md:hidden"
+              className="lg:hidden"
               priority
               quality={95}
             />
@@ -31,14 +31,14 @@ const Header = () => {
               alt="닥터뉴스 Dr.News"
               width={180}
               height={90}
-              className="hidden md:block"
+              className="hidden lg:block"
               priority
               quality={95}
             />
           </Link>
 
           {/* 우: PC 카테고리 GNB (헤더 하단 쪽으로 정렬) */}
-          <nav className="hidden md:flex items-center flex-1 justify-end gap-1 self-end pb-3">
+          <nav className="hidden lg:flex items-center flex-1 justify-end gap-1 self-end pb-3">
             {CATEGORIES.map((category) => (
               <Link
                 key={category.slug}
@@ -53,7 +53,7 @@ const Header = () => {
           {/* 모바일 햄버거 */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden flex flex-col justify-center items-center w-12 h-12 gap-1.5"
+            className="lg:hidden flex flex-col justify-center items-center w-12 h-12 gap-1.5"
             aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
             aria-expanded={mobileMenuOpen}
           >
@@ -66,7 +66,7 @@ const Header = () => {
 
       {/* 모바일 카테고리 드롭다운 */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white">
+        <div className="lg:hidden border-t border-gray-200 bg-white">
           <nav className="flex flex-col">
             {CATEGORIES.map((category) => (
               <Link
