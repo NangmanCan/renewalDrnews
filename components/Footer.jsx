@@ -8,7 +8,6 @@ const PUBLICATION = {
   registrationNo: '서울, 아00310',
   registrationDate: '2007.01.08',
   publisher: '김영학',
-  editor: '정승혜',
   youthOfficer: '김영학',
   adEmail: 'kyh6384@hanmail.com',
 };
@@ -40,8 +39,7 @@ const Footer = () => {
               <span className="text-gray-300">|</span> 등록일 : {PUBLICATION.registrationDate}
             </p>
             <p>
-              발행인 : {PUBLICATION.publisher} <span className="text-gray-300">|</span> 편집인 : {PUBLICATION.editor}{' '}
-              <span className="text-gray-300">|</span> 청소년보호책임자 : {PUBLICATION.youthOfficer}{' '}
+              발행인 : {PUBLICATION.publisher} <span className="text-gray-300">|</span> 청소년보호책임자 : {PUBLICATION.youthOfficer}{' '}
               <span className="text-gray-300">|</span> 광고 문의 : {PUBLICATION.adEmail}
             </p>
             <p>
