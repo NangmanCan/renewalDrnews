@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 // 신문법상 인터넷신문 필수 표기 (등록증 기준)
 const PUBLICATION = {
@@ -28,8 +29,8 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-10">
           <div className="flex-shrink-0">
-            <div className="text-xl font-extrabold text-navy leading-tight">Dr.News</div>
-            <div className="text-xs text-gray-400">닥터뉴스</div>
+            <Image src="/logo.webp" alt="닥터뉴스 Dr.News" width={120} height={60} />
+            <div className="text-xs text-gray-400 mt-1">닥터뉴스</div>
           </div>
 
           <div className="text-xs text-gray-500 leading-relaxed space-y-1">
