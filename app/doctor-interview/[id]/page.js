@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SidebarAd from '@/components/SidebarAd';
-import { getOpinionById, getRelatedOpinions } from '@/lib/opinions';
+import { getDoctorInterviewById } from '@/lib/doctorInterviews';
 import { getBanners } from '@/lib/banners';
 
 // ISR: 60초 캐시 후 자동 갱신
@@ -12,35 +12,36 @@ export const runtime = 'edge';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const opinion = await getOpinionById(id);
+  const interview = await getDoctorInterviewById(id);
 
-  if (!opinion) {
+  if (!interview) {
     return {
-      title: '오피니언을 찾을 수 없습니다 - Dr.News',
+      title: '닥터인터뷰를 찾을 수 없습니다 - Dr.News',
     };
   }
 
   return {
-    title: `${opinion.title} - Dr.News 오피니언`,
-    description: opinion.summary,
+    title: `${interview.title} - Dr.News 닥터인터뷰`,
+    description: interview.summary,
+    alternates: {
+      canonical: `https://drnews.co.kr/doctor-interview/${id}`,
+    },
     openGraph: {
-      title: opinion.title,
-      description: opinion.summary,
+      title: interview.title,
+      description: interview.summary,
       type: 'article',
-      publishedTime: opinion.date,
-      authors: [opinion.author],
+      publishedTime: interview.created_at,
+      authors: [interview.author],
     },
   };
 }
 
-export default async function OpinionPage({ params }) {
+export default async function DoctorInterviewPage({ params }) {
   const { id } = await params;
   // cache()로 generateMetadata와 중복 호출 제거됨
-  // getRelatedOpinions로 전체 조회 대신 3건만 조회
-  const [opinion, allBanners, otherOpinions] = await Promise.all([
-    getOpinionById(id),
+  const [interview, allBanners] = await Promise.all([
+    getDoctorInterviewById(id),
     getBanners(),
-    getRelatedOpinions(id, 3)
   ]);
 
   // 사이드바 배너 (통합 - positions 필터 없이 전체 사용)
@@ -48,12 +49,12 @@ export default async function OpinionPage({ params }) {
     (b) => b.type === 'sidebar' && b.isActive
   );
 
-  if (!opinion) {
+  if (!interview) {
     return (
       <>
         <Header />
         <main className="max-w-4xl mx-auto px-4 py-20 text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">오피니언을 찾을 수 없습니다</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">닥터인터뷰를 찾을 수 없습니다</h2>
           <Link href="/" className="text-sky-600 hover:text-sky-700 font-medium">
             홈으로 돌아가기
           </Link>
@@ -79,58 +80,58 @@ export default async function OpinionPage({ params }) {
         </Link>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* 오피니언 본문 */}
+          {/* 인터뷰 본문 */}
           <article className="flex-1 max-w-4xl">
             {/* 헤더 */}
             <header className="mb-8">
               <div className="flex items-center gap-3 mb-4">
                 <span className="inline-block px-3 py-1 bg-violet-600 text-white text-sm font-medium rounded">
-                  {opinion.category}
+                  닥터인터뷰
                 </span>
-                <span className="text-gray-500 text-sm">{opinion.date}</span>
+                <span className="text-gray-500 text-sm">{interview.date}</span>
               </div>
 
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                {opinion.title}
+                {interview.title}
               </h1>
 
               <p className="text-lg text-gray-600 mb-6 italic">
-                "{opinion.summary}"
+                "{interview.summary}"
               </p>
 
               {/* 저자 정보 */}
               <div className="flex items-center gap-4 p-4 bg-violet-50 rounded-lg">
                 <div className="relative w-16 h-16 rounded-full overflow-hidden ring-3 ring-violet-200">
-                  {opinion.authorImage ? (
+                  {interview.authorImage ? (
                     <Image
-                      src={opinion.authorImage}
-                      alt={opinion.author}
+                      src={interview.authorImage}
+                      alt={interview.author}
                       fill
                       className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-xl font-bold">
-                      {opinion.author?.charAt(0) || '?'}
+                      {interview.author?.charAt(0) || '?'}
                     </div>
                   )}
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-gray-900">{opinion.author}</p>
-                  <p className="text-gray-600">{opinion.authorTitle}</p>
+                  <p className="text-lg font-bold text-gray-900">{interview.author}</p>
+                  <p className="text-gray-600">{interview.authorTitle}</p>
                 </div>
               </div>
             </header>
 
             {/* 본문 */}
             {/* 본문: 에디터 저장분(HTML)은 그대로, 구형 플레인 텍스트는 문단 분리 */}
-            {/<[a-z][^>]*>/i.test(opinion.content) ? (
+            {/<[a-z][^>]*>/i.test(interview.content) ? (
               <div
                 className="prose prose-lg max-w-none mb-12 [&>p]:text-gray-800 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg"
-                dangerouslySetInnerHTML={{ __html: opinion.content }}
+                dangerouslySetInnerHTML={{ __html: interview.content }}
               />
             ) : (
               <div className="prose prose-lg max-w-none mb-12">
-                {opinion.content.split('\n\n').map((paragraph, index) => (
+                {interview.content.split('\n\n').map((paragraph, index) => (
                   <p key={index} className="text-gray-800 leading-relaxed mb-6 text-lg">
                     {paragraph}
                   </p>
@@ -143,27 +144,27 @@ export default async function OpinionPage({ params }) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="relative w-12 h-12 rounded-full overflow-hidden">
-                    {opinion.authorImage ? (
+                    {interview.authorImage ? (
                       <Image
-                        src={opinion.authorImage}
-                        alt={opinion.author}
+                        src={interview.authorImage}
+                        alt={interview.author}
                         fill
                         className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-lg font-bold">
-                        {opinion.author?.charAt(0) || '?'}
+                        {interview.author?.charAt(0) || '?'}
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800">{opinion.author}</p>
-                    <p className="text-sm text-gray-500">{opinion.authorTitle}</p>
+                    <p className="font-semibold text-gray-800">{interview.author}</p>
+                    <p className="text-sm text-gray-500">{interview.authorTitle}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-400">{opinion.date}</p>
-                  <p className="text-sm text-violet-600 font-medium">{opinion.category}</p>
+                  <p className="text-sm text-gray-400">{interview.date}</p>
+                  <p className="text-sm text-violet-600 font-medium">닥터인터뷰</p>
                 </div>
               </div>
             </div>
@@ -189,47 +190,6 @@ export default async function OpinionPage({ params }) {
             <SidebarAd banners={sidebarBanners} sticky={true} showInquiry={true} />
           </aside>
         </div>
-
-        {/* 다른 오피니언 */}
-        {otherOpinions.length > 0 && (
-          <section className="mt-12 pt-8 border-t border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">다른 오피니언</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {otherOpinions.map((o) => (
-                <Link
-                  key={o.id}
-                  href={`/opinion/${o.id}`}
-                  className="bg-white p-5 rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                      {o.authorImage ? (
-                        <Image
-                          src={o.authorImage}
-                          alt={o.author}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold">
-                          {o.author?.charAt(0) || '?'}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{o.author}</p>
-                      <p className="text-xs text-gray-500">{o.authorTitle}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-violet-600 font-medium">{o.category}</span>
-                  <h3 className="font-bold text-gray-900 mt-1 line-clamp-2">{o.title}</h3>
-                  <p className="text-sm text-gray-500 mt-2 line-clamp-2">{o.summary}</p>
-                  <p className="text-xs text-gray-400 mt-3">{o.date}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
       </main>
       <Footer />
     </>

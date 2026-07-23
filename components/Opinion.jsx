@@ -6,9 +6,13 @@ import Link from 'next/link';
 const OpinionCard = ({ opinion }) => {
   if (!opinion) return null;
 
+  // 닥터인터뷰 항목은 전용 상세 경로로 연결
+  const isInterview = opinion.type === 'doctor_interview';
+  const href = isInterview ? `/doctor-interview/${opinion.id}` : `/opinion/${opinion.id}`;
+
   return (
     <Link
-      href={`/opinion/${opinion.id}`}
+      href={href}
       className="block p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
     >
       <div className="flex items-start gap-3">
@@ -31,6 +35,11 @@ const OpinionCard = ({ opinion }) => {
         {/* 콘텐츠 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
+            {isInterview && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-600 text-white">
+                닥터인터뷰
+              </span>
+            )}
             <span className="text-xs text-gray-400">{opinion.date}</span>
           </div>
           <h4 className="text-[15px] font-bold text-gray-900 line-clamp-1 mb-1 hover:underline">
@@ -64,7 +73,7 @@ const Opinion = ({ opinions, fillHeight = false }) => {
       {/* 오피니언 목록 */}
       <div className={fillHeight ? 'flex-1' : ''}>
         {opinions.map((opinion) => (
-          <OpinionCard key={opinion.id} opinion={opinion} />
+          <OpinionCard key={`${opinion.type || 'opinion'}-${opinion.id}`} opinion={opinion} />
         ))}
       </div>
 
