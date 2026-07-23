@@ -123,13 +123,21 @@ export default async function DoctorInterviewPage({ params }) {
             </header>
 
             {/* 본문 */}
-            <div className="prose prose-lg max-w-none mb-12">
-              {interview.content.split('\n\n').map((paragraph, index) => (
-                <p key={index} className="text-gray-800 leading-relaxed mb-6 text-lg">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+            {/* 본문: 에디터 저장분(HTML)은 그대로, 구형 플레인 텍스트는 문단 분리 */}
+            {/<[a-z][^>]*>/i.test(interview.content) ? (
+              <div
+                className="prose prose-lg max-w-none mb-12 [&>p]:text-gray-800 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg"
+                dangerouslySetInnerHTML={{ __html: interview.content }}
+              />
+            ) : (
+              <div className="prose prose-lg max-w-none mb-12">
+                {interview.content.split('\n\n').map((paragraph, index) => (
+                  <p key={index} className="text-gray-800 leading-relaxed mb-6 text-lg">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            )}
 
             {/* 서명 영역 */}
             <div className="mt-12 pt-8 border-t border-gray-200">
