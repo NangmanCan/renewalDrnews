@@ -73,7 +73,7 @@ const Opinion = ({ opinions, fillHeight = false }) => {
       {/* 오피니언 목록 */}
       <div className={fillHeight ? 'flex-1' : ''}>
         {opinions.map((opinion) => (
-          <OpinionCard key={opinion.id} opinion={opinion} />
+          <OpinionCard key={`${opinion.type || 'opinion'}-${opinion.id}`} opinion={opinion} />
         ))}
       </div>
 
