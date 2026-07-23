@@ -1762,6 +1762,7 @@ function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
     title: ad?.title || '',
     description: ad?.description || '',
     image: ad?.image || '',
+    mobileImage: ad?.mobileImage || '',
     link: ad?.link || '',
     advertiser: ad?.advertiser || '',
     startDate: ad?.startDate || '',
@@ -1820,6 +1821,24 @@ function AdEditor({ ad, adType, onSave, onCancel, onFormChange }) {
           label="광고 이미지"
           allowWatermark={false}
         />
+
+        {/* 띠배너 모바일 전용 소재 (선택) — PC 초와이드 소재가 모바일에서 얇아지는 문제 대응 */}
+        {adType === 'strip' && (
+          <div>
+            <ImageUploader
+              currentImage={form.mobileImage}
+              onImageChange={(url) => setForm({ ...form, mobileImage: url })}
+              guide="800x200"
+              allowGif
+              folder="banners"
+              label="모바일용 이미지 (선택)"
+              allowWatermark={false}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              권장 800×200 (4:1). 등록하면 모바일에서 이 소재가 두툼하게 노출되고, 없으면 PC 소재가 원본 비율로 노출됩니다.
+            </p>
+          </div>
+        )}
 
         {/* 링크 */}
         <div>

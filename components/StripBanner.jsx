@@ -93,19 +93,37 @@ const StripBanner = ({ banners = [], rolling = true, interval = 5 }) => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackBanner(b.id, 'click')}
-              className="relative block w-full flex-shrink-0 aspect-[2400/360] bg-white lg:aspect-[2400/180]"
+              className="relative block w-full flex-shrink-0"
             >
+              {/* PC 소재 (2400:180) — PC에서만 */}
               {b.image && (
-                <Image
-                  src={b.image}
-                  alt={b.title || '광고'}
-                  fill
-                  priority={i === 0}
-                  quality={95}
-                  sizes="(max-width: 1280px) 100vw, 1280px"
-                  className="object-contain lg:object-cover"
-                  unoptimized={b.image?.endsWith('.gif')}
-                />
+                <span className="relative hidden lg:block w-full aspect-[2400/180]">
+                  <Image
+                    src={b.image}
+                    alt={b.title || '광고'}
+                    fill
+                    priority={i === 0}
+                    quality={95}
+                    sizes="1280px"
+                    className="object-cover"
+                    unoptimized={b.image?.endsWith('.gif')}
+                  />
+                </span>
+              )}
+              {/* 모바일: 전용 소재(4:1) 있으면 두툼하게, 없으면 PC 소재 원본 비율 */}
+              {(b.mobileImage || b.image) && (
+                <span className={`relative block lg:hidden w-full ${b.mobileImage ? 'aspect-[4/1]' : 'aspect-[2400/180]'}`}>
+                  <Image
+                    src={b.mobileImage || b.image}
+                    alt={b.title || '광고'}
+                    fill
+                    priority={i === 0}
+                    quality={95}
+                    sizes="100vw"
+                    className="object-cover"
+                    unoptimized={(b.mobileImage || b.image)?.endsWith('.gif')}
+                  />
+                </span>
               )}
             </a>
           ))}

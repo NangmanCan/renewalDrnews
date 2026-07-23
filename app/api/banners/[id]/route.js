@@ -27,6 +27,7 @@ export async function PUT(request, { params }) {
         title: body.title,
         description: body.description,
         image: body.image,
+        mobile_image: body.mobileImage ?? null,
         link: body.link || '#',
         type: body.type,
         is_active: body.isActive,
@@ -48,6 +49,7 @@ export async function PUT(request, { params }) {
     return NextResponse.json({
       ...updated,
       isActive: updated.is_active,
+      mobileImage: updated.mobile_image ?? null,
       order: updated.sort_order,
       advertiser: updated.advertiser,
       memo: updated.memo,
