@@ -9,13 +9,15 @@ export default function HeroSecondary({ feature, mini = [] }) {
       {feature && (
         <Link href={`/article/${feature.id}`} className="group block">
           {feature.image && (
-            <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden">
+            <div className="w-full bg-gray-100 overflow-hidden">
+              {/* 고정 비율(4:3) 크롭 대신 사진 원본 비율 유지 — 어떤 비율이든 잘리지 않게 */}
               <Image
                 src={feature.image}
                 alt={feature.title}
-                fill
+                width={640}
+                height={400}
                 sizes="(max-width: 1024px) 100vw, 256px"
-                className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                className="w-full h-auto group-hover:scale-[1.02] transition-transform duration-300"
               />
             </div>
           )}
