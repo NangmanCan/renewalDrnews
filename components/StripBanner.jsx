@@ -93,8 +93,7 @@ const StripBanner = ({ banners = [], rolling = true, interval = 5 }) => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackBanner(b.id, 'click')}
-              className="relative block w-full flex-shrink-0"
-              style={{ aspectRatio: '2400 / 180' }}
+              className="relative block w-full flex-shrink-0 aspect-[2400/360] bg-white lg:aspect-[2400/180]"
             >
               {b.image && (
                 <Image
@@ -104,7 +103,7 @@ const StripBanner = ({ banners = [], rolling = true, interval = 5 }) => {
                   priority={i === 0}
                   quality={95}
                   sizes="(max-width: 1280px) 100vw, 1280px"
-                  className="object-cover"
+                  className="object-contain lg:object-cover"
                   unoptimized={b.image?.endsWith('.gif')}
                 />
               )}
