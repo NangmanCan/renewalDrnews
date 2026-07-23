@@ -1009,7 +1009,7 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, doctorIn
           content: form.content,
           author: form.author.split('/')[0]?.trim() || form.author,
           authorTitle: form.author.split('/')[1]?.trim() || '',
-          authorImage: form.image || firstImageFromContent(form.content) || '',
+          authorImage: form.image || '', // 프로필 공란 시 본문 사진을 쓰지 않음 (이니셜 아바타 표시)
         };
 
         if (editingItem?.type === 'doctor_interview') {
@@ -1025,7 +1025,7 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, doctorIn
           content: form.content,
           author: form.author.split('/')[0]?.trim() || form.author,
           authorTitle: form.author.split('/')[1]?.trim() || '',
-          authorImage: form.image || firstImageFromContent(form.content) || '',
+          authorImage: form.image || '', // 프로필 공란 시 본문 사진을 쓰지 않음 (이니셜 아바타 표시)
           category: form.category,
         };
 
