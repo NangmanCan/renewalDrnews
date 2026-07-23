@@ -170,8 +170,11 @@ function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, so
             </span>
           )}
         </div>
-        <span className="text-sm text-gray-500 flex-shrink-0">
-          {items.length}{max !== null ? ` / ${max}` : ''}
+        <span className="flex items-center gap-1.5 flex-shrink-0">
+          <span className={`text-sm ${max !== null && items.length > max ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+            {items.length}{max !== null ? ` / ${max}` : ''}
+          </span>
+          {isFull && <span className="text-[11px] text-red-600 font-bold bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">FULL</span>}
         </span>
       </div>
       {children}
@@ -181,17 +184,31 @@ function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, so
             {canPlaceSelected ? '클릭해서 여기 배치' : '비어있음'}
           </div>
         ) : (
-          visibleItems.map((it) => (
-            <PlacedItem
-              key={it.id}
-              item={it}
-              slotId={slotId}
-              source={source}
-              onRemove={() => onRemove(it.id)}
-            />
-          ))
+          visibleItems.map((it, idx) => {
+            // 정원(max) 초과분은 실제 사이트에 노출되지 않음 — 흐리게 + 비노출 태그
+            const globalIdx = itemsPerPage ? currentPage * itemsPerPage + idx : idx;
+            const isOverflow = max !== null && globalIdx >= max;
+            return (
+              <div key={it.id} className={isOverflow ? 'relative opacity-45' : undefined}>
+                {isOverflow && (
+                  <span className="absolute -top-1 right-8 z-10 text-[10px] text-red-500 font-bold bg-white border border-red-200 px-1 rounded">비노출</span>
+                )}
+                <PlacedItem
+                  item={it}
+                  slotId={slotId}
+                  source={source}
+                  onRemove={() => onRemove(it.id)}
+                />
+              </div>
+            );
+          })
         )}
       </div>
+      {max !== null && items.length > max && (
+        <p className="mt-2 text-[12px] text-red-500 leading-snug">
+          정원 초과 {items.length - max}건은 사이트에 노출되지 않습니다 — 제거하거나 다른 슬롯으로 옮겨주세요.
+        </p>
+      )}
 
       {/* 페이지네이션 (itemsPerPage 옵션이 있고 페이지가 2개 이상일 때만) */}
       {itemsPerPage && totalPages > 1 && (
@@ -221,7 +238,6 @@ function DroppableSlot({ slotId, label, max, items, onClickAdd, selectedItem, so
         </div>
       )}
 
-      {isFull && <div className="absolute top-2 right-2 text-xs text-red-600 font-bold bg-white px-1.5 rounded">FULL</div>}
     </div>
   );
 }
@@ -232,6 +248,7 @@ function PCMiniature({ slots, selectedItem, onClickAdd, onRemove }) {
       <div className="grid grid-cols-[1fr_1.6fr_1fr] gap-3">
         <DroppableSlot
           slotId="subheadline"
+          helpText="카드(이미지+제목)에는 이 슬롯의 최신 1건만 노출됩니다. 그 아래 미니 헤드라인 2건은 최신 기사에서 자동 선정되며 이 슬롯과 무관합니다."
           label="서브헤드라인"
           max={1}
           items={slots.subheadline}
@@ -346,6 +363,7 @@ function MobileMiniature({ slots, selectedItem, onClickAdd, onRemove }) {
       />
       <DroppableSlot
         slotId="subheadline"
+        helpText="카드(이미지+제목)에는 이 슬롯의 최신 1건만 노출됩니다. 그 아래 미니 헤드라인 2건은 최신 기사에서 자동 선정되며 이 슬롯과 무관합니다."
         label="서브헤드라인"
         max={1}
         items={slots.subheadline}
