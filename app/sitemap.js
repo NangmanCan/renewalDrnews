@@ -1,14 +1,16 @@
 import { getArticles } from '@/lib/articles';
 import { getCeoReports } from '@/lib/ceoReports';
 import { getOpinions } from '@/lib/opinions';
+import { getLatestDoctorInterviews } from '@/lib/doctorInterviews';
 import { CATEGORIES } from '@/lib/categories';
 
 export default async function sitemap() {
   // 각 lib 호출은 실패 시 빈배열/정적 fallback을 반환하므로 개별 방어 처리
-  const [articles, ceoReports, opinions] = await Promise.all([
+  const [articles, ceoReports, opinions, doctorInterviews] = await Promise.all([
     getArticles().catch(() => []),
     getCeoReports(1000).catch(() => []),
     getOpinions().catch(() => []),
+    getLatestDoctorInterviews(1000).catch(() => []),
   ]);
 
   // 기사 URL
@@ -31,6 +33,14 @@ export default async function sitemap() {
   const opinionUrls = opinions.map((opinion) => ({
     url: `https://drnews.co.kr/opinion/${opinion.id}`,
     lastModified: opinion.created_at || opinion.date || new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
+
+  // 닥터인터뷰 상세 URL
+  const doctorInterviewUrls = doctorInterviews.map((interview) => ({
+    url: `https://drnews.co.kr/doctor-interview/${interview.id}`,
+    lastModified: interview.created_at || interview.date || new Date(),
     changeFrequency: 'weekly',
     priority: 0.6,
   }));
@@ -65,5 +75,5 @@ export default async function sitemap() {
     },
   ];
 
-  return [...staticPages, ...categoryUrls, ...articleUrls, ...ceoReportUrls, ...opinionUrls];
+  return [...staticPages, ...categoryUrls, ...articleUrls, ...ceoReportUrls, ...opinionUrls, ...doctorInterviewUrls];
 }

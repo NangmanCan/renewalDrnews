@@ -86,6 +86,7 @@ const PLACEMENT_OPTIONS = [
   { id: 'focus', label: '닥터포커스', color: 'sky', max: null },
   { id: 'category_card', label: '카테고리 카드(PC 우측)', color: 'brand', max: 4 },
   { id: 'opinion', label: '오피니언 기고란', color: 'violet', max: 3 },
+  { id: 'doctor_interview', label: '닥터인터뷰', color: 'emerald', max: null },
 ];
 
 // 이미지 사이즈 가이드 (retina 대응: 표시 폭 × 2 기준)
@@ -94,6 +95,7 @@ const IMAGE_GUIDES = {
   subheadline: { width: 1280, height: 720, label: '서브헤드라인 (1280x720, retina 대응)' },
   news: { width: 640, height: 400, label: '뉴스목록 (640x400, retina 대응)' },
   opinion: { width: 200, height: 200, label: '기고자 프로필 (200x200, retina 대응)' },
+  doctor_interview: { width: 200, height: 200, label: '인터뷰이 프로필 (200x200, retina 대응)' },
 };
 
 // 본문 HTML에서 첫 번째 이미지 src 추출 (대표 이미지 공란 시 대체용)
@@ -736,6 +738,9 @@ function ArticleEditor({ article, onSave, onCancel, placement, saving = false })
   const opinionCategories = ['칼럼', '기고'];
   const categories = form.placement === 'opinion' ? opinionCategories : articleCategories;
 
+  // 오피니언·닥터인터뷰는 기고자/인터뷰이 프로필(200x200 고정) 형식을 공유
+  const isProfilePlacement = form.placement === 'opinion' || form.placement === 'doctor_interview';
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.title || !form.content) {
@@ -811,9 +816,11 @@ function ArticleEditor({ article, onSave, onCancel, placement, saving = false })
                 }`}
                 style={{
                   backgroundColor: form.placement === opt.id
-                    ? (opt.color === 'red' ? '#ef4444' : opt.color === 'blue' ? '#3b82f6' : opt.color === 'violet' ? '#8b5cf6' : '#6b7280')
-                    : undefined,
-                  color: form.placement === opt.id ? 'white' : undefined
+                    ? (opt.color === 'red' ? '#ef4444' : opt.color === 'blue' ? '#3b82f6' : opt.color === 'violet' ? '#8b5cf6' : opt.color === 'emerald' ? '#059669' : '#6b7280')
+                    : (opt.color === 'emerald' ? '#ecfdf5' : undefined),
+                  color: form.placement === opt.id
+                    ? 'white'
+                    : (opt.color === 'emerald' ? '#059669' : undefined)
                 }}
               >
                 {opt.label}
@@ -834,44 +841,46 @@ function ArticleEditor({ article, onSave, onCancel, placement, saving = false })
           />
         </div>
 
-        {/* 카테고리 & 기자명 */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
+        {/* 카테고리 & 기자명 — 닥터인터뷰는 카테고리 select 숨김 */}
+        <div className={`grid ${form.placement === 'doctor_interview' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+          {form.placement !== 'doctor_interview' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {form.placement === 'opinion' ? '기고자명 / 직함' : '기자명'}
+              {isProfilePlacement ? '기고자명 / 직함' : '기자명'}
             </label>
             <input
               type="text"
               value={form.author}
               onChange={(e) => setForm({ ...form, author: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-              placeholder={form.placement === 'opinion' ? '홍길동 / 의료경영학 박사' : '김기자'}
+              placeholder={isProfilePlacement ? '홍길동 / 의료경영학 박사' : '김기자'}
             />
           </div>
         </div>
 
-        {/* 이미지 업로드 — 오피니언은 기고자 프로필(200x200 고정, 워터마크·크기 프리셋 없음) */}
+        {/* 이미지 업로드 — 오피니언·닥터인터뷰는 프로필(200x200 고정, 워터마크·크기 프리셋 없음) */}
         <ImageUploader
           currentImage={form.image}
           onImageChange={(url) => setForm({ ...form, image: url })}
           guide={currentGuide}
           allowGif={form.placement !== 'headline'}
-          folder={form.placement === 'opinion' ? 'opinions' : 'articles'}
-          label={form.placement === 'opinion' ? '기고자 프로필' : '대표 이미지'}
-          allowBasePx={form.placement !== 'opinion'}
-          allowWatermark={form.placement !== 'opinion'}
+          folder={isProfilePlacement ? 'opinions' : 'articles'}
+          label={isProfilePlacement ? '기고자 프로필' : '대표 이미지'}
+          allowBasePx={!isProfilePlacement}
+          allowWatermark={!isProfilePlacement}
         />
 
         {/* 요약 */}
@@ -927,7 +936,7 @@ function ArticleEditor({ article, onSave, onCancel, placement, saving = false })
 }
 
 // 기사 관리 탭
-function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefresh }) {
+function ArticleManager({ articles, setArticles, opinions, setOpinions, doctorInterviews, setDoctorInterviews, onRefresh }) {
   const [activeTab, setActiveTab] = useState('list');
   const [editingItem, setEditingItem] = useState(null);
   const [filterPlacement, setFilterPlacement] = useState('all');
@@ -939,6 +948,7 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
   const allItems = [
     ...articles.map(a => ({ ...a, type: 'article', placement: a.placement || (a.is_headline || a.isHeadline ? 'headline' : 'news') })),
     ...opinions.map(o => ({ ...o, type: 'opinion', placement: 'opinion' })),
+    ...(doctorInterviews || []).map(d => ({ ...d, type: 'doctor_interview', placement: 'doctor_interview' })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const parseItemDate = (dateValue) => {
@@ -991,7 +1001,23 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
   const handleSave = async (form) => {
     setSaving(true);
     try {
-      if (form.placement === 'opinion') {
+      if (form.placement === 'doctor_interview') {
+        // 닥터인터뷰로 저장 (author 분리 로직은 오피니언과 동일, 카테고리 없음)
+        const interviewData = {
+          title: form.title,
+          summary: form.summary,
+          content: form.content,
+          author: form.author.split('/')[0]?.trim() || form.author,
+          authorTitle: form.author.split('/')[1]?.trim() || '',
+          authorImage: form.image || firstImageFromContent(form.content) || '',
+        };
+
+        if (editingItem?.type === 'doctor_interview') {
+          await api.update('doctor-interviews', editingItem.id, interviewData);
+        } else {
+          await api.create('doctor-interviews', interviewData);
+        }
+      } else if (form.placement === 'opinion') {
         // 오피니언으로 저장
         const opinionData = {
           title: form.title,
@@ -1046,7 +1072,9 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
     try {
-      if (item.type === 'opinion') {
+      if (item.type === 'doctor_interview') {
+        await api.remove('doctor-interviews', item.id);
+      } else if (item.type === 'opinion') {
         await api.remove('opinions', item.id);
       } else {
         await api.remove('articles', item.id);
@@ -1066,6 +1094,7 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
       red: 'bg-red-100 text-red-600',
       blue: 'bg-blue-100 text-blue-600',
       violet: 'bg-violet-100 text-violet-600',
+      emerald: 'bg-emerald-100 text-emerald-600',
       gray: 'bg-gray-100 text-gray-600',
     };
     return (
@@ -2494,6 +2523,7 @@ export default function AdminPage() {
   const [articles, setArticles] = useState(staticArticles);
   const [ceoReports, setCeoReports] = useState(staticCeoReports);
   const [opinions, setOpinions] = useState(staticOpinions);
+  const [doctorInterviews, setDoctorInterviews] = useState([]);
   const [banners, setBanners] = useState(staticBanners);
   const [loading, setLoading] = useState(true);
   const [slots, setSlots] = useState({
@@ -2509,15 +2539,17 @@ export default function AdminPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [articlesData, opinionsData, ceoData, bannersData] = await Promise.all([
+      const [articlesData, opinionsData, doctorInterviewsData, ceoData, bannersData] = await Promise.all([
         api.fetchData('articles'),
         api.fetchData('opinions'),
+        api.fetchData('doctor-interviews'),
         api.fetchData('ceo-reports'),
         api.fetchData('banners'),
       ]);
 
       if (articlesData) setArticles(articlesData);
       if (opinionsData) setOpinions(opinionsData);
+      if (doctorInterviewsData) setDoctorInterviews(doctorInterviewsData);
       if (ceoData) setCeoReports(ceoData);
       if (bannersData) setBanners(bannersData);
 
@@ -2586,6 +2618,8 @@ export default function AdminPage() {
             setArticles={setArticles}
             opinions={opinions}
             setOpinions={setOpinions}
+            doctorInterviews={doctorInterviews}
+            setDoctorInterviews={setDoctorInterviews}
             onRefresh={loadData}
           />
         )}

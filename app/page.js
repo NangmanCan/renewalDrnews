@@ -19,6 +19,7 @@ import NewsTicker from '@/components/NewsTicker';
 import { getArticles, getHeadlineArticles, getSubHeadlineArticles, getPopularArticles, getArticlesByCategory } from '@/lib/articles';
 import { getLatestCeoReport } from '@/lib/ceoReports';
 import { getLatestOpinions, getOpinions } from '@/lib/opinions';
+import { getLatestDoctorInterviews } from '@/lib/doctorInterviews';
 import { getBanners, getStripBanners } from '@/lib/banners';
 import { getDoctorPicks } from '@/lib/doctorPicks';
 import { getAdSlotSettings } from '@/lib/adSlotSettings';
@@ -42,18 +43,25 @@ export default async function Home({ searchParams }) {
   }
 
   // Supabase에서 데이터 가져오기 (모든 쿼리 병렬 실행)
-  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, allBanners, stripBanners, doctorPicks, adSlotSettings] = await Promise.all([
+  const [allArticles, headlineArticles, subHeadlineArticles, popularArticles, latestCeoReport, latestOpinions, latestDoctorInterviews, allBanners, stripBanners, doctorPicks, adSlotSettings] = await Promise.all([
     getArticles(),
     getHeadlineArticles(2),
     getSubHeadlineArticles(1),
     getPopularArticles(8),
     getLatestCeoReport(),
     getLatestOpinions(3),
+    getLatestDoctorInterviews(1),
     getBanners(),
     getStripBanners(),
     getDoctorPicks(3),
     getAdSlotSettings(),
   ]);
+
+  // 오피니언 영역: 최신 닥터인터뷰 1건을 최상단에 노출, 아래는 기존 오피니언
+  // 인터뷰가 없으면 기존 오피니언 그대로
+  const opinionItems = latestDoctorInterviews.length > 0
+    ? [{ ...latestDoctorInterviews[0], type: 'doctor_interview' }, ...latestOpinions]
+    : latestOpinions;
 
   // 닥터포커스 기사 (placement='focus' 또는 기존 category='닥터포커스')
   const focusArticlesList = allArticles.filter(a => a.placement === 'focus' || a.category === '닥터포커스');
@@ -252,7 +260,7 @@ export default async function Home({ searchParams }) {
                   {/* 우측 사이드바 */}
                   <aside className="w-72 flex-shrink-0 flex flex-col gap-4">
                     <PopularNews articles={popularArticles} matchHeadline />
-                    <Opinion opinions={latestOpinions} fillHeight />
+                    <Opinion opinions={opinionItems} fillHeight />
                     {sidebarBanners.length > 0 && (
                       <SidebarAd banners={sidebarBanners} sticky={false} />
                     )}
@@ -335,7 +343,7 @@ export default async function Home({ searchParams }) {
               )}
 
               {/* 오피니언 */}
-              <Opinion opinions={latestOpinions} />
+              <Opinion opinions={opinionItems} />
 
               {/* 많이 본 뉴스 */}
               <PopularNews articles={popularArticles} />
