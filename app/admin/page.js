@@ -652,7 +652,7 @@ function PreviewModal({ isOpen, onClose, form }) {
 }
 
 // 기사 에디터 컴포넌트
-function ArticleEditor({ article, onSave, onCancel, placement }) {
+function ArticleEditor({ article, onSave, onCancel, placement, saving = false }) {
   const initialPlacement = article?.placement || placement || 'news';
   const defaultCategory = initialPlacement === 'opinion' ? '칼럼' : '정책';
 
@@ -907,11 +907,12 @@ function ArticleEditor({ article, onSave, onCancel, placement }) {
           </button>
           <button
             type="submit"
-            className={`py-3 text-white font-medium rounded-lg transition-colors ${
+            disabled={saving}
+            className={`py-3 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               article ? 'bg-green-600 hover:bg-green-700' : 'bg-sky-600 hover:bg-sky-700'
             }`}
           >
-            {article ? '수정 완료' : '발행하기'}
+            {saving ? '저장 중…' : article ? '수정 완료' : '발행하기'}
           </button>
         </div>
       </form>
@@ -1200,6 +1201,7 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
         <ArticleEditor
           article={editingItem}
           onSave={handleSave}
+          saving={saving}
           onCancel={() => { setEditingItem(null); setActiveTab('list'); }}
         />
       )}
@@ -1208,7 +1210,7 @@ function ArticleManager({ articles, setArticles, opinions, setOpinions, onRefres
 }
 
 // CEO 리포트 에디터
-function CeoReportEditor({ report, onSave, onCancel }) {
+function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
   const [form, setForm] = useState({
     title: report?.title || '',
     subtitle: report?.subtitle || '',
@@ -1486,9 +1488,10 @@ function CeoReportEditor({ report, onSave, onCancel }) {
 
         <button
           type="submit"
-          className="w-full py-3 bg-slate-700 hover:bg-slate-800 text-white font-medium rounded-lg"
+          disabled={saving}
+          className="w-full py-3 bg-slate-700 hover:bg-slate-800 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {report ? '수정 완료' : '발행하기'}
+          {saving ? '저장 중…' : report ? '수정 완료' : '발행하기'}
         </button>
       </form>
     </div>
@@ -1605,6 +1608,7 @@ function CeoReportManager({ reports, setReports, onRefresh }) {
         <CeoReportEditor
           report={editingReport}
           onSave={handleSave}
+          saving={saving}
           onCancel={() => { setEditingReport(null); setActiveTab('list'); }}
         />
       )}
