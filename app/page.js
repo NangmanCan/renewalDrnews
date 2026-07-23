@@ -93,8 +93,8 @@ export default async function Home({ searchParams }) {
       regularArticles = allOpinions;
       listArticles = allOpinions;
     } else if (category === '전체') {
-      // 전체 기사 (헤드라인 제외한 모든 기사)
-      listArticles = visibleArticles.filter(a => !a.isHeadline && !a.is_headline);
+      // 전체 기사 (헤드라인 제외) — 전량 렌더 시 수 MB 페이지가 되므로 50건 제한 (전체 목록은 /news)
+      listArticles = visibleArticles.filter(a => !a.isHeadline && !a.is_headline).slice(0, 50);
     } else {
       const categoryArticles = await getArticlesByCategory(category);
       regularArticles = categoryArticles;
@@ -318,7 +318,7 @@ export default async function Home({ searchParams }) {
                     ))}
                     {listArticles.length > 10 && (
                       <div className="border-t border-gray-200 py-4 text-center">
-                        <a href="/?category=전체" className="text-sm font-bold text-gray-600 hover:text-navy transition-colors">
+                        <a href="/news" className="text-sm font-bold text-gray-600 hover:text-navy transition-colors">
                           MORE +
                         </a>
                       </div>

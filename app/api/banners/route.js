@@ -30,6 +30,7 @@ export async function GET() {
     const formatted = data?.map(item => ({
       ...item,
       isActive: item.is_active,
+      mobileImage: item.mobile_image ?? null,
       order: item.sort_order,
       advertiser: item.advertiser,
       memo: item.memo,
@@ -65,6 +66,7 @@ export async function POST(request) {
         title: body.title,
         description: body.description,
         image: body.image,
+        mobile_image: body.mobileImage ?? null,
         link: body.link || '#',
         type: body.type,
         is_active: body.isActive ?? true,
@@ -85,6 +87,7 @@ export async function POST(request) {
     return NextResponse.json({
       ...created,
       isActive: created.is_active,
+      mobileImage: created.mobile_image ?? null,
       order: created.sort_order,
       advertiser: created.advertiser,
       memo: created.memo,
