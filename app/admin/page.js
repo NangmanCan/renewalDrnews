@@ -2310,12 +2310,18 @@ function StatsManager() {
           {chartData.map((d) => (
             <div
               key={d.key}
-              className="flex-1 flex items-end justify-center h-full"
+              className="flex-1 flex flex-col items-center justify-end h-full min-w-0"
               title={`${d.label} · 조회 ${d.views.toLocaleString()} · 방문 ${d.visitors.toLocaleString()}`}
             >
+              {/* 막대 위 일별 조회수 라벨 (0은 생략) */}
+              {d.views > 0 && (
+                <span className="text-[9px] leading-none text-gray-500 mb-0.5 tabular-nums">
+                  {d.views >= 1000 ? `${(d.views / 1000).toFixed(1)}k` : d.views}
+                </span>
+              )}
               <div
                 className="w-full bg-sky-500 hover:bg-sky-600 rounded-t transition-colors"
-                style={{ height: `${(d.views / chartMaxViews) * 100}%`, minHeight: d.views > 0 ? '2px' : '0' }}
+                style={{ height: `${(d.views / chartMaxViews) * 85}%`, minHeight: d.views > 0 ? '2px' : '0' }}
               />
             </div>
           ))}
