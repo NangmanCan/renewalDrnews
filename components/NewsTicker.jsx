@@ -11,8 +11,8 @@ const NewsTicker = ({ articles = [] }) => {
   // 기사 수에 따라 애니메이션 속도 조절
   // PC: 1.2배, 모바일: 1.5배 빠르게 (CSS에서 처리)
   useEffect(() => {
-    const baseSpeed = 25; // 기본 25초 (PC 1.2배 기준: 30/1.2)
-    const perItemSpeed = 4; // 기사당 4초 추가
+    const baseSpeed = 17; // 기본 17초 (느리다는 피드백으로 25→17, 약 30% 상향)
+    const perItemSpeed = 3; // 기사당 3초 추가
     setAnimationDuration(baseSpeed + articles.length * perItemSpeed);
   }, [articles.length]);
 
@@ -87,10 +87,10 @@ const NewsTicker = ({ articles = [] }) => {
           }
         }
 
-        /* 모바일: 더 빠르게 (duration 0.6배) */
+        /* 모바일: 더 빠르게 (duration 0.3배 — 기사 2건 기준 약 7초) */
         @media (max-width: 1023px) {
           .ticker-scroll {
-            animation-duration: calc(var(--duration) * 0.6) !important;
+            animation-duration: calc(var(--duration) * 0.3) !important;
           }
         }
 
