@@ -1268,6 +1268,14 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
   ];
   const isPreset = framePresets.some((f) => f.value === form.backgroundImage);
 
+  // 미리보기용 본문 발췌 (HTML 태그 제거 후 180자)
+  const previewExcerpt = (form.content || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 180);
+
   // 임시저장 데이터 로드
   useEffect(() => {
     const saved = localStorage.getItem(autoSaveKey);
@@ -1381,7 +1389,8 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="lg:flex lg:items-start lg:gap-6">
+      <form onSubmit={handleSubmit} className="space-y-4 lg:flex-1 lg:min-w-0">
         {/* 제목 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
@@ -1512,6 +1521,11 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
               label="배경 직접 업로드"
               allowWatermark={false}
             />
+            <ul className="mt-2 space-y-0.5 text-[11px] leading-relaxed text-gray-500">
+              <li>권장 1600×2000 세로형 (4:5)</li>
+              <li>중앙 ~65%는 밝고 조용하게(글이 올라가는 자리), 장식은 가장자리에</li>
+              <li>어두운 사진·중앙에 그림이 있는 소재는 글 가독성이 깨지므로 피해주세요</li>
+            </ul>
           </div>
         </div>
 
@@ -1523,6 +1537,45 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
           {saving ? '저장 중…' : report ? '수정 완료' : '발행하기'}
         </button>
       </form>
+
+      {/* 엽서 미리보기 (lg 이상) */}
+      <aside className="hidden lg:block lg:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-6">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">엽서 미리보기</h3>
+        <div
+          className="relative aspect-[4/5] rounded-lg border border-gray-300 overflow-hidden bg-white"
+          style={
+            form.backgroundImage
+              ? {
+                  backgroundImage: `url("${form.backgroundImage}")`,
+                  backgroundSize: '100% 100%',
+                  backgroundRepeat: 'no-repeat',
+                }
+              : undefined
+          }
+        >
+          {!form.backgroundImage && (
+            <span className="absolute top-2 left-0 right-0 text-center text-[11px] text-gray-400">
+              배경 없음
+            </span>
+          )}
+          <div className="absolute inset-0 flex items-center justify-center p-5">
+            <div className="w-full bg-white/55 rounded-lg px-3 py-4">
+              <p className="text-xs font-bold text-gray-900 leading-snug">
+                {form.title || '제목'}
+              </p>
+              {form.subtitle && (
+                <p className="mt-1 text-[11px] italic text-gray-600 leading-snug">
+                  {form.subtitle}
+                </p>
+              )}
+              <p className="mt-2 text-[11px] text-gray-700 leading-relaxed">
+                {previewExcerpt || '본문을 입력하면 여기에 미리보기가 표시됩니다.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+      </div>
     </div>
   );
 }
