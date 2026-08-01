@@ -1261,10 +1261,10 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
 
   // 엽서 프레임 프리셋 (public/frames/*)
   const framePresets = [
-    { label: '한지', value: '/frames/ceo-hanji.jpg' },
-    { label: '수묵', value: '/frames/ceo-sumuk.jpg' },
-    { label: '봄', value: '/frames/ceo-spring.jpg' },
-    { label: '물빛', value: '/frames/ceo-water.jpg' },
+    { label: '꽃 수채', value: '/frames/ceo-hanji.jpg' },
+    { label: '수묵 매화', value: '/frames/ceo-sumuk.jpg' },
+    { label: '봄 수채', value: '/frames/ceo-spring.jpg' },
+    { label: '풀잎', value: '/frames/ceo-water.jpg' },
   ];
   const isPreset = framePresets.some((f) => f.value === form.backgroundImage);
 
