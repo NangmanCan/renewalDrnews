@@ -177,7 +177,7 @@ export default async function CeoReportPage({ params }) {
         style={
           report.backgroundImage
             ? {
-                backgroundImage: `linear-gradient(rgba(255,255,255,0.35), rgba(255,255,255,0.35)), url("${report.backgroundImage}")`,
+                backgroundImage: `url("${report.backgroundImage}")`,
               }
             : undefined
         }
@@ -186,7 +186,7 @@ export default async function CeoReportPage({ params }) {
         <div
           className={
             report.backgroundImage
-              ? 'bg-white/95 backdrop-blur-sm shadow-lg rounded-xl px-6 py-10 md:px-10 md:py-12 prose prose-lg prose-slate max-w-none [&>p]:text-gray-800 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg'
+              ? 'bg-white/55 rounded-xl px-6 py-10 md:px-10 md:py-12 prose prose-lg prose-slate max-w-none [&>p]:text-gray-800 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg'
               : 'prose prose-lg prose-slate max-w-none [&>p]:text-gray-700 [&>p]:leading-relaxed [&>p]:mb-6 [&>p]:text-lg'
           }
           dangerouslySetInnerHTML={{ __html: report.content }}
