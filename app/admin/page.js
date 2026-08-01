@@ -1269,12 +1269,6 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
   const isPreset = framePresets.some((f) => f.value === form.backgroundImage);
 
   // 미리보기용 본문 발췌 (HTML 태그 제거 후 180자)
-  const previewExcerpt = (form.content || '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 180);
 
   // 임시저장 데이터 로드
   useEffect(() => {
@@ -1538,39 +1532,49 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
         </button>
       </form>
 
-      {/* 엽서 미리보기 (lg 이상) */}
+      {/* 엽서 미리보기 (lg 이상) — 실제 상세 페이지 축소판: 전체 본문 + 내부 스크롤 */}
       <aside className="hidden lg:block lg:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">엽서 미리보기</h3>
-        <div
-          className="relative aspect-[4/5] rounded-lg border border-gray-300 overflow-hidden bg-white"
-          style={
-            form.backgroundImage
-              ? {
-                  backgroundImage: `url("${form.backgroundImage}")`,
-                  backgroundSize: '100% 100%',
-                  backgroundRepeat: 'no-repeat',
-                }
-              : undefined
-          }
-        >
-          {!form.backgroundImage && (
-            <span className="absolute top-2 left-0 right-0 text-center text-[11px] text-gray-400">
-              배경 없음
-            </span>
-          )}
-          <div className="absolute inset-0 flex items-center justify-center p-5">
-            <div className="w-full bg-white/55 rounded-lg px-3 py-4">
-              <p className="text-xs font-bold text-gray-900 leading-snug">
-                {form.title || '제목'}
-              </p>
-              {form.subtitle && (
-                <p className="mt-1 text-[11px] italic text-gray-600 leading-snug">
-                  {form.subtitle}
+        <h3 className="text-sm font-medium text-gray-700 mb-2">
+          엽서 미리보기 <span className="text-[11px] font-normal text-gray-400">(스크롤로 전체 확인)</span>
+        </h3>
+        <div className="rounded-lg border border-gray-300 overflow-y-auto bg-white h-[560px] max-h-[70vh]">
+          {/* 배경은 실제 페이지처럼 본문 전체 길이에 스트레치 */}
+          <div
+            className="min-h-full"
+            style={
+              form.backgroundImage
+                ? {
+                    backgroundImage: `url("${form.backgroundImage}")`,
+                    backgroundSize: '100% 100%',
+                    backgroundRepeat: 'no-repeat',
+                  }
+                : undefined
+            }
+          >
+            {!form.backgroundImage && (
+              <p className="pt-2 text-center text-[11px] text-gray-400">배경 없음</p>
+            )}
+            <div className="px-5 py-8">
+              <div className="w-full bg-white/55 rounded-lg px-3 py-4">
+                <p className="text-xs font-bold text-gray-900 leading-snug">
+                  {form.title || '제목'}
                 </p>
-              )}
-              <p className="mt-2 text-[11px] text-gray-700 leading-relaxed">
-                {previewExcerpt || '본문을 입력하면 여기에 미리보기가 표시됩니다.'}
-              </p>
+                {form.subtitle && (
+                  <p className="mt-1 text-[11px] italic text-gray-600 leading-snug">
+                    {form.subtitle}
+                  </p>
+                )}
+                {form.content ? (
+                  <div
+                    className="mt-2 text-[11px] text-gray-700 leading-relaxed [&_p]:mb-2"
+                    dangerouslySetInnerHTML={{ __html: form.content }}
+                  />
+                ) : (
+                  <p className="mt-2 text-[11px] text-gray-400 leading-relaxed">
+                    본문을 입력하면 여기에 전체 미리보기가 표시됩니다.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
