@@ -1537,6 +1537,7 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
         <h3 className="text-sm font-medium text-gray-700 mb-2">
           엽서 미리보기 <span className="text-[11px] font-normal text-gray-400">(스크롤로 전체 확인)</span>
         </h3>
+        <div className="relative">
         <div className="rounded-lg border border-gray-300 overflow-y-auto bg-white h-[560px] max-h-[70vh]">
           {/* 배경은 실제 페이지처럼 본문 전체 길이에 스트레치 */}
           <div
@@ -1554,7 +1555,7 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
             {!form.backgroundImage && (
               <p className="pt-2 text-center text-[11px] text-gray-400">배경 없음</p>
             )}
-            <div className="px-5 py-8">
+            <div className="px-5 pt-8 pb-14">
               <div className="w-full bg-white/55 rounded-lg px-3 py-4">
                 <p className="text-xs font-bold text-gray-900 leading-snug">
                   {form.title || '제목'}
@@ -1577,6 +1578,11 @@ function CeoReportEditor({ report, onSave, onCancel, saving = false }) {
               </div>
             </div>
           </div>
+        </div>
+        {/* 하단 페이드 + 계속 표시 (하드컷 방지) */}
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 rounded-b-lg bg-gradient-to-t from-white via-white/70 to-transparent flex items-end justify-center pb-1">
+          <span className="text-gray-400 text-sm leading-none tracking-widest">⋯</span>
+        </div>
         </div>
       </aside>
       </div>
