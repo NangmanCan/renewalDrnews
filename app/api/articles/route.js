@@ -29,7 +29,10 @@ export async function GET() {
     // DB 필드명을 JS 형식으로 변환
     const formatted = data?.map(item => ({
       ...item,
-      date: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : null,
+      // KST 기준 게재일 (UTC 날짜로 자르면 오전 9시 이전 발행분이 전날로 표시됨)
+      date: item.created_at
+        ? new Date(item.created_at).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+        : null,
       isHeadline: item.is_headline,
       placement: item.placement || (item.is_headline ? 'headline' : 'news'),
     })) || [];
