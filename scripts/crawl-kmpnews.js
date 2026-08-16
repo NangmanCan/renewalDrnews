@@ -15,7 +15,7 @@ const OUTPUT_DIR = path.join(__dirname, '../data/crawled/kmpnews');
 // Dr.News 카테고리 매핑
 const CATEGORY_MAP = {
   '정책·제도': '정책',
-  '의료·병원': '병원',
+  '의료·병원': '병의원',
   '약사·약국': '산업',
   '제약·유통': '제약·바이오',
   '해외뉴스': '해외뉴스',
@@ -23,7 +23,7 @@ const CATEGORY_MAP = {
   '문화·라이프': '산업',
   '기획특집': '산업',
   '칼럼': '오피니언',
-  '인터뷰': '병원',
+  '인터뷰': '병의원',
   '학술': '학술',
 };
 
@@ -33,8 +33,8 @@ function inferCategory(title, content) {
   
   if (/정책|법안|국회|복지부|식약처|보건복지|규제|제도/.test(text)) return '정책';
   if (/학회|학술|연구|논문|임상|시험|발표/.test(text)) return '학술';
-  if (/병원|의료원|센터|의사|전공의|수술|진료/.test(text)) return '병원';
-  if (/ai|인공지능|디지털|빅데이터|플랫폼/.test(text)) return 'AI';
+  if (/병원|의료원|센터|의사|전공의|수술|진료/.test(text)) return '병의원';
+  if (/ai|인공지능|디지털|빅데이터|플랫폼/.test(text)) return '문화AI';
   if (/제약|바이오|신약|허가|승인|fda|품목|의약품|백신|치료제/.test(text)) return '제약·바이오';
   if (/미국|유럽|일본|중국|글로벌|해외/.test(text)) return '해외뉴스';
   if (/칼럼|기고|의견|논평/.test(text)) return '오피니언';

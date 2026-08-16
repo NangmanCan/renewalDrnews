@@ -84,7 +84,7 @@ export default async function Home({ searchParams }) {
 
   // 바이오/제약/AI 속보 (산업, AI 카테고리) - 5개로 확대
   const bioPharmArticles = visibleArticles
-    .filter(a => a.category === '산업' || a.category === 'AI' || a.category === '제약·바이오')
+    .filter(a => a.category === '산업' || a.category === '문화AI' || a.category === '제약·바이오')
     .slice(0, 5);
 
   if (category) {

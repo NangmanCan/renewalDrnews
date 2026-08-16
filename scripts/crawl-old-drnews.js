@@ -151,10 +151,10 @@ function parseArticle(html, meta) {
 function getCategoryName(cate2) {
   const categories = {
     '7': '정책',
-    '6': '병원',
+    '6': '병의원',
     '9': '학술',
     '10': '산업',
-    '12': 'AI',
+    '12': '문화AI',
     '13': '제약·바이오',
     '14': '해외뉴스',
     '15': '인터뷰',
