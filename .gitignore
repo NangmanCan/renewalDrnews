@@ -40,3 +40,6 @@ coverage
 *.tsbuildinfo
 next-env.d.ts
 supabase/snippets/
+
+# 구 사이트 아카이브 (1.4GB — git 커밋 금지, 로컬/외부 백업만)
+data/archive/

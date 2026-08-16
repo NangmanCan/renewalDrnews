@@ -734,7 +734,7 @@ function ArticleEditor({ article, onSave, onCancel, placement, saving = false })
     alert('임시저장되었습니다.');
   };
 
-  const articleCategories = ['정책', '학술', '병원', '산업', 'AI', '제약·바이오', '해외뉴스'];
+  const articleCategories = ['정책', '학술', '병의원', '산업', '문화AI', '제약·바이오', '해외뉴스'];
   const opinionCategories = ['칼럼', '기고'];
   const categories = form.placement === 'opinion' ? opinionCategories : articleCategories;
 

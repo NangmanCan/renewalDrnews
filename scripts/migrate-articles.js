@@ -39,7 +39,7 @@ function mapCategory(article) {
   const { category, title } = article;
   if (category === '닥터빅라운지') {
     if (title.includes('수면') || title.includes('학회') || title.includes('심포지엄')) return '학술';
-    return '병원';
+    return '병의원';
   }
   return category;
 }

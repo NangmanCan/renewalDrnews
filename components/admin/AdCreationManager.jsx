@@ -53,7 +53,7 @@ function AdPreview({ type, image }) {
         {/* Header (로고 + GNB 메뉴) */}
         <div className="bg-white border border-gray-300 rounded px-3 py-2.5 text-sm font-semibold text-gray-600 flex items-center justify-between">
           <span>🌐 Dr.News</span>
-          <span className="text-xs text-gray-400">정책 · 학술 · 병원 …</span>
+          <span className="text-xs text-gray-400">정책 · 학술 · 병의원 …</span>
         </div>
 
         {/* Brand line */}

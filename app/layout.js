@@ -7,8 +7,8 @@ export const metadata = {
     default: 'Dr.News - 의료 전문 뉴스',
     template: '%s | Dr.News',
   },
-  description: 'Dr.News는 정책, 학술, 병원, 산업 분야의 의료 전문 뉴스를 제공합니다. 대한민국 의료계의 가장 신속하고 정확한 정보를 전달합니다.',
-  keywords: ['의료뉴스', '의료정책', '병원뉴스', '의학', '헬스케어', '제약산업', 'Dr.News'],
+  description: 'Dr.News(닥터뉴스)는 2007년 창간한 의료 전문 뉴스이자 의료 전문 저널입니다. 정책, 학술, 병의원, 산업, 문화AI, 제약·바이오 분야를 취재하며 대한민국 의료계의 가장 신속하고 정확한 정보를 전달합니다.',
+  keywords: ['의료뉴스', '의료 전문 뉴스', '의료 전문 저널', '의료저널', '의료정책', '병의원뉴스', '의학', '헬스케어', '제약산업', '문화AI', 'Dr.News', '닥터뉴스'],
   authors: [{ name: 'Dr.News' }],
   creator: 'Dr.News',
   publisher: 'Dr.News',
@@ -16,8 +16,8 @@ export const metadata = {
     type: 'website',
     locale: 'ko_KR',
     url: 'https://drnews.co.kr',
-    title: 'Dr.News - 의료 전문 뉴스',
-    description: 'Dr.News는 정책, 학술, 병원, 산업 분야의 의료 전문 뉴스를 제공합니다.',
+    title: 'Dr.News - 의료 전문 뉴스·저널',
+    description: 'Dr.News(닥터뉴스)는 정책, 학술, 병의원, 산업, 문화AI 분야를 다루는 의료 전문 뉴스이자 의료 전문 저널입니다.',
     siteName: 'Dr.News',
     images: [
       {
@@ -30,8 +30,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Dr.News - 의료 전문 뉴스',
-    description: 'Dr.News는 정책, 학술, 병원, 산업 분야의 의료 전문 뉴스를 제공합니다.',
+    title: 'Dr.News - 의료 전문 뉴스·저널',
+    description: 'Dr.News(닥터뉴스)는 정책, 학술, 병의원, 산업, 문화AI 분야를 다루는 의료 전문 뉴스이자 의료 전문 저널입니다.',
     images: ['/og-image.jpg'],
   },
   robots: {
@@ -67,10 +67,15 @@ export const metadata = {
 // 사이트 전역 JSON-LD (Organization + WebSite)
 const organizationJsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
+  '@type': 'NewsMediaOrganization',
   name: 'Dr.News',
+  alternateName: '닥터뉴스',
   url: 'https://drnews.co.kr',
   logo: 'https://drnews.co.kr/logo.png',
+  description:
+    'Dr.News(닥터뉴스)는 2007년 창간한 대한민국 의료 전문 뉴스이자 의료 전문 저널로, 정책·학술·병의원·산업·문화AI·제약바이오 분야를 취재 보도합니다.',
+  foundingDate: '2007-01-08',
+  knowsAbout: ['의료 정책', '의학 학술', '병의원 경영', '제약·바이오 산업', '의료 AI', '헬스케어'],
 };
 
 const websiteJsonLd = {
