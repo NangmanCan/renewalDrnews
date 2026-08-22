@@ -1,17 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-
-// 신문법상 인터넷신문 필수 표기 (등록증 기준)
-const PUBLICATION = {
-  name: '닥터뉴스 (Dr.News)',
-  address: '서울특별시 강남구 강남대로44길 22 (도곡동 우정빌딩)',
-  tel: '02-529-1873',
-  registrationNo: '서울, 아00310',
-  registrationDate: '2007.01.08',
-  publisher: '김영학',
-  youthOfficer: '김영학',
-  adEmail: 'kyh6384@hanmail.com',
-};
+import { PUBLICATION } from '@/lib/publication';
 
 const Footer = () => {
   return (
@@ -21,6 +10,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px] text-gray-600">
           <a href={`mailto:${PUBLICATION.adEmail}`} className="hover:text-navy">광고 안내</a>
           <Link href="/privacy" className="font-bold text-navy hover:underline">개인정보 처리방침</Link>
+          <Link href="/about" className="hover:text-navy">회사소개</Link>
           <Link href="/youth-policy" className="hover:text-navy">청소년 보호정책</Link>
         </div>
       </div>

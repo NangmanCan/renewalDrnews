@@ -76,6 +76,7 @@ const organizationJsonLd = {
     'Dr.News(닥터뉴스)는 2007년 창간한 대한민국 의료 전문 뉴스이자 의료 전문 저널로, 정책·학술·병의원·산업·문화AI·제약바이오 분야를 취재 보도합니다.',
   foundingDate: '2007-01-08',
   knowsAbout: ['의료 정책', '의학 학술', '병의원 경영', '제약·바이오 산업', '의료 AI', '헬스케어'],
+  publishingPrinciples: 'https://drnews.co.kr/about',
 };
 
 const websiteJsonLd = {

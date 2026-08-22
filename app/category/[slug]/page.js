@@ -23,7 +23,7 @@ export async function generateMetadata({ params }) {
   }
 
   const canonicalUrl = `https://drnews.co.kr/category/${slug}`;
-  const description = `Dr.News ${category.name} 뉴스 - 의료계 ${category.name} 분야의 최신 소식과 심층 기사를 만나보세요.`;
+  const description = category.seoDescription;
 
   return {
     title: `${category.name} 뉴스`,
@@ -62,8 +62,27 @@ export default async function CategoryPage({ params }) {
     .filter((b) => b.type === 'sidebar' && b.isActive)
     .sort((a, b) => a.order - b.order);
 
+  // CollectionPage JSON-LD (카테고리 목록 페이지)
+  const collectionJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${category.name} 뉴스`,
+    description: category.seoDescription,
+    url: `https://drnews.co.kr/category/${slug}`,
+    inLanguage: 'ko-KR',
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'Dr.News',
+      url: 'https://drnews.co.kr',
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
       <Header />
 
       <main className="max-w-7xl mx-auto px-0 lg:px-4 lg:py-8 py-0">
