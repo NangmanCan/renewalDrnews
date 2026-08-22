@@ -73,6 +73,18 @@ export default async function sitemap() {
       changeFrequency: 'weekly',
       priority: 0.7,
     },
+    {
+      url: 'https://drnews.co.kr/about',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: 'https://drnews.co.kr/author/kim-young-hak',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    },
   ];
 
   return [...staticPages, ...categoryUrls, ...articleUrls, ...ceoReportUrls, ...opinionUrls, ...doctorInterviewUrls];

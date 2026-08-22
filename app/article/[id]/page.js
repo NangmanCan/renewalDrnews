@@ -110,6 +110,10 @@ export default async function ArticlePage({ params }) {
     author: {
       '@type': 'Person',
       name: article.author,
+      // 프로필 페이지가 있는 기자는 url 연결 (E-E-A-T)
+      ...(article.author?.includes('김영학')
+        ? { url: 'https://drnews.co.kr/author/kim-young-hak' }
+        : {}),
     },
     publisher: {
       '@type': 'Organization',
