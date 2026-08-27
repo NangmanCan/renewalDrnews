@@ -11,6 +11,7 @@ const Footer = () => {
           <a href={`mailto:${PUBLICATION.adEmail}`} className="hover:text-navy">광고 안내</a>
           <Link href="/privacy" className="font-bold text-navy hover:underline">개인정보 처리방침</Link>
           <Link href="/about" className="hover:text-navy">회사소개</Link>
+          <Link href="/contact" className="hover:text-navy">문의·제보</Link>
           <Link href="/youth-policy" className="hover:text-navy">청소년 보호정책</Link>
         </div>
       </div>

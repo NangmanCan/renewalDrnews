@@ -30,6 +30,10 @@ import { redirect } from 'next/navigation';
 export const revalidate = 60;
 export const runtime = 'edge';
 
+export const metadata = {
+  alternates: { canonical: 'https://drnews.co.kr' },
+};
+
 export default async function Home({ searchParams }) {
   const params = await searchParams;
   const category = params?.category;
@@ -190,6 +194,11 @@ export default async function Home({ searchParams }) {
       {!category && <IssuePickBar picks={issuePicks} />}
       
       <main className="max-w-7xl mx-auto px-0 lg:px-4 lg:py-8 py-0">
+        {/* 홈 대표 H1 (스크린리더·검색봇용, 화면에는 보이지 않음) */}
+        {!category && (
+          <h1 className="sr-only">Dr.News 닥터뉴스 — 의료 전문 뉴스·저널</h1>
+        )}
+
         {/* 카테고리 타이틀 */}
         {category && (
           <h1 className="text-2xl font-bold text-navy mb-8 px-4 lg:px-0">{category} 뉴스</h1>

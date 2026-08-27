@@ -1,5 +1,6 @@
 import './globals.css';
 import PageViewTracker from '@/components/PageViewTracker';
+import { PUBLICATION } from '@/lib/publication';
 
 export const metadata = {
   metadataBase: new URL('https://drnews.co.kr'),
@@ -77,6 +78,19 @@ const organizationJsonLd = {
   foundingDate: '2007-01-08',
   knowsAbout: ['의료 정책', '의학 학술', '병의원 경영', '제약·바이오 산업', '의료 AI', '헬스케어'],
   publishingPrinciples: 'https://drnews.co.kr/about',
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    telephone: PUBLICATION.tel,
+    email: PUBLICATION.adEmail,
+    availableLanguage: 'Korean',
+  },
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: PUBLICATION.address,
+    addressLocality: '서울',
+    addressCountry: 'KR',
+  },
 };
 
 const websiteJsonLd = {
