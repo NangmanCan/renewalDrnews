@@ -1,8 +1,16 @@
 import Link from 'next/link';
 
+// KST 기준 날짜 (서버가 UTC 엣지에서 실행되므로 타임존 명시 필수)
 function formatKoreanDate(date = new Date()) {
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일(${days[date.getDay()]})`;
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+  }).formatToParts(date);
+  const get = (t) => parts.find((p) => p.type === t)?.value;
+  return `${get('year')}년 ${get('month')}월 ${get('day')}일(${get('weekday')})`;
 }
 
 function PickItem({ label, title, href }) {

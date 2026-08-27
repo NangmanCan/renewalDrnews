@@ -80,6 +80,12 @@ export default async function sitemap() {
       priority: 0.5,
     },
     {
+      url: 'https://drnews.co.kr/contact',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
       url: 'https://drnews.co.kr/author/kim-young-hak',
       lastModified: new Date(),
       changeFrequency: 'weekly',
