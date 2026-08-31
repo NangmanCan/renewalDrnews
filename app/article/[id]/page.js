@@ -8,7 +8,7 @@ import LatestNews from '@/components/LatestNews';
 import PopularNews from '@/components/PopularNews';
 import ViewTracker from '@/components/ViewTracker';
 import ShareButtons from '@/components/ShareButtons';
-import { getArticleById, getRelatedArticles, getArticles, getPopularArticles } from '@/lib/articles';
+import { getArticleById, getRelatedArticles, getLatestArticles, getPopularArticles } from '@/lib/articles';
 import { getBanners } from '@/lib/banners';
 import { generateArticleSEO } from '@/lib/seo';
 import { getSlugByName } from '@/lib/categories';
@@ -73,7 +73,7 @@ export default async function ArticlePage({ params }) {
   const [article, allBanners, latestArticles, popularArticles] = await Promise.all([
     getArticleById(id),
     getBanners(),
-    getArticles(),
+    getLatestArticles(8),
     getPopularArticles(5)
   ]);
 
