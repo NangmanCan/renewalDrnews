@@ -34,7 +34,7 @@ const SubHeadline = ({ article }) => {
             {article.title}
           </h3>
           <p className="text-[14px] text-gray-600 line-clamp-2 leading-[1.6]">
-            {stripHtml(article.content)}
+            {stripHtml(article.summary || article.content || '')}
           </p>
           <div className="mt-3 pt-3 border-t border-gray-100">
             <span className="text-xs text-gray-500">{article.author}</span>
@@ -59,7 +59,7 @@ const SubHeadline = ({ article }) => {
             {article.title}
           </h3>
           <p className="text-[15px] text-gray-600 line-clamp-5 leading-[1.7]">
-            {stripHtml(article.content)}
+            {stripHtml(article.summary || article.content || '')}
           </p>
         </div>
       </div>
