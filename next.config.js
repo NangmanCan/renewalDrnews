@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Storage 파일명이 타임스탬프라 불변 — 최적화 이미지 캐시 1년 (기본 60초는 Supabase 재타격 유발)
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: 'http',

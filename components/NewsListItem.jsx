@@ -22,7 +22,7 @@ const NewsListItem = ({ article, compact = false }) => {
 
   // 모바일 텍스트 전용 모드 (compact) - 시사저널 스타일
   if (compact) {
-    const summary = stripHtml(article.content || article.summary || '');
+    const summary = stripHtml(article.summary || article.content || '');
     return (
       <Link
         href={href}
@@ -70,7 +70,7 @@ const NewsListItem = ({ article, compact = false }) => {
             <p className="text-xs text-gray-400 mb-1">{article.author} · {article.authorTitle || article.author_title}</p>
           )}
           <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
-            {stripHtml(article.content || article.summary)}
+            {stripHtml(article.summary || article.content)}
           </p>
         </div>
       </div>
