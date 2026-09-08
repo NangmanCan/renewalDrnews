@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getCeoReportById, getCeoReports } from '@/lib/ceoReports';
@@ -58,11 +59,7 @@ export default async function CeoReportPage({ params }) {
   ]);
 
   if (!report) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">리포트를 찾을 수 없습니다.</p>
-      </div>
-    );
+    notFound();
   }
 
   // 이전/다음 리포트

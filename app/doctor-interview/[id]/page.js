@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -50,18 +51,7 @@ export default async function DoctorInterviewPage({ params }) {
   );
 
   if (!interview) {
-    return (
-      <>
-        <Header />
-        <main className="max-w-4xl mx-auto px-4 py-20 text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">닥터인터뷰를 찾을 수 없습니다</h2>
-          <Link href="/" className="text-sky-600 hover:text-sky-700 font-medium">
-            홈으로 돌아가기
-          </Link>
-        </main>
-        <Footer />
-      </>
-    );
+    notFound();
   }
 
   return (
