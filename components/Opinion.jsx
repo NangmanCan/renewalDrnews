@@ -70,8 +70,8 @@ const Opinion = ({ opinions, fillHeight = false }) => {
         </h2>
       </div>
 
-      {/* 오피니언 목록 */}
-      <div className={fillHeight ? 'flex-1' : ''}>
+      {/* 오피니언 목록 — 고정 높이(lg)에서 항목이 넘치면 내부 스크롤 (하단 잘림 방지) */}
+      <div className={fillHeight ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain' : ''}>
         {opinions.map((opinion) => (
           <OpinionCard key={`${opinion.type || 'opinion'}-${opinion.id}`} opinion={opinion} />
         ))}
